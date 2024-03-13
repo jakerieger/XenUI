@@ -1,0 +1,4 @@
+CMakeLists.txt linguist-vendored
+*.inl linguist-language=C++
+*.h linguist-language=C++
+*.rc linguist-vendored
