@@ -1,5 +1,5 @@
 //
-// Created by conta on 3/12/2024.
+// Created by Jake Rieger on 3/12/2024.
 //
 
 #pragma once
@@ -22,7 +22,7 @@ namespace Xen {
         [[nodiscard]] HRESULT Render();
         void OnResize(u32 width, u32 height) const;
         void SetOwner(AppWindow* owner);
-        void CheckHit(const Offset& mousePos);
+        void CheckHit(const Offset<i64>& mousePos) const;
 
     private:
         HRESULT CreateDeviceResources();

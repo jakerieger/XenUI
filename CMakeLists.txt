@@ -9,7 +9,6 @@ add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWin
         Lib/XenAPI.h
         Lib/XenRenderer.cpp
         Lib/XenRenderer.h
-        Lib/UI/Offset.cpp
         Lib/UI/Offset.h
         Lib/UI/Size.h
         Lib/UI/Rect.cpp
@@ -20,8 +19,13 @@ add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWin
         Lib/UI/LinearGradient.cpp
         Lib/UI/LinearGradient.h
         Lib/UI/Box.cpp
-        Lib/UI/Box.h)
+        Lib/UI/Box.h
+        Lib/Helpers.inl)
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
 )
 target_link_libraries(HelloXen XenUI)
+
+add_executable(test_offset Tests/test_offset.cpp)
+find_package(Catch2 CONFIG REQUIRED)
+target_link_libraries(test_offset PRIVATE XenUI Catch2::Catch2 Catch2::Catch2WithMain)

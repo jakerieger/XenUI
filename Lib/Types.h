@@ -26,5 +26,15 @@ using Option = std::optional<T>;
 template<class T, class D = std::default_delete<T>>
 using Unique = std::unique_ptr<T, D>;
 
+template<typename T>
+struct InfinityHelper {
+    static constexpr T value = std::numeric_limits<T>::max();
+};
+
+template<typename T>
+constexpr T Infinity() {
+    return InfinityHelper<T>::value;
+}
+
 // Not sure about this one, might remove it
 #define MakeUnique std::make_unique

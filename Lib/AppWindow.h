@@ -1,5 +1,5 @@
 //
-// Created by conta on 3/12/2024.
+// Created by Jake Rieger on 3/12/2024.
 //
 
 #pragma once
@@ -21,7 +21,7 @@ namespace Xen {
 
         [[nodiscard]] HWND GetHandle() const { return Handle; }
         [[nodiscard]] Size<u32> GetDimensions() const { return Dimensions; }
-        Offset& GetCursorPosition() { return CursorPosition; }
+        Offset<i64>& GetCursorPosition() { return CursorPosition; }
 
     private:
         void Init();
@@ -46,6 +46,6 @@ namespace Xen {
         HWND Handle                  = nullptr;
         HINSTANCE Instance           = nullptr;
         Unique<XenRenderer> Renderer = nullptr;
-        Offset CursorPosition;
+        Offset<i64> CursorPosition;
     };
 }  // namespace Xen

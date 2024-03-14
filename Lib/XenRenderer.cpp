@@ -1,5 +1,5 @@
 //
-// Created by conta on 3/12/2024.
+// Created by Jake Rieger on 3/12/2024.
 //
 
 #include "XenRenderer.h"
@@ -55,7 +55,7 @@ namespace Xen {
 
     void XenRenderer::SetOwner(AppWindow* owner) { OwningWindow = owner; }
 
-    void XenRenderer::CheckHit(const Offset& mousePos) {
+    void XenRenderer::CheckHit(const Offset<i64>& mousePos) const {
         if (mousePos.X >= testRect.left && mousePos.X <= testRect.right &&
             mousePos.Y >= testRect.top && mousePos.Y <= testRect.bottom) {
             MessageBoxA(OwningWindow->GetHandle(), "Box clicked!", "Yay", MB_OK);

@@ -1,5 +1,5 @@
 //
-// Created by conta on 3/13/2024.
+// Created by Jake Rieger on 3/13/2024.
 //
 
 #ifndef COLOR_H
