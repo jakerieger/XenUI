@@ -51,18 +51,17 @@ namespace Xen {
 
     template<typename T>
     Size<T> Size<T>::FromHeight(T height) {
-        return Size(std::numeric_limits<T>::infinity(), height);
+        return Size(std::numeric_limits<T>::max(), height);
     }
 
     template<typename T>
     Size<T> Size<T>::FromWidth(T width) {
-        return Size(width, std::numeric_limits<T>::infinity());
+        return Size(width, std::numeric_limits<T>::max());
     }
 
     template<typename T>
     double Size<T>::GetAspectRatio() {
-        // Stupid hack to stop C++ from chopping off the decimal
-        return (Width * 1.f) / (Height * 1.f);
+        return static_cast<double>(Width) / static_cast<double>(Height);
     }
 
     template<typename T>

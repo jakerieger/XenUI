@@ -120,8 +120,11 @@ namespace Xen {
                 return appWindow->OnRightMouseButtonDown();
             case WM_RBUTTONUP:
                 return appWindow->OnRightMouseButtonUp();
-            case WM_MOUSEMOVE:
-                return appWindow->OnMouseMove();
+            case WM_MOUSEMOVE: {
+                const auto xPos = GET_X_LPARAM(lParam);
+                const auto yPos = GET_Y_LPARAM(lParam);
+                return appWindow->OnMouseMove(xPos, yPos);
+            }
             default:
                 return DefWindowProc(hwnd, msg, wParam, lParam);
         }
@@ -139,31 +142,24 @@ namespace Xen {
         return Renderer->Render();
     }
 
-    LRESULT AppWindow::OnKeyUp() {
+    LRESULT AppWindow::OnKeyUp() { return 0; }
+
+    LRESULT AppWindow::OnKeyDown() { return 0; }
+
+    LRESULT AppWindow::OnLeftMouseButtonDown() const {
+        Renderer->CheckHit(CursorPosition);
         return 0;
     }
 
-    LRESULT AppWindow::OnKeyDown() {
-        return 0;
-    }
+    LRESULT AppWindow::OnLeftMouseButtonUp() { return 0; }
 
-    LRESULT AppWindow::OnLeftMouseButtonDown() {
-        return 0;
-    }
+    LRESULT AppWindow::OnRightMouseButtonDown() { return 0; }
 
-    LRESULT AppWindow::OnLeftMouseButtonUp() {
-        return 0;
-    }
+    LRESULT AppWindow::OnRightMouseButtonUp() { return 0; }
 
-    LRESULT AppWindow::OnRightMouseButtonDown() {
-        return 0;
-    }
-
-    LRESULT AppWindow::OnRightMouseButtonUp() {
-        return 0;
-    }
-
-    LRESULT AppWindow::OnMouseMove() {
+    LRESULT AppWindow::OnMouseMove(const UINT xPos, const UINT yPos) {
+        CursorPosition.X = xPos;
+        CursorPosition.Y = yPos;
         return 0;
     }
 }  // namespace Xen

@@ -9,6 +9,7 @@
 // #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
+#include <windowsx.h>
 #include <d2d1.h>
 
 template<class Interface>

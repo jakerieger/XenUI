@@ -8,6 +8,7 @@
 #include "Platform.h"
 #include "Types.h"
 #include "XenRenderer.h"
+#include "UI/Offset.h"
 #include "UI/Size.h"
 #include <string>
 #include <iostream>
@@ -18,13 +19,9 @@ namespace Xen {
         AppWindow(const Size<u32>& dimensions, str className, str title);
         void Run();
 
-        [[nodiscard]] HWND GetHandle() const {
-            return Handle;
-        }
-
-        [[nodiscard]] Size<u32> GetDimensions() const {
-            return Dimensions;
-        }
+        [[nodiscard]] HWND GetHandle() const { return Handle; }
+        [[nodiscard]] Size<u32> GetDimensions() const { return Dimensions; }
+        Offset& GetCursorPosition() { return CursorPosition; }
 
     private:
         void Init();
@@ -37,11 +34,11 @@ namespace Xen {
         LRESULT OnPaint() const;
         LRESULT OnKeyUp();
         LRESULT OnKeyDown();
-        LRESULT OnLeftMouseButtonDown();
+        LRESULT OnLeftMouseButtonDown() const;
         LRESULT OnLeftMouseButtonUp();
         LRESULT OnRightMouseButtonDown();
         LRESULT OnRightMouseButtonUp();
-        LRESULT OnMouseMove();
+        LRESULT OnMouseMove(UINT xPos, UINT yPos);
 
         Size<u32> Dimensions;
         str ClassName;
@@ -49,5 +46,6 @@ namespace Xen {
         HWND Handle                  = nullptr;
         HINSTANCE Instance           = nullptr;
         Unique<XenRenderer> Renderer = nullptr;
+        Offset CursorPosition;
     };
 }  // namespace Xen

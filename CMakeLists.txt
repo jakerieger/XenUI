@@ -11,11 +11,17 @@ add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWin
         Lib/XenRenderer.h
         Lib/UI/Offset.cpp
         Lib/UI/Offset.h
-        Lib/UI/Size.cpp
         Lib/UI/Size.h
         Lib/UI/Rect.cpp
         Lib/UI/Rect.h
-        Lib/XenUI.h)
+        Lib/XenUI.h
+        Lib/UI/Color.cpp
+        Lib/UI/Color.h
+        Lib/UI/LinearGradient.cpp
+        Lib/UI/LinearGradient.h
+        Lib/UI/Box.cpp
+        Lib/UI/Box.h)
 
-add_executable(HelloXen Demos/HelloXen/main.cpp)
+add_executable(HelloXen Demos/HelloXen/main.cpp
+)
 target_link_libraries(HelloXen XenUI)

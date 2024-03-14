@@ -7,6 +7,7 @@
 #include "Types.h"
 #include "Platform.h"
 #include "XenAPI.h"
+#include "UI/Offset.h"
 
 #include <vector>
 
@@ -18,9 +19,10 @@ namespace Xen {
         XenRenderer() = default;
         ~XenRenderer();
         void Init();
-        [[nodiscard]] HRESULT Render() const;
-        void OnResize(u32 width, u32 height);
+        [[nodiscard]] HRESULT Render();
+        void OnResize(u32 width, u32 height) const;
         void SetOwner(AppWindow* owner);
+        void CheckHit(const Offset& mousePos);
 
     private:
         HRESULT CreateDeviceResources();
@@ -34,5 +36,6 @@ namespace Xen {
         // TODO: For testing purposes only, will be removed during API refactoring
         // Brush management will eventually become the job of widgets and not the renderer
         std::vector<ID2D1SolidColorBrush*> SolidColorBrushes = {};
+        D2D1_RECT_F testRect                                 = {};
     };
 }  // namespace Xen

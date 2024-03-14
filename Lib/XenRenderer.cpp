@@ -34,25 +34,32 @@ namespace Xen {
         SolidColorBrushes.push_back(redBrush);
     }
 
-    HRESULT XenRenderer::Render() const {
+    HRESULT XenRenderer::Render() {
         D2DRenderTarget->BeginDraw();
         D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
-        auto [width, height]   = D2DRenderTarget->GetSize();
-        const D2D1_RECT_F rect = D2D1::RectF(width / 2 - 100.0f,
-                                             height / 2 - 100.0f,
-                                             width / 2 + 100.0f,
-                                             height / 2 + 100.0f);
-        D2DRenderTarget->FillRectangle(&rect, SolidColorBrushes.at(0));
+        auto [width, height] = D2DRenderTarget->GetSize();
+        testRect             = D2D1::RectF(width / 2 - 100.0f,
+                               height / 2 - 100.0f,
+                               width / 2 + 100.0f,
+                               height / 2 + 100.0f);
+        D2DRenderTarget->FillRectangle(&testRect, SolidColorBrushes.at(0));
 
         return D2DRenderTarget->EndDraw();
     }
 
-    void XenRenderer::OnResize(u32 width, u32 height) {}
+    void XenRenderer::OnResize(u32 width, u32 height) const {
+        auto _ = D2DRenderTarget->Resize(D2D1_SIZE_U(width, height));
+    }
 
-    void XenRenderer::SetOwner(AppWindow* owner) {
-        OwningWindow = owner;
+    void XenRenderer::SetOwner(AppWindow* owner) { OwningWindow = owner; }
+
+    void XenRenderer::CheckHit(const Offset& mousePos) {
+        if (mousePos.X >= testRect.left && mousePos.X <= testRect.right &&
+            mousePos.Y >= testRect.top && mousePos.Y <= testRect.bottom) {
+            MessageBoxA(OwningWindow->GetHandle(), "Box clicked!", "Yay", MB_OK);
+        }
     }
 
     HRESULT XenRenderer::CreateDeviceResources() {
