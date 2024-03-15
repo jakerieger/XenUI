@@ -7,6 +7,7 @@
 #include "Types.h"
 #include "Platform.h"
 #include "XenAPI.h"
+#include "UI/Box.h"
 #include "UI/Offset.h"
 #include "UI/Rect.h"
 
@@ -15,12 +16,13 @@
 namespace Xen {
     class XEN_API AppWindow;
 
+    // TODO: Refactor into namespace to allow app-wide access to the render target
     class XEN_API XenRenderer {
     public:
         XenRenderer() = default;
         ~XenRenderer();
         void Init();
-        [[nodiscard]] HRESULT Render();
+        [[nodiscard]] HRESULT Render() const;
         void OnResize(u32 width, u32 height) const;
         void SetOwner(AppWindow* owner);
         void CheckHit(Offset<i64>& mousePos) const;
@@ -34,9 +36,6 @@ namespace Xen {
         ID2D1HwndRenderTarget* D2DRenderTarget = nullptr;
         AppWindow* OwningWindow                = nullptr;
 
-        // TODO: For testing purposes only, will be removed during API refactoring
-        // Brush management will eventually become the job of widgets and not the renderer
-        std::vector<ID2D1SolidColorBrush*> SolidColorBrushes = {};
-        Rect testRect                                        = {};
+        Box* testBox = nullptr;
     };
 }  // namespace Xen

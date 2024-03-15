@@ -26,26 +26,21 @@ namespace Xen {
             throw std::runtime_error("Failed to create Direct2D resources");
         }
 
-        // Create some brushes for testing
-        ID2D1SolidColorBrush* redBrush;
-        if (FAILED(
-              D2DRenderTarget->CreateSolidColorBrush(Color(0xFFFF3366).GetD2DColor(), &redBrush))) {
-            throw std::runtime_error("Failed to create solid color brush");
-        }
+        auto [width, height] = D2DRenderTarget->GetSize();
 
-        SolidColorBrushes.push_back(redBrush);
+        testBox = new Box(Rect::FromCenter(Offset(width / 2.f, height / 2.f), 100, 32),
+                          Colors::Magenta,
+                          D2DRenderTarget);
     }
 
-    HRESULT XenRenderer::Render() {
+    HRESULT XenRenderer::Render() const {
         D2DRenderTarget->BeginDraw();
         D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
         auto [width, height] = D2DRenderTarget->GetSize();
-        testRect             = Rect::FromCircle(Offset(width / 2.f, height / 2.f), 48);
-        auto boundingRect    = testRect.Grow(24);
-        D2DRenderTarget->FillRectangle(testRect.GetD2DRect(), SolidColorBrushes.at(0));
-        D2DRenderTarget->DrawRectangle(boundingRect.GetD2DRect(), SolidColorBrushes.at(0));
+        testBox->UpdateShape(Rect::FromCenter(Offset(width / 2.f, height / 2.f), 200, 64));
+        testBox->Draw();
 
         return D2DRenderTarget->EndDraw();
     }
@@ -59,8 +54,8 @@ namespace Xen {
     void XenRenderer::SetOwner(AppWindow* owner) { OwningWindow = owner; }
 
     void XenRenderer::CheckHit(Offset<i64>& mousePos) const {
-        if (testRect.Contains(mousePos.To<f32>())) {
-            std::cout << "Box clicked!\n";
+        if (testBox->GetShape().Contains(mousePos.To<f32>())) {
+            MessageBoxA(OwningWindow->GetHandle(), "Box clicked", "", MB_OK);
         }
     }
 
@@ -87,9 +82,5 @@ namespace Xen {
         return hr;
     }
 
-    void XenRenderer::DiscardDeviceResources() const {
-        for (auto brush : SolidColorBrushes) {
-            SafeRelease(&brush);
-        }
-    }
+    void XenRenderer::DiscardDeviceResources() const { delete testBox; }
 }  // namespace Xen

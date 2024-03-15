@@ -7,6 +7,13 @@
 #include <cmath>
 
 namespace Xen {
+    Color::Color() {
+        InternalColor.r = 0;
+        InternalColor.g = 0;
+        InternalColor.b = 0;
+        InternalColor.a = 0;
+    }
+
     Color::Color(const f32 r, const f32 g, const f32 b, const f32 a) {
         InternalColor.r = r;
         InternalColor.g = g;

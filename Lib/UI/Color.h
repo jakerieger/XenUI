@@ -12,6 +12,7 @@
 namespace Xen {
     class XEN_API Color {
     public:
+        Color();
         Color(f32 r, f32 g, f32 b, f32 a = 1.0);
         explicit Color(u32 color);
 
@@ -25,7 +26,7 @@ namespace Xen {
         [[nodiscard]] Color WithGreen(f32 g) const;
         [[nodiscard]] Color WithBlue(u32 b) const;
         [[nodiscard]] Color WithBlue(f32 b) const;
-        Color Greyscale() const;
+        [[nodiscard]] Color Greyscale() const;
 
         static Color AlphaBlend(const Color& foreground, const Color& background);
         static u32 GetAlphaFromOpacity(f32 opacity);
@@ -44,14 +45,14 @@ namespace Xen {
     };
 
     namespace Colors {
-        inline const auto White       = Color(0xFFFFFFFF);
-        inline const auto Black       = Color(0xFF000000);
-        inline const auto Red         = Color(0xFFFF0000);
-        inline const auto Yellow      = Color(0xFFFFFF00);
-        inline const auto Green       = Color(0xFF00FF00);
-        inline const auto Cyan        = Color(0xFF00FFFF);
-        inline const auto Blue        = Color(0xFF0000FF);
-        inline const auto Magenta     = Color(0xFFFF00FF);
-        inline const auto Transparent = Color(0x00000000);
+        inline static auto White       = Color(0xFFFFFFFF);
+        inline static auto Black       = Color(0xFF000000);
+        inline static auto Red         = Color(0xFFFF0000);
+        inline static auto Yellow      = Color(0xFFFFFF00);
+        inline static auto Green       = Color(0xFF00FF00);
+        inline static auto Cyan        = Color(0xFF00FFFF);
+        inline static auto Blue        = Color(0xFF0000FF);
+        inline static auto Magenta     = Color(0xFFFF00FF);
+        inline static auto Transparent = Color(0x00000000);
     }  // namespace Colors
 }  // namespace Xen
