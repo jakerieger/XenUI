@@ -40,25 +40,23 @@ namespace Xen {
         D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
         auto [width, height] = D2DRenderTarget->GetSize();
-        testRect             = D2D1::RectF(width / 2 - 100.0f,
-                               height / 2 - 100.0f,
-                               width / 2 + 100.0f,
-                               height / 2 + 100.0f);
-        D2DRenderTarget->FillRectangle(&testRect, SolidColorBrushes.at(0));
+        testRect             = Rect::FromCircle(Offset(width / 2, height / 2), 48);
+        D2DRenderTarget->FillRectangle(testRect.GetD2DRect(), SolidColorBrushes.at(0));
 
         return D2DRenderTarget->EndDraw();
     }
 
     void XenRenderer::OnResize(u32 width, u32 height) const {
-        auto _ = D2DRenderTarget->Resize(D2D1_SIZE_U(width, height));
+        if (const auto hr = D2DRenderTarget->Resize(D2D1_SIZE_U(width, height)); FAILED(hr)) {
+            throw std::runtime_error("Failed to resize Direct2D render target!");
+        }
     }
 
     void XenRenderer::SetOwner(AppWindow* owner) { OwningWindow = owner; }
 
-    void XenRenderer::CheckHit(const Offset<i64>& mousePos) const {
-        if (mousePos.X >= testRect.left && mousePos.X <= testRect.right &&
-            mousePos.Y >= testRect.top && mousePos.Y <= testRect.bottom) {
-            MessageBoxA(OwningWindow->GetHandle(), "Box clicked!", "Yay", MB_OK);
+    void XenRenderer::CheckHit(Offset<i64>& mousePos) const {
+        if (testRect.Contains(mousePos.To<f32>())) {
+            std::cout << "Box clicked!\n";
         }
     }
 

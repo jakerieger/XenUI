@@ -7,8 +7,7 @@
 #include "Helpers.inl"
 #include "XenAPI.h"
 #include "Types.h"
-
-#include <valarray>
+#include <cmath>
 
 namespace Xen {
     template<typename T = int>
@@ -28,12 +27,12 @@ namespace Xen {
         Offset operator/(const Offset&) const;
         Offset operator/(T scalar) const;
 
-        static Offset<double> FromDirection(T direction, T distance);
-        static Offset Lerp(const Offset& a, const Offset& b, double t);
+        static Offset<f64> FromDirection(T direction, T distance);
+        static Offset Lerp(const Offset& a, const Offset& b, f64 t);
 
-        double Direction();
-        double Distance();
-        double DistanceSqr();
+        f64 Direction();
+        f64 Distance();
+        f64 DistanceSqr();
         bool IsFinite();
         bool IsInfinite();
         Offset Scale(T scaleX, T scaleY);
@@ -114,31 +113,31 @@ namespace Xen {
     }
 
     template<typename T>
-    Offset<double> Offset<T>::FromDirection(T direction, T distance) {
+    Offset<f64> Offset<T>::FromDirection(T direction, T distance) {
         ASSERT_NUMERIC(T)
         return Offset(distance * std::cos(direction), distance * std::sin(direction));
     }
 
     template<typename T>
-    Offset<T> Offset<T>::Lerp(const Offset& a, const Offset& b, const double t) {
+    Offset<T> Offset<T>::Lerp(const Offset& a, const Offset& b, const f64 t) {
         ASSERT_NUMERIC(T)
-        return Offset(::Lerp<T>(a.X, b.X, t), ::Lerp<T>(a.Y, b.Y, t));
+        return Offset(Math::Lerp<T>(a.X, b.X, t), Math::Lerp<T>(a.Y, b.Y, t));
     }
 
     template<typename T>
-    double Offset<T>::Direction() {
+    f64 Offset<T>::Direction() {
         ASSERT_NUMERIC(T)
-        return std::atan2(static_cast<double>(X), static_cast<double>(Y));
+        return std::atan2(static_cast<f64>(X), static_cast<f64>(Y));
     }
 
     template<typename T>
-    double Offset<T>::Distance() {
+    f64 Offset<T>::Distance() {
         ASSERT_NUMERIC(T)
         return std::sqrt(X * X + Y * Y);
     }
 
     template<typename T>
-    double Offset<T>::DistanceSqr() {
+    f64 Offset<T>::DistanceSqr() {
         ASSERT_NUMERIC(T)
         return X * X + Y * Y;
     }

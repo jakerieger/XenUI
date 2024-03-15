@@ -22,11 +22,11 @@ TEST_CASE("Infinite", "[Offset]") {
 }
 
 TEST_CASE("FromDirection", "[Offset]") {
-    double direction = 2;
-    double distance  = 10;
-    double expectedX = distance * std::cos(direction);
-    double expectedY = distance * std::sin(direction);
-    auto offset      = Offset<double>::FromDirection(direction, distance);
+    f64 direction = 2;
+    f64 distance  = 10;
+    f64 expectedX = distance * std::cos(direction);
+    f64 expectedY = distance * std::sin(direction);
+    auto offset   = Offset<f64>::FromDirection(direction, distance);
     REQUIRE(offset.X == expectedX);
     REQUIRE(offset.Y == expectedY);
 }
@@ -87,9 +87,9 @@ TEST_CASE("Translate", "[Offset]") {
 }
 
 TEST_CASE("To", "[Offset]") {
-    auto offset = Offset<i64>(10, 5).To<double>();
-    REQUIRE(std::is_same_v<decltype(offset.X), double>);
-    REQUIRE(std::is_same_v<decltype(offset.Y), double>);
+    auto offset = Offset<i64>(10, 5).To<f64>();
+    REQUIRE(std::is_same_v<decltype(offset.X), f64>);
+    REQUIRE(std::is_same_v<decltype(offset.Y), f64>);
 }
 
 TEST_CASE("Negate", "[Offset]") {

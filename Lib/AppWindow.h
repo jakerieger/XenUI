@@ -34,7 +34,7 @@ namespace Xen {
         LRESULT OnPaint() const;
         LRESULT OnKeyUp();
         LRESULT OnKeyDown();
-        LRESULT OnLeftMouseButtonDown() const;
+        LRESULT OnLeftMouseButtonDown();
         LRESULT OnLeftMouseButtonUp();
         LRESULT OnRightMouseButtonDown();
         LRESULT OnRightMouseButtonUp();

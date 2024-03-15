@@ -19,8 +19,8 @@ namespace Xen {
         static Size FromHeight(T height);
         static Size FromWidth(T width);
 
-        double GetAspectRatio();
-        double GetHypotenuse();
+        f64 GetAspectRatio();
+        f64 GetHypotenuse();
 
         template<typename newT>
         Size<newT> To() {
@@ -60,12 +60,12 @@ namespace Xen {
     }
 
     template<typename T>
-    double Size<T>::GetAspectRatio() {
-        return static_cast<double>(Width) / static_cast<double>(Height);
+    f64 Size<T>::GetAspectRatio() {
+        return static_cast<f64>(Width) / static_cast<f64>(Height);
     }
 
     template<typename T>
-    double Size<T>::GetHypotenuse() {
+    f64 Size<T>::GetHypotenuse() {
         T aSqrd = Height * Height;
         T bSqrd = Width * Width;
         return std::sqrt(aSqrd + bSqrd);

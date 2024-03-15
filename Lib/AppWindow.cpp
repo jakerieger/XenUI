@@ -146,7 +146,7 @@ namespace Xen {
 
     LRESULT AppWindow::OnKeyDown() { return 0; }
 
-    LRESULT AppWindow::OnLeftMouseButtonDown() const {
+    LRESULT AppWindow::OnLeftMouseButtonDown() {
         Renderer->CheckHit(CursorPosition);
         return 0;
     }
