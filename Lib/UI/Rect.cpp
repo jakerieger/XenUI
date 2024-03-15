@@ -46,6 +46,10 @@ namespace Xen {
                      std::max(a.Y, b.Y)};
     }
 
+    Rect Rect::Copy(const Rect& other) {
+        return {other.Left(), other.Top(), other.Right(), other.Bottom()};
+    }
+
     f32 Rect::Height() const { return InternalRect.bottom - InternalRect.top; }
     f32 Rect::Width() const { return InternalRect.right - InternalRect.left; }
     f32 Rect::Top() const { return InternalRect.top; }

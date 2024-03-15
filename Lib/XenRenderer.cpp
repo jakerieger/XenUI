@@ -4,6 +4,7 @@
 
 #include "XenRenderer.h"
 #include "AppWindow.h"
+#include "UI/Color.h"
 
 namespace Xen {
     XenRenderer::~XenRenderer() {
@@ -27,7 +28,8 @@ namespace Xen {
 
         // Create some brushes for testing
         ID2D1SolidColorBrush* redBrush;
-        if (FAILED(D2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFF3366), &redBrush))) {
+        if (FAILED(
+              D2DRenderTarget->CreateSolidColorBrush(Color(0xFFFF3366).GetD2DColor(), &redBrush))) {
             throw std::runtime_error("Failed to create solid color brush");
         }
 
@@ -40,13 +42,15 @@ namespace Xen {
         D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
         auto [width, height] = D2DRenderTarget->GetSize();
-        testRect             = Rect::FromCircle(Offset(width / 2, height / 2), 48);
+        testRect             = Rect::FromCircle(Offset(width / 2.f, height / 2.f), 48);
+        auto boundingRect    = testRect.Grow(24);
         D2DRenderTarget->FillRectangle(testRect.GetD2DRect(), SolidColorBrushes.at(0));
+        D2DRenderTarget->DrawRectangle(boundingRect.GetD2DRect(), SolidColorBrushes.at(0));
 
         return D2DRenderTarget->EndDraw();
     }
 
-    void XenRenderer::OnResize(u32 width, u32 height) const {
+    void XenRenderer::OnResize(const u32 width, const u32 height) const {
         if (const auto hr = D2DRenderTarget->Resize(D2D1_SIZE_U(width, height)); FAILED(hr)) {
             throw std::runtime_error("Failed to resize Direct2D render target!");
         }

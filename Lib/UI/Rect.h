@@ -21,6 +21,7 @@ namespace Xen {
         static Rect FromCircle(const Offset<f32>& center, f32 radius);
         static Rect FromLTWH(f32 left, f32 top, f32 width, f32 height);
         static Rect FromPoints(const Offset<f32>& a, const Offset<f32>& b);
+        static Rect Copy(const Rect& other);
 
         [[nodiscard]] f32 Height() const;
         [[nodiscard]] f32 Width() const;
