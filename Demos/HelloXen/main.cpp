@@ -2,10 +2,10 @@
 
 #include <iostream>
 
-using Xen::Size;
+using namespace Xen;
 
 int main() {
-    Xen::AppWindow app(Size<u32>(800, 600), "HelloXenClass", "HelloXen");
+    AppWindow app(Size<u32>(800, 600), "HelloXenClass", "HelloXen");
     app.Run();
     return 0;
 }
