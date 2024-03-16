@@ -5,12 +5,14 @@
 #pragma once
 
 #pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
 
 // #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
 #include <windowsx.h>
 #include <d2d1.h>
+#include <dwrite.h>
 
 template<class Interface>
 void SafeRelease(Interface** ppInterface) {

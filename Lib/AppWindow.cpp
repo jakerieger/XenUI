@@ -9,8 +9,12 @@
 #include <utility>
 
 namespace Xen {
-    AppWindow::AppWindow(const Size<u32>& dimensions, str className, str title)
-        : Dimensions(dimensions), ClassName(std::move(className)), Title(std::move(title)) {}
+    AppWindow::AppWindow(const Size<u32>& dimensions,
+                         str className,
+                         str title,
+                         const int windowIcon)
+        : Dimensions(dimensions), ClassName(std::move(className)), Title(std::move(title)),
+          WindowIcon(windowIcon) {}
 
     void AppWindow::Run() {
         Init();
@@ -19,7 +23,8 @@ namespace Xen {
     }
 
     void AppWindow::Init() {
-        Instance = ::GetModuleHandle(nullptr);
+        Instance      = ::GetModuleHandle(nullptr);
+        HICON appIcon = ::LoadIcon(Instance, MAKEINTRESOURCE(WindowIcon));
 
         WNDCLASSEXA wndClass;
         wndClass.style         = CS_HREDRAW | CS_VREDRAW;
@@ -27,7 +32,7 @@ namespace Xen {
         wndClass.cbClsExtra    = 0;
         wndClass.cbWndExtra    = 0;
         wndClass.hInstance     = Instance;
-        wndClass.hIcon         = ::LoadIcon(nullptr, IDI_WINLOGO);
+        wndClass.hIcon         = appIcon;
         wndClass.hIconSm       = wndClass.hIcon;
         wndClass.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
         wndClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
@@ -59,9 +64,8 @@ namespace Xen {
         ::SetWindowLongPtr(Handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
         assert(Handle != nullptr);
 
-        Renderer = MakeUnique<XenRenderer>();
-        Renderer->SetOwner(this);
-        Renderer->Init();
+        Renderer::SetOwningWindow(this);
+        Renderer::Init();
     }
 
     void AppWindow::MainLoop() const {
@@ -133,13 +137,13 @@ namespace Xen {
     LRESULT AppWindow::OnResize(UINT width, UINT height) {
         Dimensions.Width  = width;
         Dimensions.Height = height;
-        Renderer->OnResize(width, height);
+        Renderer::OnResize(width, height);
         return 0;
     }
 
     LRESULT AppWindow::OnPaint() const {
         ::ValidateRect(Handle, nullptr);
-        return Renderer->Render();
+        return Renderer::Render();
     }
 
     LRESULT AppWindow::OnKeyUp() { return 0; }
@@ -147,7 +151,7 @@ namespace Xen {
     LRESULT AppWindow::OnKeyDown() { return 0; }
 
     LRESULT AppWindow::OnLeftMouseButtonDown() {
-        Renderer->CheckHit(CursorPosition);
+        Renderer::CheckHit(CursorPosition);
         return 0;
     }
 

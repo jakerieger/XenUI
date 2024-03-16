@@ -5,17 +5,16 @@
 #pragma once
 
 #include "Color.h"
-#include "Types.h"
 #include "XenAPI.h"
 #include "Platform.h"
 #include "Rect.h"
 
 namespace Xen {
-    class XEN_API Box {
+    class XEN_API XenBox {
     public:
-        Box() = default;
-        Box(const Rect& shape, const Color& color, ID2D1RenderTarget* renderTarget);
-        ~Box();
+        XenBox() = default;
+        XenBox(const Rect& shape, const Color& color);
+        ~XenBox();
 
         void Draw();
         void UpdateShape(const Rect& shape) { Shape = shape; }
@@ -23,13 +22,13 @@ namespace Xen {
         Rect& GetShape() { return Shape; }
         Color& GetFillColor() { return FillColor; }
         Color& GetStrokeColor() { return StrokeColor; }
+        ID2D1SolidColorBrush* GetBrush() { return Brush; }
 
     private:
         Rect Shape        = {};
         Color FillColor   = {};
         Color StrokeColor = {};
 
-        ID2D1SolidColorBrush* InternalColor = nullptr;
-        ID2D1RenderTarget* RenderTarget     = nullptr;
+        ID2D1SolidColorBrush* Brush = nullptr;
     };
 }  // namespace Xen

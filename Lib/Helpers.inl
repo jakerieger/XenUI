@@ -7,6 +7,9 @@
 #include "Types.h"
 #include <cassert>
 
+#include <codecvt>
+#include <locale>
+
 namespace Xen {
     namespace Math {
         template<typename T>
@@ -60,6 +63,16 @@ namespace Xen {
             const auto alphaByte = static_cast<unsigned char>(a * 255.0f);
 
             return (alphaByte << 24) | (redByte << 16) | (greenByte << 8) | blueByte;
+        }
+
+        inline void WideToANSI(const std::wstring& value, std::string& converted) {
+            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+            converted = converter.to_bytes(value);
+        }
+
+        inline void ANSIToWide(const std::string& value, std::wstring& converted) {
+            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+            converted = converter.from_bytes(value);
         }
     }  // namespace Converters
 }  // namespace Xen

@@ -16,7 +16,7 @@
 namespace Xen {
     class XEN_API AppWindow {
     public:
-        AppWindow(const Size<u32>& dimensions, str className, str title);
+        AppWindow(const Size<u32>& dimensions, str className, str title, int windowIcon);
         void Run();
 
         [[nodiscard]] HWND GetHandle() const { return Handle; }
@@ -43,9 +43,9 @@ namespace Xen {
         Size<u32> Dimensions;
         str ClassName;
         str Title;
-        HWND Handle                  = nullptr;
-        HINSTANCE Instance           = nullptr;
-        Unique<XenRenderer> Renderer = nullptr;
+        HWND Handle        = nullptr;
+        HINSTANCE Instance = nullptr;
         Offset<i64> CursorPosition;
+        int WindowIcon = 0;
     };
 }  // namespace Xen

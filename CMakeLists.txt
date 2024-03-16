@@ -9,6 +9,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Set the output directory for libraries (DLLs)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+
 include_directories(${CMAKE_SOURCE_DIR}/Lib)
 
 add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWindow.h
@@ -24,12 +26,15 @@ add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWin
         Lib/UI/Color.h
         Lib/UI/LinearGradient.cpp
         Lib/UI/LinearGradient.h
-        Lib/UI/Box.cpp
-        Lib/UI/Box.h
-        Lib/Helpers.inl)
+        Lib/UI/XenBox.cpp
+        Lib/UI/XenBox.h
+        Lib/Helpers.inl
+        Lib/UI/XenText.cpp
+        Lib/UI/XenText.h)
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
-        Demos/Res/app.rc)
+        Demos/Res/app.rc
+        Demos/Res/resource.h)
 target_link_libraries(HelloXen XenUI)
 
 add_executable(test_offset Tests/test_offset.cpp)
