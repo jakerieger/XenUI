@@ -9,7 +9,7 @@ namespace Xen {
     Rect Rect::Largest = FromPoints(Offset(0.f, 0.f), Offset(MAX_SIZE_F, MAX_SIZE_F));
     Rect Rect::Zero    = {0, 0, 0, 0};
 
-    Rect::Rect(const Offset<f32>& offset, const Size<f32>& size) {
+    Rect::Rect(const Offset& offset, const Size<f32>& size) {
         InternalRect.bottom = offset.Y + size.Height;
         InternalRect.left   = offset.X;
         InternalRect.right  = offset.X + size.Width;
@@ -23,7 +23,7 @@ namespace Xen {
         InternalRect.top    = top;
     }
 
-    Rect Rect::FromCenter(const Offset<f32>& center, const f32 width, const f32 height) {
+    Rect Rect::FromCenter(const Offset& center, const f32 width, const f32 height) {
         const auto left   = center.X - width / 2;
         const auto top    = center.Y - height / 2;
         const auto right  = center.X + width / 2;
@@ -31,7 +31,7 @@ namespace Xen {
         return Rect {left, top, right, bottom};
     }
 
-    Rect Rect::FromCircle(const Offset<f32>& center, const f32 radius) {
+    Rect Rect::FromCircle(const Offset& center, const f32 radius) {
         return FromCenter(center, radius * 2, radius * 2);
     }
 
@@ -39,7 +39,7 @@ namespace Xen {
         return Rect {left, top, left + width, top + height};
     }
 
-    Rect Rect::FromPoints(const Offset<f32>& a, const Offset<f32>& b) {
+    Rect Rect::FromPoints(const Offset& a, const Offset& b) {
         return Rect {std::min(a.X, b.X),
                      std::min(a.Y, b.Y),
                      std::max(a.X, b.X),
@@ -59,17 +59,17 @@ namespace Xen {
     f32 Rect::LongestSide() const { return std::max(Width(), Height()); }
     f32 Rect::ShortestSide() const { return std::min(Width(), Height()); }
 
-    Offset<f32> Rect::BottomCenter() const { return {Left() + Width() / 2.f, Bottom()}; }
-    Offset<f32> Rect::BottomLeft() const { return {Left(), Bottom()}; }
-    Offset<f32> Rect::BottomRight() const { return {Right(), Bottom()}; }
-    Offset<f32> Rect::Center() const { return {Left() + Width() / 2.f, Top() + Height() / 2.f}; }
-    Offset<f32> Rect::CenterLeft() const { return {Left(), Top() + Height() / 2.f}; }
-    Offset<f32> Rect::CenterRight() const { return {Right(), Top() + Height() / 2.f}; }
-    Offset<f32> Rect::TopCenter() const { return {Left() + Width() / 2.f, Top()}; }
-    Offset<f32> Rect::TopLeft() const { return {Left(), Top()}; }
-    Offset<f32> Rect::TopRight() const { return {Right(), Top()}; }
+    Offset Rect::BottomCenter() const { return {Left() + Width() / 2.f, Bottom()}; }
+    Offset Rect::BottomLeft() const { return {Left(), Bottom()}; }
+    Offset Rect::BottomRight() const { return {Right(), Bottom()}; }
+    Offset Rect::Center() const { return {Left() + Width() / 2.f, Top() + Height() / 2.f}; }
+    Offset Rect::CenterLeft() const { return {Left(), Top() + Height() / 2.f}; }
+    Offset Rect::CenterRight() const { return {Right(), Top() + Height() / 2.f}; }
+    Offset Rect::TopCenter() const { return {Left() + Width() / 2.f, Top()}; }
+    Offset Rect::TopLeft() const { return {Left(), Top()}; }
+    Offset Rect::TopRight() const { return {Right(), Top()}; }
 
-    bool Rect::Contains(const Offset<f32>& offset) const {
+    bool Rect::Contains(const Offset& offset) const {
         return offset.X >= Left() && offset.X < Right() && offset.Y >= Top() && offset.Y < Bottom();
     }
 
@@ -105,7 +105,7 @@ namespace Xen {
                 std::min(Bottom(), other.Bottom())};
     }
 
-    Rect Rect::Shift(const Offset<f32>& offset) const {
+    Rect Rect::Shift(const Offset& offset) const {
         return {Left() + offset.X, Top() + offset.Y, Right() + offset.X, Bottom() + offset.Y};
     }
 

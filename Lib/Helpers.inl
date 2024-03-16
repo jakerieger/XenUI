@@ -5,8 +5,8 @@
 #pragma once
 
 #include "Types.h"
-#include <cassert>
 
+#include <cassert>
 #include <codecvt>
 #include <locale>
 

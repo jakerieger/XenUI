@@ -14,10 +14,14 @@ namespace Xen::Renderer {
     AppWindow* g_OwningWindow                = nullptr;
 
     // TEST RESOURCES
-    XenText* demoText = nullptr;
-    XenBox* demoBox   = nullptr;
+    XenText* demoText            = nullptr;
+    XenBox* demoBox              = nullptr;
+    constexpr u32 g_ButtonWidth  = 200;
+    constexpr u32 g_ButtonHeight = 48;
+    Rect g_ButtonRect            = {};
 
-    HRESULT CreateDeviceResources() {
+    HRESULT
+    CreateDeviceResources() {
         HRESULT hr = S_OK;
 
         if (!g_D2DRenderTarget) {
@@ -47,10 +51,11 @@ namespace Xen::Renderer {
     }
 
     void CreateTestResources() {
-        auto [width, height] = g_D2DRenderTarget->GetSize();
-        demoText = new XenText("Click Me", "Inter", Offset(width / 2.f, height / 2.f), 400, 16.f);
-        demoBox  = new XenBox(Rect::FromCenter(Offset(width / 2.f, height / 2.f), 200, 64),
-                             Color(0xFFFF3366));
+        g_ButtonRect = Rect::FromCenter(GetRenderTargetCenter(), g_ButtonWidth, g_ButtonHeight);
+
+        demoText =
+          new XenText("Click Me", "Inter", GetRenderTargetCenter(), g_ButtonRect, 400, 16.f);
+        demoBox = new XenBox(g_ButtonRect, Color(0xFFFF3366));
     }
 
     void DiscardDeviceResources() {
@@ -76,25 +81,17 @@ namespace Xen::Renderer {
     }
 
     int Render() {
+        g_ButtonRect = Rect::FromCenter(GetRenderTargetCenter(), g_ButtonWidth, g_ButtonHeight);
+
         g_D2DRenderTarget->BeginDraw();
         g_D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         g_D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
+        demoBox->UpdateSize(g_ButtonRect);
         demoBox->Draw();
-        auto [width, height] = g_D2DRenderTarget->GetSize();
-        demoBox->UpdateShape(Rect::FromCenter(Offset(width / 2.f, height / 2.f), 200, 64));
 
+        demoText->UpdateSize(g_ButtonRect);
         demoText->Draw();
-
-        // auto [width, height] = D2DRenderTarget->GetSize();
-        // testBox->UpdateShape(Rect::FromCenter(Offset(width / 2.f, height / 2.f), 200, 64));
-        // testBox->Draw();
-        //
-        // D2DRenderTarget->DrawText(L"Click Me",
-        //                           wcslen(L"Click Me"),
-        //                           TextFormat,
-        //                           D2D1::RectF(0, 0, 200, 100),
-        //                           testBox->GetBrush());
 
         return g_D2DRenderTarget->EndDraw();
     }
@@ -110,9 +107,24 @@ namespace Xen::Renderer {
         }
     }
 
-    void CheckHit(Offset<i64>& mousePos) {}
+    void CheckHit(Offset& mousePos) {
+        if (demoBox->GetSize().Contains(mousePos)) {
+            ::MessageBoxA(GetOwningWindow()->GetHandle(), "Button clicked", "HelloXen", MB_OK);
+        }
+    }
+
+    void CheckOverlap(Offset& mousePos) {
+        if (demoBox->GetSize().Contains(mousePos)) {
+            // std::cout << "Cursor is overlapping button\n";
+        }
+    }
 
     void SetOwningWindow(AppWindow* owner) { g_OwningWindow = owner; }
+
+    Offset GetRenderTargetCenter() {
+        auto [width, height] = g_D2DRenderTarget->GetSize();
+        return {width / 2.f, height / 2.f};
+    }
 
     ID2D1Factory* GetD2DFactory() { return g_D2DFactory; }
     IDWriteFactory* GetDWFactory() { return g_DWFactory; }

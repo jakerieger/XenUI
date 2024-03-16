@@ -1,5 +1,5 @@
 #include "XenUI.h"
-#include "../Res/resource.h"
+#include "resource.h"
 
 #include <iostream>
 

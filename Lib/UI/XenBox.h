@@ -13,19 +13,19 @@ namespace Xen {
     class XEN_API XenBox {
     public:
         XenBox() = default;
-        XenBox(const Rect& shape, const Color& color);
+        XenBox(const Rect& size, const Color& color);
         ~XenBox();
 
         void Draw();
-        void UpdateShape(const Rect& shape) { Shape = shape; }
+        void UpdateSize(const Rect& size) { Size = size; }
 
-        Rect& GetShape() { return Shape; }
+        Rect& GetSize() { return Size; }
         Color& GetFillColor() { return FillColor; }
         Color& GetStrokeColor() { return StrokeColor; }
         ID2D1SolidColorBrush* GetBrush() { return Brush; }
 
     private:
-        Rect Shape        = {};
+        Rect Size         = {};
         Color FillColor   = {};
         Color StrokeColor = {};
 

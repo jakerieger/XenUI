@@ -6,8 +6,8 @@
 #include "XenRenderer.h"
 
 namespace Xen {
-    XenBox::XenBox(const Rect& shape, const Color& color) {
-        Shape       = shape;
+    XenBox::XenBox(const Rect& size, const Color& color) {
+        Size        = size;
         FillColor   = color;
         StrokeColor = color;
 
@@ -20,5 +20,5 @@ namespace Xen {
 
     XenBox::~XenBox() { SafeRelease(&Brush); }
 
-    void XenBox::Draw() { Renderer::GetRenderTarget()->FillRectangle(Shape.GetD2DRect(), Brush); }
+    void XenBox::Draw() { Renderer::GetRenderTarget()->FillRectangle(Size.GetD2DRect(), Brush); }
 }  // namespace Xen

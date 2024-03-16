@@ -3,6 +3,7 @@
 //
 
 #include "AppWindow.h"
+#include "XenRenderer.h"
 #include "UI/Size.h"
 
 #include <cassert>
@@ -162,8 +163,9 @@ namespace Xen {
     LRESULT AppWindow::OnRightMouseButtonUp() { return 0; }
 
     LRESULT AppWindow::OnMouseMove(const UINT xPos, const UINT yPos) {
-        CursorPosition.X = xPos;
-        CursorPosition.Y = yPos;
+        CursorPosition.X = static_cast<f32>(xPos);
+        CursorPosition.Y = static_cast<f32>(yPos);
+        Renderer::CheckOverlap(CursorPosition);
         return 0;
     }
 }  // namespace Xen

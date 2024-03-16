@@ -7,7 +7,6 @@
 #include "XenAPI.h"
 #include "Platform.h"
 #include "Types.h"
-#include "XenRenderer.h"
 #include "UI/Offset.h"
 #include "UI/Size.h"
 #include <string>
@@ -21,7 +20,11 @@ namespace Xen {
 
         [[nodiscard]] HWND GetHandle() const { return Handle; }
         [[nodiscard]] Size<u32> GetDimensions() const { return Dimensions; }
-        Offset<i64>& GetCursorPosition() { return CursorPosition; }
+        Offset& GetCursorPosition() { return CursorPosition; }
+        [[nodiscard]] Offset GetWindowCenter() const {
+            return {static_cast<f32>(Dimensions.Width) / 2.f,
+                    static_cast<f32>(Dimensions.Height) / 2.f};
+        }
 
     private:
         void Init();
@@ -45,7 +48,7 @@ namespace Xen {
         str Title;
         HWND Handle        = nullptr;
         HINSTANCE Instance = nullptr;
-        Offset<i64> CursorPosition;
+        Offset CursorPosition;
         int WindowIcon = 0;
     };
 }  // namespace Xen

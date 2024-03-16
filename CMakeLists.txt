@@ -13,15 +13,15 @@ add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
 include_directories(${CMAKE_SOURCE_DIR}/Lib)
 
-add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWindow.h
+add_library(XenUI SHARED
+        Lib/Platform.h
+        Lib/Types.h
         Lib/XenAPI.h
-        Lib/XenRenderer.cpp
-        Lib/XenRenderer.h
         Lib/UI/Offset.h
+        Lib/UI/Offset.cpp
         Lib/UI/Size.h
         Lib/UI/Rect.cpp
         Lib/UI/Rect.h
-        Lib/XenUI.h
         Lib/UI/Color.cpp
         Lib/UI/Color.h
         Lib/UI/LinearGradient.cpp
@@ -30,11 +30,20 @@ add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWin
         Lib/UI/XenBox.h
         Lib/Helpers.inl
         Lib/UI/XenText.cpp
-        Lib/UI/XenText.h)
+        Lib/UI/XenText.h
+        Lib/AppWindow.cpp
+        Lib/AppWindow.h
+        Lib/XenRenderer.cpp
+        Lib/XenRenderer.h
+        Lib/XenUI.h
+        Lib/Widgets/Widget.cpp
+        Lib/Widgets/Widget.h
+)
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
         Demos/Res/app.rc
         Demos/Res/resource.h)
+target_include_directories(HelloXen PRIVATE Demos/Res)
 target_link_libraries(HelloXen XenUI)
 
 add_executable(test_offset Tests/test_offset.cpp)
