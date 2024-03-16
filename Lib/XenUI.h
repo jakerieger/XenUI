@@ -11,3 +11,6 @@
 #include "UI/Offset.h"
 #include "UI/Size.h"
 #include "UI/Offset.h"
+#include "UI/Color.h"
+#include "UI/Rect.h"
+#include "UI/Box.h"

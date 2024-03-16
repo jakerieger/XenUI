@@ -3,6 +3,12 @@ project(XenUI)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Set the output directory for executables
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Set the output directory for libraries (DLLs)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 include_directories(${CMAKE_SOURCE_DIR}/Lib)
 
 add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWindow.h
@@ -23,7 +29,7 @@ add_library(XenUI SHARED Lib/Platform.h Lib/Types.h Lib/AppWindow.cpp Lib/AppWin
         Lib/Helpers.inl)
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
-)
+        Demos/Res/app.rc)
 target_link_libraries(HelloXen XenUI)
 
 add_executable(test_offset Tests/test_offset.cpp)

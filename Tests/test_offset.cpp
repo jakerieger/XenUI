@@ -35,8 +35,8 @@ TEST_CASE("Lerp", "[Offset]") {
     auto offsetA   = Offset<i64>(10, 5);
     auto offsetB   = Offset<i64>(20, 10);
     auto result    = Offset<i64>::Lerp(offsetA, offsetB, 0.5);
-    auto expectedX = Lerp(offsetA.X, offsetB.X, 0.5);
-    auto expectedY = Lerp(offsetA.Y, offsetB.Y, 0.5);
+    auto expectedX = Math::Lerp(offsetA.X, offsetB.X, 0.5);
+    auto expectedY = Math::Lerp(offsetA.Y, offsetB.Y, 0.5);
     auto expected  = Offset(expectedX, expectedY);
 
     REQUIRE(result == expected);

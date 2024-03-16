@@ -5,8 +5,11 @@
 using namespace Xen;
 
 int main() {
-    AppWindow app(Size<u32>(800, 600), "HelloXenClass", "HelloXen");
-    app.Run();
+    if (const auto hr = CoInitialize(nullptr); SUCCEEDED(hr)) {
+        AppWindow app(Size<u32>(800, 600), "HelloXenClass", "HelloXen");
+        app.Run();
+        CoUninitialize();
+    }
     return 0;
 }
 
