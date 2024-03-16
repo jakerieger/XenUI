@@ -76,5 +76,3 @@ namespace Xen {
         }
     }  // namespace Converters
 }  // namespace Xen
-
-#define ASSERT_NUMERIC(T) static_assert(std::is_arithmetic<T>::value, "Not a numeric type");

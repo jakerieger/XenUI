@@ -7,11 +7,14 @@
 #include "UI/XenBox.h"
 #include "UI/XenText.h"
 
+#include <chrono>
+
 namespace Xen::Renderer {
     ID2D1Factory* g_D2DFactory               = nullptr;
     IDWriteFactory* g_DWFactory              = nullptr;
     ID2D1HwndRenderTarget* g_D2DRenderTarget = nullptr;
     AppWindow* g_OwningWindow                = nullptr;
+    std::chrono::time_point g_StartTime      = std::chrono::steady_clock::now();
 
     // TEST RESOURCES
     XenText* demoText            = nullptr;
@@ -53,9 +56,8 @@ namespace Xen::Renderer {
     void CreateTestResources() {
         g_ButtonRect = Rect::FromCenter(GetRenderTargetCenter(), g_ButtonWidth, g_ButtonHeight);
 
-        demoText =
-          new XenText("Click Me", "Inter", GetRenderTargetCenter(), g_ButtonRect, 400, 16.f);
-        demoBox = new XenBox(g_ButtonRect, Color(0xFFFF3366));
+        demoText = new XenText("Quit", "Inter", GetRenderTargetCenter(), g_ButtonRect, 400, 16.f);
+        demoBox  = new XenBox(g_ButtonRect, Color(0xFFFF3366));
     }
 
     void DiscardDeviceResources() {
@@ -107,13 +109,14 @@ namespace Xen::Renderer {
         }
     }
 
-    void CheckHit(Offset& mousePos) {
+    void CheckHit(const Offset& mousePos) {
         if (demoBox->GetSize().Contains(mousePos)) {
-            ::MessageBoxA(GetOwningWindow()->GetHandle(), "Button clicked", "HelloXen", MB_OK);
+            // ::MessageBoxA(GetOwningWindow()->GetHandle(), "Button clicked", "HelloXen", MB_OK);
+            ::PostQuitMessage(0);
         }
     }
 
-    void CheckOverlap(Offset& mousePos) {
+    void CheckOverlap(const Offset& mousePos) {
         if (demoBox->GetSize().Contains(mousePos)) {
             // std::cout << "Cursor is overlapping button\n";
         }
@@ -124,6 +127,13 @@ namespace Xen::Renderer {
     Offset GetRenderTargetCenter() {
         auto [width, height] = g_D2DRenderTarget->GetSize();
         return {width / 2.f, height / 2.f};
+    }
+
+    u64 GetTicks() {
+        const auto currentTime = std::chrono::steady_clock::now();
+        const auto duration =
+          std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - g_StartTime).count();
+        return duration;
     }
 
     ID2D1Factory* GetD2DFactory() { return g_D2DFactory; }

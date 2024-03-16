@@ -18,10 +18,11 @@ namespace Xen::Renderer {
     int Render();
     void Shutdown();
     void OnResize(u32 width, u32 height);
-    void CheckHit(Offset& mousePos);
-    void CheckOverlap(Offset& mousePos);
+    void CheckHit(const Offset& mousePos);
+    void CheckOverlap(const Offset& mousePos);
     void SetOwningWindow(AppWindow* owner);
     Offset GetRenderTargetCenter();
+    u64 GetTicks();
 
     ID2D1Factory* GetD2DFactory();
     IDWriteFactory* GetDWFactory();

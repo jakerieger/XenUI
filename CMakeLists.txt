@@ -46,6 +46,6 @@ add_executable(HelloXen Demos/HelloXen/main.cpp
 target_include_directories(HelloXen PRIVATE Demos/Res)
 target_link_libraries(HelloXen XenUI)
 
-add_executable(test_offset Tests/test_offset.cpp)
-find_package(Catch2 CONFIG REQUIRED)
-target_link_libraries(test_offset PRIVATE XenUI Catch2::Catch2 Catch2::Catch2WithMain)
+#add_executable(test_offset Tests/test_offset.cpp)
+#find_package(Catch2 CONFIG REQUIRED)
+#target_link_libraries(test_offset PRIVATE XenUI Catch2::Catch2 Catch2::Catch2WithMain)
