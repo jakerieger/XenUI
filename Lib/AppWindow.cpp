@@ -3,7 +3,7 @@
 //
 
 #include "AppWindow.h"
-#include "XenRenderer.h"
+#include "Renderer.h"
 #include "UI/Size.h"
 
 #include <cassert>

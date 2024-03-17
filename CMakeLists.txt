@@ -26,15 +26,15 @@ add_library(XenUI SHARED
         Lib/UI/Color.h
         Lib/UI/LinearGradient.cpp
         Lib/UI/LinearGradient.h
-        Lib/UI/XenBox.cpp
-        Lib/UI/XenBox.h
+        Lib/UI/Box.cpp
+        Lib/UI/Box.h
         Lib/Helpers.inl
-        Lib/UI/XenText.cpp
-        Lib/UI/XenText.h
+        Lib/UI/Text.cpp
+        Lib/UI/Text.h
         Lib/AppWindow.cpp
         Lib/AppWindow.h
-        Lib/XenRenderer.cpp
-        Lib/XenRenderer.h
+        Lib/Renderer.cpp
+        Lib/Renderer.h
         Lib/XenUI.h
         Lib/Widgets/Widget.cpp
         Lib/Widgets/Widget.h

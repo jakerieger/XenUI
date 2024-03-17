@@ -12,22 +12,22 @@
 #include "Rect.h"
 
 namespace Xen {
-    class XEN_API XenText {
+    class XEN_API Text {
     public:
-        XenText(wstr value,
-                const wstr& fontFamily,
-                const Offset& position,
-                const Rect& size,
-                u32 fontWeight     = 400,
-                f32 fontSize       = 12.f,
-                const Color& color = Colors::White);
-        XenText(const str& value,
-                const str& fontFamily,
-                const Offset& position,
-                const Rect& size,
-                u32 fontWeight     = 400,
-                f32 fontSize       = 12.f,
-                const Color& color = Colors::White);
+        Text(wstr value,
+             const wstr& fontFamily,
+             const Offset& position,
+             const Rect& size,
+             u32 fontWeight     = 400,
+             f32 fontSize       = 12.f,
+             const Color& color = Colors::White);
+        Text(const str& value,
+             const str& fontFamily,
+             const Offset& position,
+             const Rect& size,
+             u32 fontWeight     = 400,
+             f32 fontSize       = 12.f,
+             const Color& color = Colors::White);
 
         void Draw();
         void UpdateSize(const Rect& size);

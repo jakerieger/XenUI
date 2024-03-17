@@ -10,11 +10,11 @@
 #include "Rect.h"
 
 namespace Xen {
-    class XEN_API XenBox {
+    class XEN_API Box {
     public:
-        XenBox() = default;
-        XenBox(const Rect& size, const Color& color);
-        ~XenBox();
+        Box() = default;
+        Box(const Rect& size, const Color& color);
+        ~Box();
 
         void Draw();
         void UpdateSize(const Rect& size) { Size = size; }

@@ -2,11 +2,11 @@
 // Created by Jake Rieger on 3/13/2024.
 //
 
-#include "XenBox.h"
-#include "XenRenderer.h"
+#include "Box.h"
+#include "Renderer.h"
 
 namespace Xen {
-    XenBox::XenBox(const Rect& size, const Color& color) {
+    Box::Box(const Rect& size, const Color& color) {
         Size        = size;
         FillColor   = color;
         StrokeColor = color;
@@ -18,7 +18,7 @@ namespace Xen {
         }
     }
 
-    XenBox::~XenBox() { SafeRelease(&Brush); }
+    Box::~Box() { SafeRelease(&Brush); }
 
-    void XenBox::Draw() { Renderer::GetRenderTarget()->FillRectangle(Size.GetD2DRect(), Brush); }
+    void Box::Draw() { Renderer::GetRenderTarget()->FillRectangle(Size.GetD2DRect(), Brush); }
 }  // namespace Xen

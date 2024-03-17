@@ -2,10 +2,10 @@
 // Created by Jake Rieger on 3/12/2024.
 //
 
-#include "XenRenderer.h"
+#include "Renderer.h"
 #include "AppWindow.h"
-#include "UI/XenBox.h"
-#include "UI/XenText.h"
+#include "UI/Box.h"
+#include "UI/Text.h"
 
 #include <chrono>
 
@@ -17,8 +17,8 @@ namespace Xen::Renderer {
     std::chrono::time_point g_StartTime      = std::chrono::steady_clock::now();
 
     // TEST RESOURCES
-    XenText* demoText            = nullptr;
-    XenBox* demoBox              = nullptr;
+    Text* demoText               = nullptr;
+    Box* demoBox                 = nullptr;
     constexpr u32 g_ButtonWidth  = 200;
     constexpr u32 g_ButtonHeight = 48;
     Rect g_ButtonRect            = {};
@@ -56,8 +56,8 @@ namespace Xen::Renderer {
     void CreateTestResources() {
         g_ButtonRect = Rect::FromCenter(GetRenderTargetCenter(), g_ButtonWidth, g_ButtonHeight);
 
-        demoText = new XenText("Quit", "Inter", GetRenderTargetCenter(), g_ButtonRect, 400, 16.f);
-        demoBox  = new XenBox(g_ButtonRect, Color(0xFFFF3366));
+        demoText = new Text("Quit", "Inter", GetRenderTargetCenter(), g_ButtonRect, 400, 16.f);
+        demoBox  = new Box(g_ButtonRect, Color(0xFFFF3366));
     }
 
     void DiscardDeviceResources() {

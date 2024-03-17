@@ -2,13 +2,13 @@
 // Created by conta on 3/15/2024.
 //
 
-#include "XenText.h"
+#include "Text.h"
 
 #include "Rect.h"
-#include "XenRenderer.h"
+#include "Renderer.h"
 
 namespace Xen {
-    XenText::XenText(wstr value,
+    Text::Text(wstr value,
                      const wstr& fontFamily,
                      const Offset& position,
                      const Rect& size,
@@ -41,7 +41,7 @@ namespace Xen {
         }
     }
 
-    XenText::XenText(const str& value,
+    Text::Text(const str& value,
                      const str& fontFamily,
                      const Offset& position,
                      const Rect& size,
@@ -79,7 +79,7 @@ namespace Xen {
         }
     }
 
-    void XenText::Draw() {
+    void Text::Draw() {
         Renderer::GetRenderTarget()->DrawText(Value.c_str(),
                                               wcslen(Value.c_str()),
                                               TextFormat,
@@ -87,10 +87,10 @@ namespace Xen {
                                               FillColor);
     }
 
-    void XenText::UpdateSize(const Rect& size) { BoxSize = size; }
+    void Text::UpdateSize(const Rect& size) { BoxSize = size; }
 
-    void XenText::SetText(const wstr& value) {}
+    void Text::SetText(const wstr& value) {}
 
-    void XenText::SetText(const str& value) {}
+    void Text::SetText(const str& value) {}
 
 }  // namespace Xen
