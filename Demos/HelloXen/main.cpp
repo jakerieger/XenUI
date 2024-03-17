@@ -7,7 +7,7 @@ using namespace Xen;
 
 int main() {
     if (const auto hr = CoInitialize(nullptr); SUCCEEDED(hr)) {
-        AppWindow app(Size<u32>(800, 600), "HelloXenClass", "HelloXen", APPICON);
+        AppWindow app(Size<u32>(600, 400), "HelloXenClass", "HelloXen", APPICON);
         app.Run();
         CoUninitialize();
     }

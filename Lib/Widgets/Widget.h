@@ -3,3 +3,19 @@
 //
 
 #pragma once
+
+#include "XenAPI.h"
+
+#include <vector>
+
+namespace Xen {
+    // ReSharper disable once CppClassCanBeFinal
+    class XEN_API Widget {
+    public:
+        Widget()          = default;
+        virtual ~Widget() = default;
+
+    private:
+        std::vector<Widget*> Children;
+    };
+}  // namespace Xen
