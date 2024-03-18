@@ -15,7 +15,13 @@ namespace Xen::RenderTree {
     }
     // clang-format on
 
-    void Render() {}
+    void Render() {
+        auto currentElement = g_RootElement.get();
+        while (currentElement != nullptr) {
+            currentElement->Draw();
+            currentElement = currentElement->GetChild();
+        }
+    }
 
     void Cleanup() {}
 }  // namespace Xen::RenderTree
