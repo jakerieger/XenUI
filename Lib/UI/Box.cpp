@@ -6,7 +6,9 @@
 #include "Renderer.h"
 
 namespace Xen {
-    Box::Box(const Rect& size, const Color& color) {
+    Box::Box(const Rect& size, const Color& color, const i64 zIndex, Element* child)
+        : Element(zIndex) {
+        this->Children.push_back(child);
         Size        = size;
         FillColor   = color;
         StrokeColor = color;

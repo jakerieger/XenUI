@@ -23,6 +23,12 @@ namespace Xen {
         Shutdown();
     }
 
+    void AppWindow::Quit() const noexcept { ::PostQuitMessage(0); }
+
+    void AppWindow::Minimize() noexcept {}
+
+    void AppWindow::ToggleMaximize() noexcept {}
+
     void AppWindow::Init() {
         Instance      = ::GetModuleHandle(nullptr);
         HICON appIcon = ::LoadIcon(Instance, MAKEINTRESOURCE(WindowIcon));

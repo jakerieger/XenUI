@@ -9,14 +9,18 @@
 
 namespace Xen {
     Text::Text(wstr value,
-                     const wstr& fontFamily,
-                     const Offset& position,
-                     const Rect& size,
-                     const u32 fontWeight,
-                     const f32 fontSize,
-                     const Color& color)
-        : Value(std::move(value)), TextColor(color), Position(position), BoxSize(size),
-          FontSize(fontSize), Weight(fontWeight) {
+               const wstr& fontFamily,
+               const Offset& position,
+               const Rect& size,
+               const i64 zIndex,
+               Element* child,
+               const u32 fontWeight,
+               const f32 fontSize,
+               const Color& color)
+        : Element(zIndex), Value(std::move(value)), TextColor(color), Position(position),
+          BoxSize(size), FontSize(fontSize), Weight(fontWeight) {
+        this->Children.push_back(child);
+
         auto hr =
           Renderer::GetDWFactory()->CreateTextFormat(fontFamily.c_str(),
                                                      nullptr,
@@ -42,14 +46,17 @@ namespace Xen {
     }
 
     Text::Text(const str& value,
-                     const str& fontFamily,
-                     const Offset& position,
-                     const Rect& size,
-                     const u32 fontWeight,
-                     const f32 fontSize,
-                     const Color& color)
-        : TextColor(color), Position(position), BoxSize(size), FontSize(fontSize),
+               const str& fontFamily,
+               const Offset& position,
+               const Rect& size,
+               const i64 zIndex,
+               Element* child,
+               const u32 fontWeight,
+               const f32 fontSize,
+               const Color& color)
+        : Element(zIndex), TextColor(color), Position(position), BoxSize(size), FontSize(fontSize),
           Weight(fontWeight) {
+        this->Children.push_back(child);
         Converters::ANSIToWide(value, Value);
 
         wstr fontFamilyW;

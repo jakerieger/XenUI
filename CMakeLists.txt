@@ -40,11 +40,14 @@ add_library(XenUI SHARED
         Lib/Widgets/Widget.h
         Lib/RenderTree.cpp
         Lib/RenderTree.h
+        Lib/UI/Element.cpp
+        Lib/UI/Element.h
 )
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
         Demos/Res/app.rc
-        Demos/Res/resource.h)
+        Demos/Res/resource.h
+)
 target_include_directories(HelloXen PRIVATE Demos/Res)
 target_link_libraries(HelloXen XenUI)
 

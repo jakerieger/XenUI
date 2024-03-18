@@ -26,6 +26,10 @@ namespace Xen {
                     static_cast<f32>(Dimensions.Height) / 2.f};
         }
 
+        void Quit() const noexcept;
+        void Minimize() noexcept;
+        void ToggleMaximize() noexcept;
+
     private:
         void Init();
         void MainLoop() const;

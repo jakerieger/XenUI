@@ -5,9 +5,17 @@
 #include "RenderTree.h"
 
 namespace Xen::RenderTree {
+    Unique<Element> g_RootElement;
+
     void Init() {}
-    void PushElement() {}
-    void PopElement() {}
+
+    // clang-format off
+    void SetRoot(Element* root) {
+        g_RootElement = Unique<Element>(root);
+    }
+    // clang-format on
+
     void Render() {}
+
     void Cleanup() {}
 }  // namespace Xen::RenderTree

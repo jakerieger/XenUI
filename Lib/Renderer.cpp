@@ -4,9 +4,12 @@
 
 #include "Renderer.h"
 #include "AppWindow.h"
+#include "RenderTree.h"
+#include "UI/Element.h"
 #include "UI/Box.h"
 #include "UI/Text.h"
 
+#include <algorithm>
 #include <chrono>
 
 namespace Xen::Renderer {
@@ -15,13 +18,6 @@ namespace Xen::Renderer {
     ID2D1HwndRenderTarget* g_D2DRenderTarget = nullptr;
     AppWindow* g_OwningWindow                = nullptr;
     std::chrono::time_point g_StartTime      = std::chrono::steady_clock::now();
-
-    // TEST RESOURCES
-    Text* demoText               = nullptr;
-    Box* demoBox                 = nullptr;
-    constexpr u32 g_ButtonWidth  = 200;
-    constexpr u32 g_ButtonHeight = 48;
-    Rect g_ButtonRect            = {};
 
     HRESULT
     CreateDeviceResources() {
@@ -53,13 +49,6 @@ namespace Xen::Renderer {
         return hr;
     }
 
-    void CreateTestResources() {
-        g_ButtonRect = Rect::FromCenter(GetRenderTargetCenter(), g_ButtonWidth, g_ButtonHeight);
-
-        demoText = new Text("Quit", "Inter", GetRenderTargetCenter(), g_ButtonRect, 400, 16.f);
-        demoBox  = new Box(g_ButtonRect, Color(0xFFFF3366));
-    }
-
     void DiscardDeviceResources() {
         SafeRelease(&g_D2DFactory);
         SafeRelease(&g_D2DRenderTarget);
@@ -79,27 +68,22 @@ namespace Xen::Renderer {
             throw std::runtime_error("Failed to create Direct2D resources");
         }
 
-        CreateTestResources();
+        RenderTree::Init();
     }
 
     int Render() {
-        g_ButtonRect = Rect::FromCenter(GetRenderTargetCenter(), g_ButtonWidth, g_ButtonHeight);
-
         g_D2DRenderTarget->BeginDraw();
         g_D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         g_D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
-        demoBox->UpdateSize(g_ButtonRect);
-        demoBox->Draw();
-
-        demoText->UpdateSize(g_ButtonRect);
-        demoText->Draw();
+        RenderTree::Render();
 
         return g_D2DRenderTarget->EndDraw();
     }
 
     void Shutdown() {
         DiscardDeviceResources();
+        RenderTree::Cleanup();
         g_OwningWindow = nullptr;
     }
 
@@ -109,18 +93,9 @@ namespace Xen::Renderer {
         }
     }
 
-    void CheckHit(const Offset& mousePos) {
-        if (demoBox->GetSize().Contains(mousePos)) {
-            // ::MessageBoxA(GetOwningWindow()->GetHandle(), "Button clicked", "HelloXen", MB_OK);
-            ::PostQuitMessage(0);
-        }
-    }
+    void CheckHit(const Offset& mousePos) {}
 
-    void CheckOverlap(const Offset& mousePos) {
-        if (demoBox->GetSize().Contains(mousePos)) {
-            // std::cout << "Cursor is overlapping button\n";
-        }
-    }
+    void CheckOverlap(const Offset& mousePos) {}
 
     void SetOwningWindow(AppWindow* owner) { g_OwningWindow = owner; }
 

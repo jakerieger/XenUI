@@ -5,19 +5,22 @@
 #pragma once
 
 #include "Color.h"
+#include "Element.h"
 #include "XenAPI.h"
 #include "Platform.h"
 #include "Rect.h"
 
 namespace Xen {
-    class XEN_API Box {
+    class XEN_API Box final : public Element {
     public:
-        Box() = default;
-        Box(const Rect& size, const Color& color);
-        ~Box();
+        explicit Box(const i64 zIndex, Element* child) : Element(zIndex) {
+            this->Children.push_back(child);
+        }
+        Box(const Rect& size, const Color& color, i64 zIndex, Element* child);
+        ~Box() override;
 
-        void Draw();
-        void UpdateSize(const Rect& size) { Size = size; }
+        void Draw() override;
+        void UpdateSize(const Rect& size) override { Size = size; }
 
         Rect& GetSize() { return Size; }
         Color& GetFillColor() { return FillColor; }

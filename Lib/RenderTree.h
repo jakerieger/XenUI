@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include "Types.h"
+#include "UI/Element.h"
+
 namespace Xen::RenderTree {
     void Init();
-    void PushElement();
-    void PopElement();
+    void SetRoot(Element* root);
     void Render();
     void Cleanup();
 }  // namespace Xen::RenderTree
