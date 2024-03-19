@@ -44,6 +44,9 @@ add_library(XenUI SHARED
         Lib/UI/Element.h
         Lib/XenApp.cpp
         Lib/XenApp.h
+        Lib/UI/Theme.h
+        Lib/AppContext.cpp
+        Lib/AppContext.h
 )
 
 add_executable(HelloXen Demos/HelloXen/main.cpp

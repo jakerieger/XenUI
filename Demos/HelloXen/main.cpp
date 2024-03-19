@@ -25,15 +25,15 @@ void HelloXen::BuildUI() {
 
     const auto btnRect = Rect::FromCenter(Window->GetWindowCenter(), 200, 48);
     btnText            = new Text("Quit",
-                       "Inter",
+                       Context.FontFamily,
                        Window->GetWindowCenter(),
                        btnRect,
                        0,
                        nullptr,
                        600,
                        16.f,
-                       Colors::Black);
-    btnBox             = new Box(btnRect, Colors::Cyan, 0, btnText);
+                       Context.AppTheme.White);
+    btnBox             = new Box(btnRect, Context.AppTheme.Primary, 0, btnText);
 
     AttachRootElement(btnBox);
 }
@@ -42,7 +42,7 @@ void HelloXen::Shutdown() {}
 
 int main() {
     if (const auto hr = CoInitialize(nullptr); SUCCEEDED(hr)) {
-        HelloXen app(Size<u32>(800, 600), "HelloXen", APPICON);
+        HelloXen app(Size<u32>(600, 400), "HelloXen", APPICON);
         app.RunApp();
         CoUninitialize();
     }

@@ -21,6 +21,7 @@ namespace Xen {
         // This is necessary to allow our RenderTree to rebuild the UI
         // when the window state changes
         RenderTree::Init(this);
+        Renderer::SetOwner(this);
     }
 
     XenApp::~XenApp() = default;
@@ -32,7 +33,6 @@ namespace Xen {
         Window->Init();
 
         // Tell the renderer about our window and initialize it
-        Renderer::SetOwningWindow(RawPtr(Window));
         Renderer::Init();
 
         // Call our BuildUI method

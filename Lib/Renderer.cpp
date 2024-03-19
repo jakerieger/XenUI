@@ -3,20 +3,16 @@
 //
 
 #include "Renderer.h"
-#include "AppWindow.h"
 #include "RenderTree.h"
-#include "UI/Element.h"
-#include "UI/Box.h"
-#include "UI/Text.h"
+#include "XenApp.h"
 
-#include <algorithm>
 #include <chrono>
 
 namespace Xen::Renderer {
     ID2D1Factory* g_D2DFactory               = nullptr;
     IDWriteFactory* g_DWFactory              = nullptr;
     ID2D1HwndRenderTarget* g_D2DRenderTarget = nullptr;
-    AppWindow* g_OwningWindow                = nullptr;
+    XenApp* g_OwningApp                      = nullptr;
     std::chrono::time_point g_StartTime      = std::chrono::steady_clock::now();
 
     HRESULT
@@ -25,11 +21,11 @@ namespace Xen::Renderer {
 
         if (!g_D2DRenderTarget) {
             RECT rc;
-            ::GetClientRect(g_OwningWindow->GetHandle(), &rc);
+            ::GetClientRect(g_OwningApp->GetNativeWindow()->GetHandle(), &rc);
             const D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
             hr                     = g_D2DFactory->CreateHwndRenderTarget(
               D2D1::RenderTargetProperties(),
-              D2D1::HwndRenderTargetProperties(g_OwningWindow->GetHandle(), size),
+              D2D1::HwndRenderTargetProperties(g_OwningApp->GetNativeWindow()->GetHandle(), size),
               &g_D2DRenderTarget);
         }
 
@@ -56,7 +52,7 @@ namespace Xen::Renderer {
     }
 
     void Init() {
-        if (g_OwningWindow == nullptr) {
+        if (g_OwningApp->GetNativeWindow() == nullptr) {
             throw std::runtime_error("Renderer has no owning window");
         }
 
@@ -72,7 +68,7 @@ namespace Xen::Renderer {
     int Render() {
         g_D2DRenderTarget->BeginDraw();
         g_D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-        g_D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
+        g_D2DRenderTarget->Clear(g_OwningApp->GetContext().AppTheme.WindowBackground.GetD2DColor());
 
         RenderTree::RebuildUI();
         RenderTree::Render();
@@ -83,7 +79,6 @@ namespace Xen::Renderer {
     void Shutdown() {
         DiscardDeviceResources();
         RenderTree::Cleanup();
-        g_OwningWindow = nullptr;
     }
 
     void OnResize(const u32 width, const u32 height) {
@@ -99,7 +94,7 @@ namespace Xen::Renderer {
 
     void CheckOverlap(const Offset& mousePos) {}
 
-    void SetOwningWindow(AppWindow* owner) { g_OwningWindow = owner; }
+    void SetOwner(XenApp* owner) { g_OwningApp = owner; }
 
     Offset GetRenderTargetCenter() {
         auto [width, height] = g_D2DRenderTarget->GetSize();
@@ -116,5 +111,5 @@ namespace Xen::Renderer {
     ID2D1Factory* GetD2DFactory() { return g_D2DFactory; }
     IDWriteFactory* GetDWFactory() { return g_DWFactory; }
     ID2D1HwndRenderTarget* GetRenderTarget() { return g_D2DRenderTarget; }
-    AppWindow* GetOwningWindow() { return g_OwningWindow; }
+    AppWindow* GetOwningWindow() { return g_OwningApp->GetNativeWindow(); }
 }  // namespace Xen::Renderer

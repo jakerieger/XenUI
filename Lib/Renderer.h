@@ -10,7 +10,7 @@
 #include "UI/Offset.h"
 
 namespace Xen {
-    class XEN_API AppWindow;
+    class XEN_API XenApp;
 }
 
 namespace Xen::Renderer {
@@ -20,12 +20,12 @@ namespace Xen::Renderer {
     void OnResize(u32 width, u32 height);
     void CheckHit(const Offset& mousePos);
     void CheckOverlap(const Offset& mousePos);
-    void SetOwningWindow(AppWindow* owner);
+    void SetOwner(XenApp* owner);
     Offset GetRenderTargetCenter();
     u64 GetTicks();
 
     ID2D1Factory* GetD2DFactory();
     IDWriteFactory* GetDWFactory();
     ID2D1HwndRenderTarget* GetRenderTarget();
-    AppWindow* GetOwningWindow();
+    XenApp* GetOwner();
 }  // namespace Xen::Renderer

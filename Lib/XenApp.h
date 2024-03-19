@@ -5,6 +5,7 @@
 #pragma once
 
 #include "AppWindow.h"
+#include "AppContext.h"
 #include "Types.h"
 #include "XenAPI.h"
 #include "UI/Element.h"
@@ -19,8 +20,11 @@ namespace Xen {
         virtual void Shutdown();
 
         static void AttachRootElement(Element* root);
+        [[nodiscard]] AppWindow* GetNativeWindow() const { return RawPtr(Window); }
+        AppContext& GetContext() { return Context; }
 
     protected:
         Unique<AppWindow> Window;
+        AppContext Context;
     };
 }  // namespace Xen
