@@ -67,8 +67,6 @@ namespace Xen::Renderer {
         if (FAILED(CreateDeviceResources())) {
             throw std::runtime_error("Failed to create Direct2D resources");
         }
-
-        RenderTree::Init();
     }
 
     int Render() {
@@ -76,6 +74,7 @@ namespace Xen::Renderer {
         g_D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         g_D2DRenderTarget->Clear(D2D1::ColorF(0x11131C));
 
+        RenderTree::RebuildUI();
         RenderTree::Render();
 
         return g_D2DRenderTarget->EndDraw();
@@ -91,6 +90,9 @@ namespace Xen::Renderer {
         if (const auto hr = g_D2DRenderTarget->Resize(D2D1_SIZE_U(width, height)); FAILED(hr)) {
             throw std::runtime_error("Failed to resize Direct2D render target!");
         }
+
+        // Rebuild UI
+        RenderTree::RebuildUI();
     }
 
     void CheckHit(const Offset& mousePos) {}

@@ -17,11 +17,7 @@ namespace Xen {
         : Dimensions(dimensions), ClassName(std::move(className)), Title(std::move(title)),
           WindowIcon(windowIcon) {}
 
-    void AppWindow::Run() {
-        Init();
-        MainLoop();
-        Shutdown();
-    }
+    void AppWindow::Run() const { MainLoop(); }
 
     void AppWindow::Quit() const noexcept { ::PostQuitMessage(0); }
 
@@ -70,9 +66,6 @@ namespace Xen {
                                    this);
         ::SetWindowLongPtr(Handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
         assert(Handle != nullptr);
-
-        Renderer::SetOwningWindow(this);
-        Renderer::Init();
     }
 
     void AppWindow::MainLoop() const {

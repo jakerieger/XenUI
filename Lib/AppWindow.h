@@ -16,7 +16,9 @@ namespace Xen {
     class XEN_API AppWindow {
     public:
         AppWindow(const Size<u32>& dimensions, str className, str title, int windowIcon);
-        void Run();
+        void Init();
+        void Run() const;
+        void Shutdown();
 
         [[nodiscard]] HWND GetHandle() const { return Handle; }
         [[nodiscard]] Size<u32> GetDimensions() const { return Dimensions; }
@@ -31,9 +33,7 @@ namespace Xen {
         void ToggleMaximize() noexcept;
 
     private:
-        void Init();
         void MainLoop() const;
-        void Shutdown();
 
         static LRESULT CALLBACK MessageHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

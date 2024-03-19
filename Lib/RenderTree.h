@@ -7,9 +7,14 @@
 #include "Types.h"
 #include "UI/Element.h"
 
+namespace Xen {
+    class XenApp;
+}
+
 namespace Xen::RenderTree {
-    void Init();
+    void Init(XenApp* app);
     void SetRoot(Element* root);
+    void RebuildUI();
     void Render();
     void Cleanup();
 }  // namespace Xen::RenderTree

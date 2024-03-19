@@ -3,17 +3,17 @@
 //
 
 #include "RenderTree.h"
+#include "XenApp.h"
 
 namespace Xen::RenderTree {
     Unique<Element> g_RootElement;
+    XenApp* g_App = nullptr;
 
-    void Init() {}
+    void Init(XenApp* app) { g_App = app; }
 
-    // clang-format off
-    void SetRoot(Element* root) {
-        g_RootElement = Unique<Element>(root);
-    }
-    // clang-format on
+    void SetRoot(Element* root) { g_RootElement = Unique<Element>(root); }
+
+    void RebuildUI() { g_App->BuildUI(); }
 
     void Render() {
         auto currentElement = g_RootElement.get();

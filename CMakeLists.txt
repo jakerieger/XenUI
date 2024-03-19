@@ -42,6 +42,8 @@ add_library(XenUI SHARED
         Lib/RenderTree.h
         Lib/UI/Element.cpp
         Lib/UI/Element.h
+        Lib/XenApp.cpp
+        Lib/XenApp.h
 )
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
