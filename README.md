@@ -12,51 +12,48 @@ Here's a snippet of the `XenApp::BuildUI()` method used to create the UI of the 
 from the [HelloXen](Demos/HelloXen/main.cpp) demo:
 
 ```cpp
-void HelloXen::BuildUI() {
-    // Reset UI elements
-    // NOTE: Should always be called and always at the top of BuildUI()
-    XenApp::BuildUI();
-
+Element* HelloXen::BuildUI() {
     const auto btnRect = Rect::FromCenter(Window->GetWindowCenter().Translate(0.f, 20.f), 200, 48);
-    btnText            = new Text("Say Hello",
-                       Context.FontFamily,
-                       Window->GetWindowCenter(),
-                       btnRect,
-                       0,
-                       nullptr,
-                       600,
-                       16.f,
-                       Context.AppTheme.White);
-    btnBox             = new Box(btnRect, Context.AppTheme.Tertiary, 1, btnText, [&]() {
+    auto btnCallback   = [&]() {
         ::MessageBoxA(Window->GetHandle(), "Hello!", "HelloXen", MB_OK | MB_ICONINFORMATION);
-    });
-    helloText =
-      new Text("Hello Xen!",
-               Context.FontFamily,
-               Window->GetWindowCenter(),
-               Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset().Translate(0.f, -140.f)),
-               0,
-               btnBox,
-               300,
-               24.f,
-               Context.AppTheme.TextHighlight);
-    hintText =
+    };
+    auto windowCallback = [&] { Quit(); };
+
+    return new Box(
+      Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset()),
+      Context.AppTheme.FrameBackground,
+      0,
       new Text("(Click the window background to quit)",
                Context.FontFamily,
                Window->GetWindowCenter(),
                Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset().Translate(0.f, -90.f)),
                0,
-               helloText,
+               new Text("Hello Xen!",
+                        Context.FontFamily,
+                        Window->GetWindowCenter(),
+                        Rect::FromPoints({0, 0},
+                                         Window->GetDimensions().AsOffset().Translate(0.f, -140.f)),
+                        0,
+                        new Box(btnRect,
+                                Context.AppTheme.Tertiary,
+                                1,
+                                new Text("Say Hello",
+                                         Context.FontFamily,
+                                         Window->GetWindowCenter(),
+                                         btnRect,
+                                         0,
+                                         nullptr,
+                                         600,
+                                         16.f,
+                                         Context.AppTheme.White),
+                                btnCallback),
+                        300,
+                        24.f,
+                        Context.AppTheme.TextHighlight),
                300,
                14.f,
-               Context.AppTheme.TextHighlight);
-    appBackground = new Box(Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset()),
-                            Context.AppTheme.FrameBackground,
-                            0,
-                            hintText,
-                            [] { ::PostQuitMessage(0); });
-
-    AttachRootElement(appBackground);
+               Context.AppTheme.TextHighlight),
+      windowCallback);
 }
 ```
 
