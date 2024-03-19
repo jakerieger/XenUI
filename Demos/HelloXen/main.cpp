@@ -64,7 +64,7 @@ void HelloXen::BuildUI() {
                             Context.AppTheme.FrameBackground,
                             0,
                             hintText,
-                            []() { ::PostQuitMessage(0); });
+                            [] { ::PostQuitMessage(0); });
 
     AttachRootElement(appBackground);
 }

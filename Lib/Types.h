@@ -41,7 +41,7 @@ constexpr T Infinity() {
 // Not sure about this one, might remove it
 #define MakeUnique std::make_unique
 #define RawPtr(ptr) ptr.get()
-#define ActionNone []() {}
+#define ActionNone [] {}
 
 constexpr i64 MAX_SIZE   = 100000;
 constexpr f32 MAX_SIZE_F = 100000.f;
