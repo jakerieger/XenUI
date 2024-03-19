@@ -19,7 +19,9 @@ namespace Xen {
         virtual void RunApp();
         virtual void Shutdown();
 
+        static void Quit() { ::PostQuitMessage(0); }
         static void AttachRootElement(Element* root);
+
         [[nodiscard]] AppWindow* GetNativeWindow() const { return RawPtr(Window); }
         AppContext& GetContext() { return Context; }
 

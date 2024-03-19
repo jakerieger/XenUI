@@ -21,7 +21,7 @@ Element* HelloXen::BuildUI() {
     auto btnCallback   = [&]() {
         ::MessageBoxA(Window->GetHandle(), "Hello!", "HelloXen", MB_OK | MB_ICONINFORMATION);
     };
-    auto windowCallback = [] { ::PostQuitMessage(0); };
+    auto windowCallback = [&] { Quit(); };
 
     // Your compiler might warn you that this leaks memory,
     // but all of these class instances get cleaned up and deleted
