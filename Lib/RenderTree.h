@@ -14,6 +14,7 @@ namespace Xen {
 namespace Xen::RenderTree {
     void Init(XenApp* app);
     void SetRoot(Element* root);
+    Element* GetRoot();
     void RebuildUI();
     void Render();
     void Cleanup();

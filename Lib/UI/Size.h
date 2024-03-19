@@ -27,6 +27,8 @@ namespace Xen {
             return Size<newT>(static_cast<newT>(Width), static_cast<newT>(Height));
         }
 
+        Offset AsOffset() { return Offset(Width, Height); }
+
         T Width;
         T Height;
     };

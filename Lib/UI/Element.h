@@ -13,10 +13,12 @@
 namespace Xen {
     class XEN_API Element {
     public:
-        explicit Element(const i64 zIndex) : ZIndex(zIndex) {}
-        virtual ~Element()                        = default;
-        virtual void Draw()                       = 0;
-        virtual void UpdateSize(const Rect& size) = 0;
+        explicit Element(const i64 zIndex, const Rect& size) : Size(size), ZIndex(zIndex) {}
+        virtual ~Element()  = default;
+        virtual void Draw() = 0;
+
+        void UpdateSize(const Rect& size) { Size = size; }
+        Rect& GetSize() { return Size; }
 
         [[nodiscard]] i64 GetZIndex() const { return ZIndex; }
         [[nodiscard]] Element* GetChild() const { return Children.at(0); }
@@ -28,14 +30,9 @@ namespace Xen {
             return dynamic_cast<T*>(this);
         }
 
-        static void SortByZIndex(std::vector<Element*>& elements) {
-            std::ranges::sort(elements, [](const Element* a, const Element* b) {
-                return a->GetZIndex() < b->GetZIndex();
-            });
-        }
-
     protected:
         std::vector<Element*> Children;
+        Rect Size;
 
     private:
         i64 ZIndex;

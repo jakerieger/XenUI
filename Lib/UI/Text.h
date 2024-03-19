@@ -36,7 +36,6 @@ namespace Xen {
              const Color& color = Colors::White);
 
         void Draw() override;
-        void UpdateSize(const Rect& size) override;
         void SetText(const wstr& value);
         void SetText(const str& value);
 
@@ -44,7 +43,6 @@ namespace Xen {
         wstr Value;
         Color TextColor;
         Offset Position;
-        Rect BoxSize;
         f32 FontSize;
         u32 Weight;
         IDWriteTextFormat* TextFormat   = nullptr;

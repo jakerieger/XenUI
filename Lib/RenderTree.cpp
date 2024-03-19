@@ -13,6 +13,8 @@ namespace Xen::RenderTree {
 
     void SetRoot(Element* root) { g_RootElement = Unique<Element>(root); }
 
+    Element* GetRoot() { return RawPtr(g_RootElement); }
+
     void RebuildUI() { g_App->BuildUI(); }
 
     void Render() {

@@ -17,8 +17,8 @@ namespace Xen {
                const u32 fontWeight,
                const f32 fontSize,
                const Color& color)
-        : Element(zIndex), Value(std::move(value)), TextColor(color), Position(position),
-          BoxSize(size), FontSize(fontSize), Weight(fontWeight) {
+        : Element(zIndex, size), Value(std::move(value)), TextColor(color), Position(position),
+          FontSize(fontSize), Weight(fontWeight) {
         this->Children.push_back(child);
 
         auto hr =
@@ -54,7 +54,7 @@ namespace Xen {
                const u32 fontWeight,
                const f32 fontSize,
                const Color& color)
-        : Element(zIndex), TextColor(color), Position(position), BoxSize(size), FontSize(fontSize),
+        : Element(zIndex, size), TextColor(color), Position(position), FontSize(fontSize),
           Weight(fontWeight) {
         this->Children.push_back(child);
         Converters::ANSIToWide(value, Value);
@@ -90,11 +90,9 @@ namespace Xen {
         Renderer::GetRenderTarget()->DrawText(Value.c_str(),
                                               wcslen(Value.c_str()),
                                               TextFormat,
-                                              BoxSize.GetD2DRect(),
+                                              Size.GetD2DRect(),
                                               FillColor);
     }
-
-    void Text::UpdateSize(const Rect& size) { BoxSize = size; }
 
     void Text::SetText(const wstr& value) {}
 

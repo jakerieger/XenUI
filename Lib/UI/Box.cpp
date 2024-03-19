@@ -6,8 +6,13 @@
 #include "Renderer.h"
 
 namespace Xen {
-    Box::Box(const Rect& size, const Color& color, const i64 zIndex, Element* child)
-        : Element(zIndex) {
+    Box::Box(const Rect& size,
+             const Color& color,
+             const i64 zIndex,
+             Element* child,
+             std::function<void()> onPressed)
+        : Element(zIndex, size) {
+        this->OnPressed = std::move(onPressed);
         this->Children.push_back(child);
         Size        = size;
         FillColor   = color;
@@ -22,5 +27,16 @@ namespace Xen {
 
     Box::~Box() { SafeRelease(&Brush); }
 
-    void Box::Draw() { Renderer::GetRenderTarget()->FillRectangle(Size.GetD2DRect(), Brush); }
+    void Box::Draw() {
+        if (Rounded) {
+            D2D1_ROUNDED_RECT roundedRect;
+            roundedRect.rect    = Size.GetD2DRect();
+            roundedRect.radiusX = 8.f;
+            roundedRect.radiusY = 8.f;
+            Renderer::GetRenderTarget()->FillRoundedRectangle(roundedRect, Brush);
+            return;
+        }
+
+        Renderer::GetRenderTarget()->FillRectangle(Size.GetD2DRect(), Brush);
+    }
 }  // namespace Xen

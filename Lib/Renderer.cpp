@@ -5,9 +5,13 @@
 #include "Renderer.h"
 #include "RenderTree.h"
 #include "XenApp.h"
+#include "UI/Box.h"
 
 #include <chrono>
 
+namespace Xen {
+    class Box;
+}
 namespace Xen::Renderer {
     ID2D1Factory* g_D2DFactory               = nullptr;
     IDWriteFactory* g_DWFactory              = nullptr;
@@ -90,7 +94,30 @@ namespace Xen::Renderer {
         RenderTree::RebuildUI();
     }
 
-    void CheckHit(const Offset& mousePos) {}
+    void CheckHit(const Offset& mousePos) {
+        auto currentElement   = RenderTree::GetRoot();
+        Element* foundElement = nullptr;
+        while (currentElement != nullptr) {
+            if (currentElement->GetSize().Contains(mousePos)) {
+                if (const auto asInteractive = currentElement->As<Interactive>();
+                    asInteractive != nullptr) {
+                    if (foundElement == nullptr) {
+                        foundElement = currentElement;
+                    } else {
+                        if (currentElement->GetZIndex() > foundElement->GetZIndex()) {
+                            foundElement = currentElement;
+                        }
+                    }
+                }
+            }
+
+            currentElement = currentElement->GetChild();
+        }
+
+        if (foundElement) {
+            foundElement->As<Interactive>()->OnPressed();
+        }
+    }
 
     void CheckOverlap(const Offset& mousePos) {}
 
