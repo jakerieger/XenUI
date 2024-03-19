@@ -15,7 +15,7 @@ namespace Xen {
     public:
         XenApp(const Size<u32>& windowSize, const str& windowTitle, u32 windowIcon = 0);
         virtual ~XenApp();
-        virtual void BuildUI();
+        virtual Element* BuildUI() = 0;
         virtual void RunApp();
         virtual void Shutdown();
 

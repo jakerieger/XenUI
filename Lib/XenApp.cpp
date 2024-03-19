@@ -26,8 +26,6 @@ namespace Xen {
 
     XenApp::~XenApp() = default;
 
-    void XenApp::BuildUI() { AttachRootElement(nullptr); }
-
     void XenApp::RunApp() {
         // Initialize our native Win32 window
         Window->Init();
@@ -36,7 +34,7 @@ namespace Xen {
         Renderer::Init();
 
         // Call our BuildUI method
-        BuildUI();
+        RenderTree::SetRoot(BuildUI());
 
         // Run the main window loop
         Window->Run();

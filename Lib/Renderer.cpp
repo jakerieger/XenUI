@@ -74,6 +74,7 @@ namespace Xen::Renderer {
         g_D2DRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
         g_D2DRenderTarget->Clear(g_OwningApp->GetContext().AppTheme.WindowBackground.GetD2DColor());
 
+        RenderTree::Cleanup();
         RenderTree::RebuildUI();
         RenderTree::Render();
 

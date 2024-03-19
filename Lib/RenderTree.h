@@ -17,5 +17,5 @@ namespace Xen::RenderTree {
     Element* GetRoot();
     void RebuildUI();
     void Render();
-    void Cleanup();
+    void XEN_API Cleanup();
 }  // namespace Xen::RenderTree

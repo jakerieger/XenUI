@@ -15,7 +15,7 @@ namespace Xen::RenderTree {
 
     Element* GetRoot() { return RawPtr(g_RootElement); }
 
-    void RebuildUI() { g_App->BuildUI(); }
+    void RebuildUI() { SetRoot(g_App->BuildUI()); }
 
     void Render() {
         auto currentElement = g_RootElement.get();
@@ -25,5 +25,16 @@ namespace Xen::RenderTree {
         }
     }
 
-    void Cleanup() {}
+    void Cleanup() {
+        std::vector<Element*> elements;
+        auto currentElement = g_RootElement.release();
+        while (currentElement != nullptr) {
+            elements.push_back(currentElement);
+            currentElement = currentElement->GetChild();
+        }
+        std::ranges::reverse(elements);
+        for (const auto el : elements) {
+            delete el;
+        }
+    }
 }  // namespace Xen::RenderTree
