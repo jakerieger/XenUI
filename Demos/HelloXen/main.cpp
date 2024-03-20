@@ -1,4 +1,6 @@
 // ReSharper disable CppDFAMemoryLeak
+#include "ElementAllocator.h"
+#include "RenderTree.h"
 #include "XenUI.h"
 #include "resource.h"
 
@@ -23,44 +25,43 @@ Element* HelloXen::BuildUI() {
     };
     auto windowCallback = [&] { Quit(); };
 
-    // Your compiler might warn you that this leaks memory,
-    // but all of these class instances get cleaned up and deleted
-    // before each rebuild of the UI. See the RenderTree namespace
-    // for impl details
-    return new Box(
+    // `create` is a macro replacement for `new (Allocator)`
+    // See ElementAllocator for details on how this works
+    return create Box(
       Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset()),
       Context.AppTheme.FrameBackground,
       0,
-      new Text("(Click the window background to quit)",
-               Context.FontFamily,
-               Window->GetWindowCenter(),
-               Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset().Translate(0.f, -90.f)),
-               0,
-               new Text("Hello Xen!",
-                        Context.FontFamily,
-                        Window->GetWindowCenter(),
-                        Rect::FromPoints({0, 0},
-                                         Window->GetDimensions().AsOffset().Translate(0.f, -140.f)),
-                        0,
-                        new Box(btnRect,
-                                Context.AppTheme.Tertiary,
-                                1,
-                                new Text("Say Hello",
-                                         Context.FontFamily,
-                                         Window->GetWindowCenter(),
-                                         btnRect,
-                                         0,
-                                         nullptr,
-                                         600,
-                                         16.f,
-                                         Context.AppTheme.White),
-                                btnCallback),
-                        300,
-                        24.f,
-                        Context.AppTheme.TextHighlight),
-               300,
-               14.f,
-               Context.AppTheme.TextHighlight),
+      create Text(
+        "(Click the window background to quit)",
+        Context.FontFamily,
+        Window->GetWindowCenter(),
+        Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset().Translate(0.f, -90.f)),
+        0,
+        create Text(
+          "Hello Xen!",
+          Context.FontFamily,
+          Window->GetWindowCenter(),
+          Rect::FromPoints({0, 0}, Window->GetDimensions().AsOffset().Translate(0.f, -140.f)),
+          0,
+          create Box(btnRect,
+                     Context.AppTheme.Tertiary,
+                     1,
+                     create Text("Say Hello",
+                                 Context.FontFamily,
+                                 Window->GetWindowCenter(),
+                                 btnRect,
+                                 0,
+                                 nullptr,
+                                 600,
+                                 16.f,
+                                 Context.AppTheme.White),
+                     btnCallback),
+          300,
+          24.f,
+          Context.AppTheme.TextHighlight),
+        300,
+        14.f,
+        Context.AppTheme.TextHighlight),
       windowCallback);
 }
 

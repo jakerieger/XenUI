@@ -28,3 +28,9 @@
                       MB_ICONERROR | MB_OK);                                                       \
         return 1;                                                                                  \
     }
+
+// new operator overload
+// ReSharper disable once CppParameterMayBeConst
+XEN_API inline void* operator new(size_t _Size, Xen::ElementAllocator& allocator) {
+    return allocator.Allocate(_Size);
+}

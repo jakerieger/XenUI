@@ -55,4 +55,6 @@ namespace Xen {
         // can be thought of as a more complex linked list.
         RenderTree::SetRoot(root);
     }
+
+    void XenApp::ResetElements() { Allocator.Reset(); }
 }  // namespace Xen

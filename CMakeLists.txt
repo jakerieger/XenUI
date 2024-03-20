@@ -48,6 +48,10 @@ add_library(XenUI SHARED
         Lib/AppContext.cpp
         Lib/AppContext.h
         Lib/UI/Interactive.h
+        Lib/API/Dialog.cpp
+        Lib/API/Dialog.h
+        Lib/ElementAllocator.cpp
+        Lib/ElementAllocator.h
 )
 
 add_executable(HelloXen Demos/HelloXen/main.cpp

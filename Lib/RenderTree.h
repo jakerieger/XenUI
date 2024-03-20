@@ -9,13 +9,16 @@
 
 namespace Xen {
     class XenApp;
-}
+}  // namespace Xen
 
 namespace Xen::RenderTree {
     void Init(XenApp* app);
     void SetRoot(Element* root);
-    Element* GetRoot();
     void RebuildUI();
     void Render();
-    void XEN_API Cleanup();
+
+    Element* GetRoot();
+    std::vector<Element*> GetTreeAsVector();
+
+    XEN_API void Cleanup();
 }  // namespace Xen::RenderTree

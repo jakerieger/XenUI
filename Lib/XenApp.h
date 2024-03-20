@@ -6,11 +6,14 @@
 
 #include "AppWindow.h"
 #include "AppContext.h"
+#include "ElementAllocator.h"
 #include "Types.h"
 #include "XenAPI.h"
 #include "UI/Element.h"
 
 namespace Xen {
+#define create new (Allocator)
+
     class XEN_API XenApp {
     public:
         XenApp(const Size<u32>& windowSize, const str& windowTitle, u32 windowIcon = 0);
@@ -25,8 +28,12 @@ namespace Xen {
         [[nodiscard]] AppWindow* GetNativeWindow() const { return RawPtr(Window); }
         AppContext& GetContext() { return Context; }
 
+        void ResetElements();
+        ElementAllocator& GetAllocator() { return Allocator; }
+
     protected:
         Unique<AppWindow> Window;
         AppContext Context;
+        ElementAllocator Allocator;
     };
 }  // namespace Xen
