@@ -52,7 +52,13 @@ add_library(XenUI SHARED
         Lib/API/Dialog.h
         Lib/ElementAllocator.cpp
         Lib/ElementAllocator.h
+        Lib/UI/SVG.cpp
+        Lib/UI/SVG.h
+        Lib/RuntimeError.h
 )
+
+find_package(NanoSVG CONFIG REQUIRED)
+target_link_libraries(XenUI PRIVATE NanoSVG::nanosvg)
 
 add_executable(HelloXen Demos/HelloXen/main.cpp
         Demos/Res/app.rc
@@ -61,6 +67,14 @@ add_executable(HelloXen Demos/HelloXen/main.cpp
 target_include_directories(HelloXen PRIVATE Demos/Res)
 target_link_libraries(HelloXen XenUI)
 
-#add_executable(test_offset Tests/test_offset.cpp)
-#find_package(Catch2 CONFIG REQUIRED)
-#target_link_libraries(test_offset PRIVATE XenUI Catch2::Catch2 Catch2::Catch2WithMain)
+add_executable(SVGRendering Demos/SVGRendering/main.cpp
+        Demos/Res/app.rc
+        Demos/Res/resource.h
+)
+target_include_directories(SVGRendering PRIVATE Demos/Res)
+target_link_libraries(SVGRendering XenUI NanoSVG::nanosvg)
+configure_file(Demos/SVGRendering/XenLogo.svg ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/XenLogo.svg COPYONLY)
+
+add_executable(test_offset Tests/test_offset.cpp)
+find_package(Catch2 CONFIG REQUIRED)
+target_link_libraries(test_offset PRIVATE XenUI Catch2::Catch2 Catch2::Catch2WithMain)

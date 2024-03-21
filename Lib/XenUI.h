@@ -4,11 +4,6 @@
 
 #pragma once
 
-#include "AppWindow.h"
-#include "Types.h"
-#include "Helpers.inl"
-#include "XenApp.h"
-
 #include "UI/Offset.h"
 #include "UI/Size.h"
 #include "UI/Offset.h"
@@ -16,6 +11,12 @@
 #include "UI/Rect.h"
 #include "UI/Box.h"
 #include "UI/Text.h"
+#include "UI/Element.h"
+
+#include "AppWindow.h"
+#include "Types.h"
+#include "Helpers.inl"
+#include "XenApp.h"
 
 #define RUN_XEN_APP(app)                                                                           \
     if (const auto hr = CoInitialize(nullptr); SUCCEEDED(hr)) {                                    \

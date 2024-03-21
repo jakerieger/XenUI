@@ -7,6 +7,9 @@
 #include <cmath>
 
 namespace Xen {
+    Offset Offset::Infinite = {Infinity<f32>(), Infinity<f32>()};
+    Offset Offset::Zero     = {0, 0};
+
     bool Offset::operator==(const Offset& other) const { return X == other.X && Y == other.Y; }
 
     Offset Offset::operator-() const { return {-X, -Y}; }
