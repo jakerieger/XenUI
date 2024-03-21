@@ -1,4 +1,3 @@
-// ReSharper disable CppDFAMemoryLeak
 #include "ElementAllocator.h"
 #include "RenderTree.h"
 #include "XenUI.h"
