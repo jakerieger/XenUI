@@ -12,21 +12,26 @@
 #include "UI/Box.h"
 #include "UI/Text.h"
 #include "UI/Element.h"
+#include "UI/SVG.h"
 
 #include "AppWindow.h"
 #include "Types.h"
 #include "Helpers.inl"
 #include "XenApp.h"
 
-#define RUN_XEN_APP(app)                                                                           \
+#define RUN_XEN_APP(app, name)                                                                     \
     if (const auto hr = CoInitialize(nullptr); SUCCEEDED(hr)) {                                    \
+        std::cout << "Running demo: '" << name << "'\n";                                           \
         app.RunApp();                                                                              \
         CoUninitialize();                                                                          \
     } else {                                                                                       \
-        ::MessageBoxA(nullptr,                                                                     \
-                      "Failed to initialize COM",                                                  \
-                      "Windows API Error",                                                         \
-                      MB_ICONERROR | MB_OK);                                                       \
+        ::MessageBoxA(                                                                             \
+          nullptr,                                                                                 \
+          " Failed to initialize COM                                                   \
+                 ",                                                                                \
+          " Windows API Error                                                          \
+                 ",                                                                                \
+          MB_ICONERROR | MB_OK);                                                                   \
         return 1;                                                                                  \
     }
 

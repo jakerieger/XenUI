@@ -4,7 +4,6 @@
 
 #include "XenUI.h"
 #include "resource.h"
-#include "UI/SVG.h"
 
 using namespace Xen;
 
@@ -30,6 +29,6 @@ void SVGRendering::Shutdown() {}
 
 int main() {
     SVGRendering app(Size<u32>(600, 300), "SVGRendering", APPICON);
-    RUN_XEN_APP(app)
+    RUN_XEN_APP(app, "SVGRendering")
     return 0;
 }

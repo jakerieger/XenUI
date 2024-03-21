@@ -70,6 +70,6 @@ void HelloXen::Shutdown() {}
 
 int main() {
     HelloXen app(Size<u32>(600, 400), "HelloXen", APPICON);
-    RUN_XEN_APP(app)
+    RUN_XEN_APP(app, "HelloXen")
     return 0;
 }

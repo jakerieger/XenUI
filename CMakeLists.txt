@@ -65,7 +65,7 @@ add_executable(HelloXen Demos/HelloXen/main.cpp
         Demos/Res/resource.h
 )
 target_include_directories(HelloXen PRIVATE Demos/Res)
-target_link_libraries(HelloXen XenUI)
+target_link_libraries(HelloXen XenUI NanoSVG::nanosvg)
 
 add_executable(SVGRendering Demos/SVGRendering/main.cpp
         Demos/Res/app.rc
@@ -77,4 +77,4 @@ configure_file(Demos/SVGRendering/XenLogo.svg ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/
 
 add_executable(test_offset Tests/test_offset.cpp)
 find_package(Catch2 CONFIG REQUIRED)
-target_link_libraries(test_offset PRIVATE XenUI Catch2::Catch2 Catch2::Catch2WithMain)
+target_link_libraries(test_offset PRIVATE XenUI NanoSVG::nanosvg Catch2::Catch2 Catch2::Catch2WithMain)
