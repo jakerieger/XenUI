@@ -10,8 +10,9 @@ namespace Xen {
              const Color& color,
              const i64 zIndex,
              Element* child,
+             const bool rounded,
              std::function<void()> onPressed)
-        : Element(zIndex, size) {
+        : Element(zIndex, size), Rounded(rounded) {
         this->OnPressed = std::move(onPressed);
         this->Children.push_back(child);
         Size        = size;

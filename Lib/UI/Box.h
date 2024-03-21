@@ -21,6 +21,7 @@ namespace Xen {
             const Color& color,
             i64 zIndex,
             Element* child,
+            bool rounded                    = false,
             std::function<void()> onPressed = ActionNone);
         ~Box() override;
 
@@ -33,7 +34,7 @@ namespace Xen {
     private:
         Color FillColor   = {};
         Color StrokeColor = {};
-        bool Rounded      = true;
+        bool Rounded;
 
         ID2D1SolidColorBrush* Brush = nullptr;
     };

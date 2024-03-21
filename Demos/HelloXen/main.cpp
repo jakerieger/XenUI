@@ -54,6 +54,7 @@ Element* HelloXen::BuildUI() {
                                  600,
                                  16.f,
                                  Context.AppTheme.White),
+                     true,
                      btnCallback),
           300,
           24.f,
@@ -61,6 +62,7 @@ Element* HelloXen::BuildUI() {
         300,
         14.f,
         Context.AppTheme.TextHighlight),
+      false,
       windowCallback);
 }
 
