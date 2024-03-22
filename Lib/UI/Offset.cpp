@@ -18,7 +18,6 @@
 //
 
 #include "Offset.h"
-
 #include <cmath>
 
 namespace Xen {

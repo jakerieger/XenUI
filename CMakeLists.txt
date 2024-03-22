@@ -6,7 +6,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
-include_directories(${CMAKE_SOURCE_DIR}/Lib Vendor/svgpp/include Vendor/svgpp/third_party)
+include_directories(${CMAKE_SOURCE_DIR}/Lib)
 
 add_library(XenUI SHARED
         Lib/Platform.h
@@ -51,6 +51,8 @@ add_library(XenUI SHARED
         Lib/UI/SVG.h
         Lib/RuntimeError.h
 )
+find_package(NanoSVG CONFIG REQUIRED)
+target_link_libraries(XenUI PRIVATE NanoSVG::nanosvg NanoSVG::nanosvgrast)
 
 add_subdirectory(Demos)
 add_subdirectory(Tests)

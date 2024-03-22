@@ -18,10 +18,12 @@
 //
 
 #include "SVG.h"
-
 #include "Color.h"
 #include "Renderer.h"
 #include "RuntimeError.h"
+
+#include <nanosvg.h>
+#include <nanosvgrast.h>
 
 namespace Xen {
     void SVG::ParseSVGToD2DGeometry() {
@@ -29,13 +31,13 @@ namespace Xen {
         Error::RuntimeError(69, "No SVG parser implemented.");
     }
 
-    void SVG::Update() { ParseSVGToD2DGeometry(); }
+    void SVG::Update() {}
 
     SVG::SVG(const i64 zIndex, const str& fileName, const Offset& position, Element* child)
         : Element(zIndex, {0, 0, 0, 0}), Position(position) {
         this->Children.push_back(child);
 
-        ParseSVGToD2DGeometry();
+        NSVGimage* image = nullptr;
     }
 
     SVG::~SVG() {
