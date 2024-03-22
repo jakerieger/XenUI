@@ -33,7 +33,10 @@ SVGRendering::SVGRendering(const Size<u32>& windowSize,
 }
 
 Element* SVGRendering::BuildUI() {
-    return create SVG(0, "XenLogo.svg", Window->GetWindowCenter(), nullptr);  //
+    return create Box(Rect({0, 0}, Window->GetDimensions().To<f32>()),
+                      Context.AppTheme.FrameBackground,
+                      0,
+                      create SVG(1, "XenLogo.svg", Window->GetWindowCenter(), nullptr));  //
 }
 
 void SVGRendering::Shutdown() {}

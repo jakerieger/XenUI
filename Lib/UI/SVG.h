@@ -20,17 +20,18 @@
 #pragma once
 
 #include "Element.h"
-#include "Interactive.h"
 #include "XenAPI.h"
 #include "Platform.h"
 
-namespace Xen {
-    struct XEN_API Geometry {
-        ID2D1SolidColorBrush* Brush = nullptr;
-        ID2D1GeometrySink* Sink     = nullptr;
-        ID2D1PathGeometry* Path     = nullptr;
-    };
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#define NANOSVG_ALL_COLOR_KEYWORDS  // Include full list of color keywords.
+#define NANOSVG_IMPLEMENTATION      // Expands implementation
+#include <nanosvg.h>
+#include <nanosvgrast.h>
 
+namespace Xen {
     class XEN_API SVG final : public Element {
     public:
         SVG(i64 zIndex, const str& fileName, const Offset& position, Element* child);
@@ -39,9 +40,10 @@ namespace Xen {
         void Draw() override;
 
     private:
-        void ParseSVGToD2DGeometry();
+        void SVGToBitmap();
         void Update();
-        std::vector<Geometry> ShapeData;
         Offset Position;
+        NSVGimage* SvgData  = nullptr;
+        ID2D1Bitmap* Bitmap = nullptr;
     };
 }  // namespace Xen

@@ -22,13 +22,32 @@
 #include "Renderer.h"
 #include "RuntimeError.h"
 
-#include <nanosvg.h>
-#include <nanosvgrast.h>
-
 namespace Xen {
-    void SVG::ParseSVGToD2DGeometry() {
-        Position.X = Position.X;
-        Error::RuntimeError(69, "No SVG parser implemented.");
+    void SVG::SVGToBitmap() {
+        const auto rast = nsvgCreateRasterizer();
+        if (!rast)
+            Error::RuntimeError(1, "Error rasterizing SVG data");
+
+        const auto w   = static_cast<int>(Size.Width());
+        const auto h   = static_cast<int>(Size.Height());
+        const auto img = static_cast<unsigned char*>(malloc(w * h * 4));
+        nsvgRasterize(rast, SvgData, 0, 0, 1, img, w, h, w * 4);
+        const auto hr = Renderer::GetRenderTarget()->CreateBitmap(
+          D2D1::SizeU(w, h),
+          img,
+          w * 4,
+          D2D1::BitmapProperties(
+            D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+          &Bitmap);
+        if (FAILED(hr)) {
+            free(img);
+            nsvgDeleteRasterizer(rast);
+            nsvgDelete(SvgData);
+            Error::RuntimeError(1, "Error creating D2D bitmap");
+        }
+
+        free(img);
+        nsvgDeleteRasterizer(rast);
     }
 
     void SVG::Update() {}
@@ -37,22 +56,21 @@ namespace Xen {
         : Element(zIndex, {0, 0, 0, 0}), Position(position) {
         this->Children.push_back(child);
 
-        NSVGimage* image = nullptr;
+        SvgData = nsvgParseFromFile(fileName.c_str(), "px", 96);
+        if (!SvgData) {
+            Error::RuntimeError(1, "Could not parse SVG file.");
+        }
+
+        Size = {0, 0, SvgData->width, SvgData->height};
+
+        SVGToBitmap();
     }
 
-    SVG::~SVG() {
-        for (auto [Brush, Sink, Path] : ShapeData) {
-            SafeRelease(&Brush);
-            SafeRelease(&Path);
-            SafeRelease(&Sink);
-        }
-        Element::~Element();
-    }
+    SVG::~SVG() { Element::~Element(); }
 
     void SVG::Draw() {
-        // Update();
-        for (auto& [Brush, Sink, Path] : ShapeData) {
-            Renderer::GetRenderTarget()->FillGeometry(Path, Brush);
+        if (Bitmap) {
+            Renderer::GetRenderTarget()->DrawBitmap(Bitmap, Size.GetD2DRect());
         }
     }
 }  // namespace Xen
