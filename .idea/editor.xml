@@ -3,5 +3,14 @@
   <component name="BackendCodeEditorSettings">
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/CodeStyle/CodeFormatting/CppClangFormat/EnableClangFormatSupport/@EntryValue" value="true" type="bool" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Text/@EntryValue" value="#pragma once" type="string" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Field/=DATE/@KeyIndexDefined" value="false" type="bool" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Field/=FILENAME/@KeyIndexDefined" value="false" type="bool" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Applicability/=Live/@EntryIndexedValue" value="true" type="bool" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Applicability/=Live/@EntryIndexRemoved" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Applicability/=Surround/@EntryIndexedValue" value="false" type="bool" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=4EC4C4D6A2258848A4F1EC77FB6589A1/Applicability/=Surround/@EntryIndexRemoved" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=B003EBE9BE3ECF4289E4EAA2175A0486/Text/@EntryValue" value="#pragma once" type="string" />
+    <option name="/Default/PatternsAndTemplates/LiveTemplates/Template/=B003EBE9BE3ECF4289E4EAA2175A0486/Field/=FILENAME/@KeyIndexDefined" value="false" type="bool" />
   </component>
 </project>

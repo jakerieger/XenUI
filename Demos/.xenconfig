@@ -1,2 +1,0 @@
-config:
-  max_elements: 100 # configure the maximum number of UI elements Xen will handle

@@ -1,5 +1,5 @@
-//
-// Created by conta on 3/21/2024.
+// Author: Jake Rieger
+// Created: 3/21/2024.
 //
 
 #pragma once
@@ -8,13 +8,6 @@
 #include "Interactive.h"
 #include "XenAPI.h"
 #include "Platform.h"
-
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#define NANOSVG_ALL_COLOR_KEYWORDS
-#define NANOSVG_IMPLEMENTATION
-#include "nanosvg.h"
 
 namespace Xen {
     struct XEN_API Geometry {
@@ -33,7 +26,6 @@ namespace Xen {
     private:
         void ParseSVGToD2DGeometry();
         void Update();
-        NSVGimage* SVGData = nullptr;
         std::vector<Geometry> ShapeData;
         Offset Position;
     };

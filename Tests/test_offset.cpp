@@ -1,5 +1,5 @@
-//
-// Created by conta on 3/14/2024.
+// Author: Jake Rieger
+// Created: 3/21/2024.
 //
 #define CATCH_CONFIG_MAIN
 

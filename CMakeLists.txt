@@ -2,16 +2,11 @@ cmake_minimum_required(VERSION 3.28)
 project(XenUI)
 
 set(CMAKE_CXX_STANDARD 20)
-
-# Set the output directory for executables
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# Set the output directory for libraries (DLLs)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
-include_directories(${CMAKE_SOURCE_DIR}/Lib)
+include_directories(${CMAKE_SOURCE_DIR}/Lib Vendor/svgpp/include Vendor/svgpp/third_party)
 
 add_library(XenUI SHARED
         Lib/Platform.h
@@ -57,24 +52,8 @@ add_library(XenUI SHARED
         Lib/RuntimeError.h
 )
 
-find_package(NanoSVG CONFIG REQUIRED)
-target_link_libraries(XenUI PRIVATE NanoSVG::nanosvg)
+add_subdirectory(Demos)
+add_subdirectory(Tests)
 
-add_executable(HelloXen Demos/HelloXen/main.cpp
-        Demos/Res/app.rc
-        Demos/Res/resource.h
-)
-target_include_directories(HelloXen PRIVATE Demos/Res)
-target_link_libraries(HelloXen XenUI NanoSVG::nanosvg)
-
-add_executable(SVGRendering Demos/SVGRendering/main.cpp
-        Demos/Res/app.rc
-        Demos/Res/resource.h
-)
-target_include_directories(SVGRendering PRIVATE Demos/Res)
-target_link_libraries(SVGRendering XenUI NanoSVG::nanosvg)
-configure_file(Demos/SVGRendering/XenLogo.svg ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/XenLogo.svg COPYONLY)
-
-add_executable(test_offset Tests/test_offset.cpp)
-find_package(Catch2 CONFIG REQUIRED)
-target_link_libraries(test_offset PRIVATE XenUI NanoSVG::nanosvg Catch2::Catch2 Catch2::Catch2WithMain)
+add_custom_command(TARGET XenUI POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:XenUI> ${CMAKE_BINARY_DIR}/Demos/XenUI.dll)
+add_custom_command(TARGET XenUI POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:XenUI> ${CMAKE_BINARY_DIR}/Tests/XenUI.dll)

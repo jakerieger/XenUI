@@ -1,5 +1,5 @@
-//
-// Created by conta on 3/18/2024.
+// Author: Jake Rieger
+// Created: 3/21/2024.
 //
 
 #pragma once
