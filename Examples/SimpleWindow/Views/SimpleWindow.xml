@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XenApp name="SimpleWindow" width="400" height="300">
+    <Center>
+        <Text>
+            Hello, XenUI!
+        </Text>
+    </Center>
+</XenApp>
