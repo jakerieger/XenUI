@@ -109,6 +109,8 @@ VERBATIM_HEADERS       = YES
 #---------------------------------------------------------------------------
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
+HTML_EXTRA_STYLESHEET  = Docs/css/doxygen-awesome.css \
+                         Docs/css/doxygen-awesome-sidebar-only.css
 HTML_FILE_EXTENSION    = .html
 HTML_COLORSTYLE        = AUTO_LIGHT
 HTML_DYNAMIC_SECTIONS  = YES
