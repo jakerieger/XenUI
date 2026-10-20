@@ -1,0 +1,6 @@
+.idea
+build*
+*.dll
+*.bin
+*.exe
+Docs/html
