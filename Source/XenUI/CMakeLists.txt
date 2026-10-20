@@ -21,10 +21,19 @@ XenUI_CompileShader(Graphics/Shaders/LivePrimitives.hlsl PsMain ps_4_0 kLivePrim
 XenUI_CompileShader(Graphics/Shaders/LiveTexture.hlsl VsMain vs_4_0 kLiveTextureVertexShader LiveTextureVS.h)
 XenUI_CompileShader(Graphics/Shaders/LiveTexture.hlsl PsMain ps_4_0 kLiveTexturePixelShader LiveTexturePS.h)
 
+set(XENUI_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/Generated")
+set(XENUI_GENERATED_DIR "${XENUI_GENERATED_DIR}" PARENT_SCOPE)
+configure_file("${PROJECT_SOURCE_DIR}/cmake/Version.hpp.in" "${XENUI_GENERATED_DIR}/XenUI/Version.hpp" @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/cmake/XenUI.rc.in" "${CMAKE_CURRENT_BINARY_DIR}/XenUI.rc.configured" @ONLY)
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/XenUI-$<CONFIG>.rc" INPUT "${CMAKE_CURRENT_BINARY_DIR}/XenUI.rc.configured")
+
 add_library(XenUI SHARED
         Api.hpp
         XenUI.hpp
         Pch.hpp
+        Version.cpp
+        "${XENUI_GENERATED_DIR}/XenUI/Version.hpp"
+        "${CMAKE_CURRENT_BINARY_DIR}/XenUI-$<CONFIG>.rc"
         App.hpp
         App.cpp
         AppContext.hpp
@@ -175,9 +184,20 @@ add_library(XenUI SHARED
 
 set_source_files_properties(Graphics/Shaders/LivePrimitives.hlsl Graphics/Shaders/LiveTexture.hlsl PROPERTIES HEADER_FILE_ONLY TRUE)
 
-Xen_ConfigureTarget(XenUI)
+add_library(XenUI::XenUI ALIAS XenUI)
 
-target_include_directories(XenUI PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+XenUI_ConfigureTarget(XenUI)
+
+set_target_properties(XenUI PROPERTIES
+        DEBUG_POSTFIX d
+        VERSION "${PROJECT_VERSION}"
+)
+target_compile_features(XenUI PUBLIC cxx_std_20)
+target_include_directories(XenUI PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>"
+        "$<BUILD_INTERFACE:${XENUI_GENERATED_DIR}>"
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 target_include_directories(XenUI PRIVATE "${XENUI_SHADER_DIR}")
 target_compile_definitions(XenUI PRIVATE XENUI_EXPORTS)
 target_precompile_headers(XenUI PRIVATE Pch.hpp)

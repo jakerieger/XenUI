@@ -1,0 +1,7 @@
+flowchart TB
+  root["RenderView layer"] --> p1["Picture: window background and panels"]
+  root --> sv["Scroll viewport layer, clipped, offset by scroll"]
+  root --> p2["Picture: status bar"]
+  sv --> p3["Picture: lane grid"]
+  sv --> clip["Clip layer: live content, D3D texture"]
+  sv --> ph["Playhead layer: thin, moves every frame"]

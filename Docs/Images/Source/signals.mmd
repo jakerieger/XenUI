@@ -1,0 +1,13 @@
+flowchart LR
+  S1["Signal: Track.Gain"] --> O1["Element of GainLabel: MarkNeedsBuild"]
+  S1 --> O2["RenderSlider: MarkNeedsPaint only"]
+  S1 --> O3["Effect: republish the audio mix"]
+  S2["Signal: Model.Playhead"] --> O4["Element of PlayheadMarker"]
+  S2 --> O5["Computed: formatted position"]
+  O5 --> O6["Element of PositionReadout"]
+  O1 --> B["BuildOwner dirty list"]
+  O4 --> B
+  O6 --> B
+  B --> F["RequestFrame"]
+  O2 --> P["PipelineOwner paint queue"]
+  P --> F

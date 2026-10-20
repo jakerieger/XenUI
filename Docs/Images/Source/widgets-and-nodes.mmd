@@ -1,0 +1,7 @@
+flowchart LR
+  N1["Node handle"] --> H
+  N2["another Node handle"] --> H
+  subgraph Block["WidgetArena block"]
+    H["WidgetHeader: type, refcount, key"] --> P["Payload: your struct, e.g. Slider"]
+  end
+  H --> T["WidgetType, one per C++ type: type_info, Destroy, CreateElement"]

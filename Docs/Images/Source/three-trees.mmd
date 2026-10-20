@@ -1,0 +1,27 @@
+flowchart TB
+  subgraph W["Widget nodes, rebuilt freely"]
+    direction LR
+    w1["Container: padding, background"]
+    w2["Text: Hello"]
+    w1 --> w2
+  end
+  subgraph E["Elements, persistent"]
+    direction LR
+    e1["ComponentElement for Container"]
+    e2["RenderElement for Padding"]
+    e3["RenderElement for DecoratedBox"]
+    e4["ComponentElement for Text"]
+    e5["RenderElement for Paragraph"]
+    e1 --> e2 --> e3 --> e4 --> e5
+  end
+  subgraph R["Render objects"]
+    direction LR
+    r1["RenderPadding"]
+    r2["RenderDecoratedBox"]
+    r3["RenderParagraph"]
+    r1 --> r2 --> r3
+  end
+  w1 -. "builds" .-> e1
+  e2 --- r1
+  e3 --- r2
+  e5 --- r3

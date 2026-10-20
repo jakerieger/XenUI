@@ -1,0 +1,22 @@
+sequenceDiagram
+  participant OS as Windows
+  participant Win as WindowImpl
+  participant In as InputDispatcher
+  participant Sig as Signal
+  participant Host as WidgetHost
+  participant Comp as Compositor
+  participant GPU as GPU
+  OS->>Win: WM_MOUSEMOVE
+  Win->>In: HandlePointer
+  In->>Sig: slider writes its bound signal
+  Sig->>Host: observers mark elements or render objects dirty
+  Host->>Win: RequestFrame
+  Note over OS,Win: run loop waits<br/>for the frame waitable
+  Win->>Win: RunFrameCallback
+  Win->>Host: Update
+  Host->>Host: Build dirty elements
+  Host->>Host: FlushLayout
+  Host->>Host: FlushPaint into layers
+  Win->>Comp: Render
+  Comp->>GPU: live prepass, then redraw damaged rects
+  Comp->>GPU: Present1 with dirty rects

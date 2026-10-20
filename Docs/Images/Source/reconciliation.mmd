@@ -1,0 +1,8 @@
+flowchart TB
+  A["New node for this position"] --> B{"Node empty?"}
+  B -- "yes" --> X["Unmount the old element"]
+  B -- "no" --> C{"Exactly the same node as before?"}
+  C -- "yes" --> K["Keep the element; skip the whole subtree"]
+  C -- "no" --> D{"Same widget type and same key?"}
+  D -- "yes" --> U["Update in place: new widget, UpdateRenderObject or rebuild"]
+  D -- "no" --> Y["Unmount the old element, inflate a new one"]

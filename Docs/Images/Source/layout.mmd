@@ -1,0 +1,6 @@
+flowchart TB
+  P["Row, given width 0 to 900"] -- "fixed child: width 0 to unbounded" --> A["Text sizes itself: 120"]
+  P -- "Expanded child: exactly the remaining 780" --> B["Slider fills 780"]
+  A -- "size 120 x 18" --> P
+  B -- "size 780 x 26" --> P
+  P --> Q["Row positions children at x 0 and x 120, then reports 900 x 26"]

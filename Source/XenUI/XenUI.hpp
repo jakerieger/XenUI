@@ -60,6 +60,7 @@
 #include "XenUI/Tree/ElementTree.hpp"
 #include "XenUI/Tree/Key.hpp"
 #include "XenUI/Tree/Widget.hpp"
+#include "XenUI/Version.hpp"
 #include "XenUI/Widgets/Basic.hpp"
 #include "XenUI/Widgets/Controls.hpp"
 #include "XenUI/Widgets/DragDrop.hpp"

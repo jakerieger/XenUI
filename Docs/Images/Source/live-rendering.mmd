@@ -1,0 +1,19 @@
+flowchart LR
+  subgraph Audio["Audio thread"]
+    AE["Render audio blocks"]
+  end
+  subgraph Handoff["Lock-free handoff"]
+    TB["TripleBuffer: latest meter snapshot"]
+    Q["SpscQueue: scope samples"]
+  end
+  subgraph UI["UI thread, inside the compositor"]
+    LV["LiveView OnDraw records primitives into a LiveCanvas"]
+    LR["LiveRenderer: instanced D3D11 quads, SDF antialiasing"]
+    TX["Shared texture, opened as a D2D bitmap"]
+    CP["Composited like any other layer"]
+  end
+  AE --> TB
+  AE --> Q
+  TB --> LV
+  Q --> LV
+  LV --> LR --> TX --> CP

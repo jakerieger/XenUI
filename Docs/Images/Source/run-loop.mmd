@@ -1,0 +1,9 @@
+flowchart LR
+  A["Drain messages"] --> B{"Any window with a pending frame?"}
+  B -- "yes" --> C["Wait on frame waitables, messages and the next timer"]
+  B -- "no" --> D["Wait on messages and the next timer only"]
+  C -- "a window is ready" --> E["RenderFrame for that window"]
+  C -- "message or timer" --> F["Run due timers"]
+  D --> F
+  E --> F
+  F --> A

@@ -14,9 +14,9 @@ add_executable(XenUITests
         TestWidgets.hpp
 )
 
-Xen_ConfigureTarget(XenUITests)
+XenUI_ConfigureTarget(XenUITests)
 
 target_include_directories(XenUITests SYSTEM PRIVATE "${doctest_SOURCE_DIR}")
-target_link_libraries(XenUITests PRIVATE XenUI)
+target_link_libraries(XenUITests PRIVATE XenUI::XenUI)
 
 add_test(NAME XenUITests COMMAND XenUITests)

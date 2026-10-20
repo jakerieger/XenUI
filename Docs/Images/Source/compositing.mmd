@@ -1,0 +1,9 @@
+flowchart TB
+  A["Pending damage since last frame"] --> B["Prepare live layers: continuous or dirty ones add damage"]
+  B --> C["Merge with the damage of the last two presented frames"]
+  C --> D["Snap to device-pixel rectangles"]
+  D --> E["Wait for the frame-latency waitable"]
+  E --> F["Re-rasterize stale cached layers"]
+  F --> G["For each rectangle: clip, clear, draw the layers that intersect it"]
+  G --> H["Present1 with only this frame's changed rectangles"]
+  H --> I["Push this frame's damage into the history"]

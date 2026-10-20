@@ -1,0 +1,29 @@
+flowchart TB
+  subgraph You["Your code"]
+    W["Widget structs: Row, Text, Slider, your components"]
+    S["Signals: Signal, Computed, Effect"]
+  end
+  subgraph Tree["Tree"]
+    E["Element tree: identity, state, reconciliation"]
+  end
+  subgraph Render["Render"]
+    R["RenderObject tree: layout, hit testing, paint"]
+  end
+  subgraph Graphics["Graphics"]
+    L["Layer tree: display lists, live content, transforms"]
+    C["Compositor: damage, caches, drawing"]
+  end
+  subgraph GPU["Windows and the GPU"]
+    D2D["Direct2D 1.1 and DirectWrite"]
+    D3D["Direct3D 11 for live content"]
+    SC["Flip-model swapchain, Present1 with dirty rects"]
+  end
+  W --> E
+  S -. "change marks elements dirty" .-> E
+  E --> R
+  R -- "paint records into" --> L
+  L --> C
+  C --> D2D
+  C --> D3D
+  D2D --> SC
+  D3D --> SC

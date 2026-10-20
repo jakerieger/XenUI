@@ -1,0 +1,9 @@
+flowchart TB
+  K["WM_KEYDOWN"] --> M{"Popup menu open?"}
+  M -- "yes" --> PM["Route the key to the popup"]
+  M -- "no" --> F["Focused Focus widget: OnKey"]
+  F -- "not handled" --> U["Walk up: each Focus OnKey and each Shortcuts widget"]
+  U -- "not handled" --> T{"Tab or Shift+Tab?"}
+  T -- "yes" --> MV["Move focus in paint order"]
+  T -- "no" --> WS["Window-level shortcuts"]
+  C["WM_CHAR or IME result"] --> X["Focused Focus widget: OnText, then its ancestors"]

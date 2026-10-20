@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/XenUITargets.cmake")
+
+# XenUI's release preset builds RelWithDebInfo. Map every optimized consumer configuration onto whichever optimized
+# build is installed, so a Release consumer never falls back to the Debug DLL and its debug CRT.
+set_target_properties(XenUI::XenUI PROPERTIES
+        MAP_IMPORTED_CONFIG_RELEASE "Release;RelWithDebInfo;MinSizeRel"
+        MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release;MinSizeRel"
+        MAP_IMPORTED_CONFIG_MINSIZEREL "MinSizeRel;Release;RelWithDebInfo"
+)
+
+check_required_components(XenUI)

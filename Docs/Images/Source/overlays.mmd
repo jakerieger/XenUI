@@ -1,0 +1,6 @@
+flowchart LR
+  T["Tooltip, ContextMenu, Select"] --> OC["OverlayController.ShowPopup"]
+  OC --> PP{"Native popups available?"}
+  PP -- "yes" --> PW["PopupManager opens a WS_POPUP window with its own WidgetHost, sized to content"]
+  PP -- "no, e.g. headless tests" --> IW["In-window overlay entry, positioned by RenderAnchoredPopup"]
+  PW --> R["Keys routed from the owner window; outside clicks, moves and deactivation dismiss it"]

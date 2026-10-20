@@ -1,0 +1,9 @@
+flowchart TB
+  A["WM_LBUTTONDOWN"] --> B["Hit test from the root: collect the path, deepest first"]
+  B --> C["Start a pointer session: the path and its gesture detectors"]
+  C --> D["Deliver Down to every target on the path"]
+  D --> E["Focus the deepest focusable widget on the path"]
+  E --> F{"Pointer moves past 4 DIP?"}
+  F -- "yes" --> G["Deepest detector that wants a drag wins and gets DragStart and Updates"]
+  F -- "no, released" --> H["Deepest detector that wants a tap gets OnTap, double taps are counted"]
+  G --> I["Up ends the drag"]
