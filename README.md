@@ -2,6 +2,8 @@
 
 GPU-accelerated Windows GUI framework for C++20 inspired by Flutter. It is the GUI backbone of the Xen Studio DAW.
 
+![](Docs/images/screen.png)
+
 ## Overview
 
 XenUI describes user interfaces as trees of small, immutable widget structs written with designated initializers.
