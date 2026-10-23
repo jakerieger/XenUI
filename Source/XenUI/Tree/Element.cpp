@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "XenUI/Tree/Element.hpp"
+#include "XenUI/Core/FrameStats.hpp"
 #include "XenUI/Core/SlabPool.hpp"
 
 #include <algorithm>
@@ -262,6 +263,7 @@ namespace XenUI {
     }
 
     void ComponentElement::PerformRebuild() {
+        ++FrameCounters::Current().Rebuilt;
         Rebuild(true);
     }
 

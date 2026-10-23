@@ -17,7 +17,29 @@
 #include <algorithm>
 
 namespace XenUI {
+    TextLayoutNavigator::~TextLayoutNavigator() = default;
+
     TextEditingController::TextEditingController(std::string Initial) : _Editor(std::move(Initial)) {}
+
+    bool TextEditingController::MoveVertical(int Lines, bool Extend) {
+        if (_Navigator == nullptr) { return false; }
+        const TextSelection Current = _Editor.GetSelection();
+        float Column                = _PreferredX;
+        const size_t Target         = _Navigator->GetVerticalTarget(Current.Caret, Lines, Column);
+        _Editor.SetSelection({Extend ? Current.Anchor : Target, Target});
+        Notify(false);
+        _PreferredX = Column;
+        return true;
+    }
+
+    bool TextEditingController::MoveToLineEdge(bool End, bool Extend) {
+        if (_Navigator == nullptr) { return false; }
+        const TextSelection Current = _Editor.GetSelection();
+        const size_t Target         = _Navigator->GetLineEdge(Current.Caret, End);
+        _Editor.SetSelection({Extend ? Current.Anchor : Target, Target});
+        Notify(false);
+        return true;
+    }
 
     const std::string& TextEditingController::GetText() const {
         (void)_Revision.Get();
@@ -58,7 +80,8 @@ namespace XenUI {
     }
 
     void TextEditingController::Notify(bool TextChanged) {
-        _Revision = _Revision.Peek() + 1;
+        _PreferredX = -1.0f;
+        _Revision   = _Revision.Peek() + 1;
         if (TextChanged && _OnTextChanged) { _OnTextChanged(); }
     }
 }  // namespace XenUI

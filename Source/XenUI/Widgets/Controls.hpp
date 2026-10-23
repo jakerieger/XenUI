@@ -195,6 +195,8 @@ namespace XenUI {
         std::vector<MenuItem> Items;
         std::function<void()> OnDismiss;
         float Width = 200.0f;
+        /// @brief Called with -1 or 1 when Left or Right is pressed, so a menu bar can switch menus.
+        std::function<void(int Direction)> OnSideways;
 
         class XENUI_API State : public ComponentState<MenuPanel> {
         protected:
@@ -217,7 +219,8 @@ namespace XenUI {
                                                   std::vector<MenuItem> Items,
                                                   std::function<void()> OnClosed,
                                                   const PopupStyle& Style,
-                                                  float Width = 200.0f);
+                                                  float Width                         = 200.0f,
+                                                  std::function<void(int)> OnSideways = {});
 
     /// @brief Opens a menu at the pointer on right-click.
     struct ContextMenu {

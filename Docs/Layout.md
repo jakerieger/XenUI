@@ -87,6 +87,29 @@ Container {
 `Align {.Child = Content, .WidthFactor = 1.0f}` is the way to center something vertically while keeping its natural
 width. The built-in `Button` uses it so it doesn't stretch inside a column.
 
+## Wrap and grids
+
+`Wrap` flows children left to right and starts a new run below whenever the next child would not fit, like words in
+a paragraph. Use it for tag lists and toolbars that should reflow:
+
+```cpp
+Wrap {.Spacing = 8.0f, .RunSpacing = 8.0f, .Children = std::move(Tags)}
+```
+
+`Alignment` places each run (`Start`, `Center`, `End` or `SpaceBetween`), and `CrossAlignment` aligns children of
+different heights within a run.
+
+`Grid` lays children out in equal-width columns, filling rows left to right:
+
+```cpp
+Grid {.MinColumnWidth = 120.0f, .Spacing = 8.0f, .RunSpacing = 8.0f, .RowHeight = 56.0f, .Children = std::move(Tiles)}
+Grid {.Columns = 3, .Spacing = 12.0f, .Children = std::move(Cards)}
+```
+
+- With `Columns = 0` (the default), the grid fits as many columns of at least `MinColumnWidth` as the width allows,
+  so it reflows as its container resizes. A positive `Columns` fixes the count.
+- Every cell is exactly one column wide. Each row is as tall as its tallest child, or exactly `RowHeight` when set.
+
 ## Stacking
 
 `Stack` draws its children on top of each other. Children wrapped in `Positioned` are placed by their edges or size;

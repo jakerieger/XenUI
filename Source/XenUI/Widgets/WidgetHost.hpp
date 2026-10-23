@@ -16,6 +16,7 @@
 
 #include "XenUI/Api.hpp"
 #include "XenUI/Core/Math.hpp"
+#include "XenUI/Core/FrameStats.hpp"
 #include "XenUI/Graphics/Layer.hpp"
 #include "XenUI/Input/InputDispatcher.hpp"
 #include "XenUI/Render/RenderBox.hpp"
@@ -25,7 +26,24 @@
 #include <memory>
 
 namespace XenUI {
+    class WidgetHost;
     class WindowChrome;
+
+    /// @brief Gives widgets such as DeveloperTools access to the host running their tree. Provided above every
+    /// root; read it with `Context.Find<DeveloperHandle>()`.
+    struct DeveloperHandle {
+        WidgetHost* Host = nullptr;
+    };
+
+    /// @brief Time spent and work done by the last WidgetHost::Update, in milliseconds.
+    struct UpdateTimings {
+        float BuildMs      = 0.0f;
+        float LayoutMs     = 0.0f;
+        float PaintMs      = 0.0f;
+        uint32_t Rebuilt   = 0;
+        uint32_t LaidOut   = 0;
+        uint32_t Repainted = 0;
+    };
     class PopupPresenter;
 
     /// @brief Runs the build → layout → paint pipeline for a widget tree, producing a layer tree. Windows host one
@@ -75,6 +93,14 @@ namespace XenUI {
 
         [[nodiscard]] ElementTree& GetTree() const { return *_Tree; }
 
+        /// @brief Timings and work counts of the last Update.
+        [[nodiscard]] const UpdateTimings& GetLastUpdate() const { return _LastUpdate; }
+        /// @brief Recent frames. Windows record complete frames including drawing; a host driven on its own records
+        /// each Update.
+        [[nodiscard]] FrameStatistics& GetFrameStatistics() { return _Statistics; }
+        /// @internal Windows turn this off and record whole frames themselves.
+        void SetRecordsFrames(bool Records) { _RecordsFrames = Records; }
+
         /// @brief Feeds window input into the tree. Positions are in the same space as the viewport.
         [[nodiscard]] InputDispatcher& GetInput() const { return *_Input; }
 
@@ -86,6 +112,9 @@ namespace XenUI {
         std::unique_ptr<InputDispatcher> _Input;
         std::unique_ptr<ElementTree> _Tree;
         std::function<void()> _OnUpdateRequested;
+        UpdateTimings _LastUpdate;
+        FrameStatistics _Statistics;
+        bool _RecordsFrames        = true;
         PopupPresenter* _Presenter = nullptr;
         WindowChrome* _Chrome      = nullptr;
     };

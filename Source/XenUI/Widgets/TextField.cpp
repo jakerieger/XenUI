@@ -18,10 +18,39 @@
 #include "XenUI/Widgets/Input.hpp"
 #include "XenUI/Widgets/Theme.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 namespace XenUI {
     namespace {
-        constexpr uint16_t kProcessKey = 0xE5;
+        constexpr uint16_t kProcessKey    = 0xE5;
+        constexpr float kMultilinePadding = 6.0f;
+
+        float LineHeight(const XenUI::Font& TextFont) {
+            return std::ceil(TextLayout("Ag", TextFont).GetMeasuredSize().Height);
+        }
     }  // namespace
+
+    Node TextArea::Build(BuildContext& Context) const {
+        (void)Context;
+        return TextField {
+          .Controller     = Controller,
+          .Bind           = Bind,
+          .InitialText    = InitialText,
+          .OnChanged      = OnChanged,
+          .OnSubmit       = OnSubmit,
+          .OnFocusChanged = OnFocusChanged,
+          .Placeholder    = Placeholder,
+          .TextFont       = TextFont,
+          .FocusTarget    = FocusTarget,
+          .AutoFocus      = AutoFocus,
+          .Enabled        = Enabled,
+          .MaxLength      = MaxLength,
+          .Width          = Width,
+          .Label          = Label,
+          .Lines          = std::max(Lines, 2),
+        };
+    }
 
     TextEditingController& TextField::State::GetController() {
         TextEditingController* External = GetWidget().Controller;
@@ -35,6 +64,7 @@ namespace XenUI {
 
     void TextField::State::Init() {
         const TextField& Props = GetWidget();
+        GetController().GetEditor().SetSingleLine(Props.Lines <= 1);
         if (Props.Bind != nullptr) {
             GetController().SetText(Props.Bind->Peek());
         } else if (Props.Controller == nullptr && !Props.InitialText.empty()) {
@@ -59,6 +89,7 @@ namespace XenUI {
 
     void TextField::State::Attach() {
         TextEditingController& Editing = GetController();
+        Editing.GetEditor().SetSingleLine(GetWidget().Lines <= 1);
         Editing.GetEditor().SetMaxLength(GetWidget().MaxLength);
         Editing.SetOnTextChanged([this] { TextChanged(); });
     }
@@ -129,7 +160,45 @@ namespace XenUI {
             RestartBlink();
             return true;
         };
-        const TextUnit Step = Control ? TextUnit::Word : TextUnit::Character;
+        const TextUnit Step  = Control ? TextUnit::Word : TextUnit::Character;
+        const bool Multiline = Props.Lines > 1;
+
+        if (Multiline) {
+            switch (Event.Code) {
+                case KeyCode::Up:
+                case KeyCode::Down:
+                    Editing.MoveVertical(Event.Code == KeyCode::Down ? 1 : -1, Shift);
+                    RestartBlink();
+                    return true;
+                case KeyCode::PageUp:
+                case KeyCode::PageDown: {
+                    const int Page = std::max(1, Editing.GetVisibleLineCount() - 1);
+                    Editing.MoveVertical(Event.Code == KeyCode::PageDown ? Page : -Page, Shift);
+                    RestartBlink();
+                    return true;
+                }
+                case KeyCode::Home:
+                case KeyCode::End:
+                    if (Control || !Editing.MoveToLineEdge(Event.Code == KeyCode::End, Shift)) {
+                        Editing.Edit([&](TextEditor& Editor) {
+                            Editor.Move(TextUnit::Line, Event.Code == KeyCode::End, Shift);
+                            return false;
+                        });
+                    }
+                    RestartBlink();
+                    return true;
+                case KeyCode::Enter:
+                    if (Control) {
+                        if (!Props.OnSubmit) { return false; }
+                        Editing.GetEditor().BreakUndoGroup();
+                        Props.OnSubmit(Editing.PeekText());
+                        return true;
+                    }
+                    return Run([](TextEditor& Editor) { return Editor.Insert("\n"); });
+                default:
+                    break;
+            }
+        }
 
         switch (Event.Code) {
             case KeyCode::Left:
@@ -230,12 +299,14 @@ namespace XenUI {
         }
         const bool Focused = Keyboard.HasFocus();
         if (Focused != _WasFocused) { FocusChanged(Focused); }
+        const XenUI::Font Font = Props.TextFont.value_or(Style.BodyFont);
+        const bool Multiline   = Props.Lines > 1;
 
         Node Editable = RawEditableText {
           .Controller = &Editing,
           .Style =
             {
-              .TextFont         = Props.TextFont.value_or(Style.BodyFont),
+              .TextFont         = Font,
               .Foreground       = Style.Text,
               .PlaceholderColor = Style.TextMuted,
               .SelectionColor   = Style.Accent.WithAlpha(0.35f),
@@ -246,6 +317,7 @@ namespace XenUI {
           .Enabled      = Props.Enabled,
           .CaretVisible = &_CaretOn,
           .Label        = Props.Label,
+          .Multiline    = Props.Lines > 1,
         };
         NodeList Children;
         if (!Props.Leading.IsEmpty()) { Children.push_back(Props.Leading); }
@@ -262,12 +334,15 @@ namespace XenUI {
           .Child =
             Container {
               .Width        = Props.Width,
-              .Height       = Style.ControlHeight,
-              .Padding      = EdgeInsets::Symmetric(8.0f, 0.0f),
+              .Height       = Multiline ? kMultilinePadding * 2.0f + LineHeight(Font) * static_cast<float>(Props.Lines)
+                                        : Style.ControlHeight,
+              .Padding      = EdgeInsets::Symmetric(8.0f, Multiline ? kMultilinePadding : 0.0f),
               .Background   = Style.Track,
               .CornerRadius = Style.CornerRadius,
               .BorderColor  = Focused && Props.Enabled ? Style.Accent : Style.Border,
-              .Child        = Row {.Spacing = 6.0f, .Children = std::move(Children)},
+              .Child = Row {.Spacing        = 6.0f,
+                            .CrossAlignment = Multiline ? CrossAxisAlignment::Stretch : CrossAxisAlignment::Center,
+                            .Children       = std::move(Children)},
             },
         };
     }

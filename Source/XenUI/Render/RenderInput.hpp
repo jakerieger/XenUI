@@ -196,6 +196,10 @@ namespace XenUI {
 
         [[nodiscard]] bool WantsFocusOnTap() const { return _FocusOnTap && CanRequestFocus(); }
 
+        /// @brief Whether Tab traversal stays inside this subtree while focus is in it.
+        void SetTrapsFocus(bool TrapsFocus) { _TrapsFocus = TrapsFocus; }
+        [[nodiscard]] bool TrapsFocus() const { return _TrapsFocus; }
+
         bool HandleKey(const KeyEvent& Event);
         bool HandleText(const TextEvent& Event);
 
@@ -219,6 +223,7 @@ namespace XenUI {
         bool _AutoFocusDone         = false;
         bool _FocusOnTap            = true;
         bool _CanRequestFocus       = true;
+        bool _TrapsFocus            = false;
     };
 
     class XENUI_API RenderShortcuts final : public RenderBox {

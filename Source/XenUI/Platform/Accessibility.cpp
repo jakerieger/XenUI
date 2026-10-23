@@ -79,6 +79,30 @@ namespace XenUI {
                     return UIA_MenuItemControlTypeId;
                 case SemanticsRole::ToolBar:
                     return UIA_ToolBarControlTypeId;
+                case SemanticsRole::RadioButton:
+                    return UIA_RadioButtonControlTypeId;
+                case SemanticsRole::ProgressBar:
+                    return UIA_ProgressBarControlTypeId;
+                case SemanticsRole::TabList:
+                    return UIA_TabControlTypeId;
+                case SemanticsRole::TabItem:
+                    return UIA_TabItemControlTypeId;
+                case SemanticsRole::Spinner:
+                    return UIA_SpinnerControlTypeId;
+                case SemanticsRole::Dialog:
+                    return UIA_PaneControlTypeId;
+                case SemanticsRole::MenuBar:
+                    return UIA_MenuBarControlTypeId;
+                case SemanticsRole::Tree:
+                    return UIA_TreeControlTypeId;
+                case SemanticsRole::TreeItem:
+                    return UIA_TreeItemControlTypeId;
+                case SemanticsRole::Table:
+                    return UIA_TableControlTypeId;
+                case SemanticsRole::TableRow:
+                    return UIA_DataItemControlTypeId;
+                case SemanticsRole::ColumnHeader:
+                    return UIA_HeaderItemControlTypeId;
                 default:
                     return UIA_GroupControlTypeId;
             }
@@ -521,6 +545,9 @@ namespace XenUI {
                 break;
             case UIA_IsOffscreenPropertyId:
                 SetBool(*Result, Node->IsOffscreen());
+                break;
+            case UIA_IsDialogPropertyId:
+                SetBool(*Result, Properties.Role == SemanticsRole::Dialog);
                 break;
             case UIA_IsControlElementPropertyId:
             case UIA_IsContentElementPropertyId:

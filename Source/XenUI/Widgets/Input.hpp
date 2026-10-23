@@ -111,6 +111,8 @@ namespace XenUI {
         /// @brief Receives input-method compositions while focused; see TextInputClient.
         TextInputClient* TextInput = nullptr;
         HitTestBehavior Behavior   = HitTestBehavior::DeferToChild;
+        /// @brief Keeps Tab and Shift+Tab cycling among the focusable widgets inside, as a modal dialog does.
+        bool TrapsFocus = false;
         Node Child;
 
         [[nodiscard]] std::unique_ptr<RenderFocus> CreateRenderObject() const {
@@ -125,6 +127,7 @@ namespace XenUI {
             Render.SetHandlers(OnKey, OnText);
             Render.SetTextInput(TextInput);
             Render.SetBehavior(Behavior);
+            Render.SetTrapsFocus(TrapsFocus);
         }
     };
 

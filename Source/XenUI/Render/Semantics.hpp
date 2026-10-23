@@ -50,6 +50,22 @@ namespace XenUI {
         Menu,
         MenuItem,
         ToolBar,
+        RadioButton,
+        ProgressBar,
+        /// @brief The row of tabs of a tab view.
+        TabList,
+        TabItem,
+        /// @brief A number with step controls.
+        Spinner,
+        /// @brief A modal dialog.
+        Dialog,
+        MenuBar,
+        Tree,
+        TreeItem,
+        Table,
+        /// @brief One row of a table.
+        TableRow,
+        ColumnHeader,
     };
 
     /// @brief Whether nodes with Role are announced as a single control, with their name taken from the text

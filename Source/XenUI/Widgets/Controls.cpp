@@ -73,20 +73,20 @@ namespace XenUI {
                               .Toggled  = Value,
                               .OnToggle = Toggle,
                               .Child    = Focus {
-                                   .OnKey =
+                                .OnKey =
                                   [Toggle](const KeyEvent& Event) {
                                       if (!IsActivationKey(Event)) { return false; }
                                       Toggle();
                                       return true;
                                   },
-                                   .Child =
+                                .Child =
                                   MouseRegion {
-                                       .Cursor = CursorShape::Hand,
-                                       .Child =
+                                    .Cursor = CursorShape::Hand,
+                                    .Child =
                                       GestureDetector {
-                                           .OnTap    = [Toggle](const TapEvent&) { Toggle(); },
-                                           .Behavior = HitTestBehavior::Opaque,
-                                           .Child    = Content,
+                                        .OnTap    = [Toggle](const TapEvent&) { Toggle(); },
+                                        .Behavior = HitTestBehavior::Opaque,
+                                        .Child    = Content,
                                       },
                                   },
                               }};
@@ -167,30 +167,30 @@ namespace XenUI {
           .Label    = Props.AccessibleLabel.empty() ? Props.Label : Props.AccessibleLabel,
           .OnInvoke = [this] { Activate(); },
           .Child    = Focus {
-               .Target = &_Focus,
-               .OnKey =
+            .Target = &_Focus,
+            .OnKey =
               [this](const KeyEvent& Event) {
                   if (!IsActivationKey(Event)) { return false; }
                   Activate();
                   return true;
               },
-               .Child = MouseRegion {
-                 .OnEnter = [this](const PointerEvent&) { _Hovered = true; },
-                 .OnExit =
+            .Child = MouseRegion {
+              .OnEnter = [this](const PointerEvent&) { _Hovered = true; },
+              .OnExit =
                 [this](const PointerEvent&) {
                     _Hovered = false;
                     _Pressed = false;
                 },
-                 .Cursor = CursorShape::Hand,
-                 .Child =
+              .Cursor = CursorShape::Hand,
+              .Child =
                 Listener {
-                     .OnDown =
+                  .OnDown =
                     [this](const PointerEvent& Event) {
                         if (Event.Button == MouseButton::Primary) { _Pressed = true; }
                     },
-                     .OnUp     = [this](const PointerEvent&) { _Pressed = false; },
-                     .OnCancel = [this](const PointerEvent&) { _Pressed = false; },
-                     .Child    = GestureDetector {.OnTap = [this](const TapEvent&) { Activate(); }, .Child = Face},
+                  .OnUp     = [this](const PointerEvent&) { _Pressed = false; },
+                  .OnCancel = [this](const PointerEvent&) { _Pressed = false; },
+                  .Child    = GestureDetector {.OnTap = [this](const TapEvent&) { Activate(); }, .Child = Face},
                 },
             },
           }};
@@ -216,13 +216,13 @@ namespace XenUI {
         }
         const float Amount = _Checked.Get();
         const Node Box     = Container {
-              .Width        = 16.0f,
-              .Height       = 16.0f,
-              .Background   = Interpolate(Style.Track, Style.Accent, Amount),
-              .CornerRadius = 3.0f,
-              .BorderColor  = Interpolate(Style.Border, Style.Accent, Amount),
-              .Child        = Amount > 0.01f
-                                ? Node(CustomPaint {.OnPaint =
+          .Width        = 16.0f,
+          .Height       = 16.0f,
+          .Background   = Interpolate(Style.Track, Style.Accent, Amount),
+          .CornerRadius = 3.0f,
+          .BorderColor  = Interpolate(Style.Border, Style.Accent, Amount),
+          .Child = Amount > 0.01f
+                     ? Node(CustomPaint {.OnPaint =
                                            [Mark = Style.AccentText.WithAlpha(
                                               Style.AccentText.A * Amount)](Painter& Canvas, const Size& Extent) {
                                                const Path Tick =
@@ -236,7 +236,7 @@ namespace XenUI {
                                                  Mark,
                                                  {.Width = 2.0f, .Cap = LineCap::Round, .Join = LineJoin::Round});
                                            }})
-                                : Node {},
+                     : Node {},
         };
         return ToggleRow(Style, Box, Caption, Active, SemanticsRole::CheckBox, Checked, [Checked, Changed] {
             if (Changed) { Changed(!Checked); }
@@ -258,7 +258,7 @@ namespace XenUI {
         }
         const float Position = _Position.Get();
         const Node Track     = CustomPaint {
-              .OnPaint =
+          .OnPaint =
             [Position, Style](Painter& Canvas, const Size& Extent) {
                 const float Radius = Extent.Height * 0.5f;
                 const float Blend  = std::clamp(Position, 0.0f, 1.0f);
@@ -273,8 +273,8 @@ namespace XenUI {
                                   Radius - 3.0f,
                                   Interpolate(Style.TextMuted, Style.AccentText, Blend));
             },
-              .Width  = 32.0f,
-              .Height = 18.0f,
+          .Width  = 32.0f,
+          .Height = 18.0f,
         };
         return ToggleRow(Style, Track, Caption, Active, SemanticsRole::Switch, On, [On, Changed] {
             if (Changed) { Changed(!On); }
@@ -424,23 +424,23 @@ namespace XenUI {
         Rect Anchor = GetGlobalBounds(GetElement());
         Anchor      = {Anchor.X, Anchor.Y, Anchor.Width, Anchor.Height + 4.0f};
         _Entry      = _Overlay->ShowPopup({
-               .Anchor = Anchor,
-               .Kind   = PopupKind::Tooltip,
-               .Builder =
+          .Anchor = Anchor,
+          .Kind   = PopupKind::Tooltip,
+          .Builder =
             [Message = GetWidget().Message, Style = _Style] {
                 const Theme& Palette = Style.Palette;
                 return Style.Wrap(Container {
-                       .Padding      = EdgeInsets::Symmetric(8.0f, 4.0f),
-                       .Background   = Palette.SurfaceRaised,
-                       .CornerRadius = Palette.CornerRadius,
-                       .BorderColor  = Palette.Border,
-                       .Child        = Text {.Content  = Message,
-                                             .Font     = Palette.SmallFont,
-                                             .Color    = Palette.Text,
-                                             .Wrapping = TextWrapping::NoWrap},
+                  .Padding      = EdgeInsets::Symmetric(8.0f, 4.0f),
+                  .Background   = Palette.SurfaceRaised,
+                  .CornerRadius = Palette.CornerRadius,
+                  .BorderColor  = Palette.Border,
+                  .Child        = Text {.Content  = Message,
+                                        .Font     = Palette.SmallFont,
+                                        .Color    = Palette.Text,
+                                        .Wrapping = TextWrapping::NoWrap},
                 });
             },
-               .Background = _Style.Palette.SurfaceRaised,
+          .Background = _Style.Palette.SurfaceRaised,
         });
     }
 
@@ -467,26 +467,26 @@ namespace XenUI {
             const bool Active     = Item.Enabled && Index == Highlighted;
             const Color LabelTint = !Item.Enabled ? Style.TextDisabled : (Active ? Style.AccentText : Style.Text);
             const Node Content    = Container {
-                 .Height       = kMenuRowHeight,
-                 .Padding      = EdgeInsets::Symmetric(8.0f, 0.0f),
-                 .Background   = Active ? Style.Accent : Style.Accent.WithAlpha(0.0f),
-                 .CornerRadius = 3.0f,
-                 .Child =
+              .Height       = kMenuRowHeight,
+              .Padding      = EdgeInsets::Symmetric(8.0f, 0.0f),
+              .Background   = Active ? Style.Accent : Style.Accent.WithAlpha(0.0f),
+              .CornerRadius = 3.0f,
+              .Child =
                 Row {
-                     .Spacing = 8.0f,
-                     .Children =
-                       {
+                  .Spacing = 8.0f,
+                  .Children =
+                    {
                       SizedBox {.Width = 12.0f,
-                                   .Child = Item.Checked
-                                              ? Node(Text {.Content = "✓", .Font = Style.SmallFont, .Color = LabelTint})
-                                              : Node {}},
+                                .Child = Item.Checked
+                                           ? Node(Text {.Content = "✓", .Font = Style.SmallFont, .Color = LabelTint})
+                                           : Node {}},
                       Expanded {.Child = Text {.Content  = Item.Label,
-                                                  .Font     = Style.BodyFont,
-                                                  .Color    = LabelTint,
-                                                  .Wrapping = TextWrapping::NoWrap}},
+                                               .Font     = Style.BodyFont,
+                                               .Color    = LabelTint,
+                                               .Wrapping = TextWrapping::NoWrap}},
                       Text {.Content = Item.ShortcutText,
-                               .Font    = Style.SmallFont,
-                               .Color   = Active ? Style.AccentText : Style.TextMuted},
+                            .Font    = Style.SmallFont,
+                            .Color   = Active ? Style.AccentText : Style.TextMuted},
                     },
                 },
             };
@@ -540,6 +540,13 @@ namespace XenUI {
                                               Dismiss();
                                           }
                                           return true;
+                                      case KeyCode::Left:
+                                      case KeyCode::Right:
+                                          if (const std::function<void(int)> Sideways = GetWidget().OnSideways) {
+                                              Sideways(Event.Code == KeyCode::Left ? -1 : 1);
+                                              return true;
+                                          }
+                                          return false;
                                       default:
                                           return false;
                                   }
@@ -592,14 +599,16 @@ namespace XenUI {
                           std::vector<MenuItem> Items,
                           std::function<void()> OnClosed,
                           const PopupStyle& Style,
-                          float Width) {
+                          float Width,
+                          std::function<void(int)> OnSideways) {
         return Overlay.ShowPopup({
           .Anchor    = Anchor,
           .Placement = Placement,
           .Kind      = PopupKind::Menu,
           .Builder =
-            [Items = std::move(Items), OnClosed, Width, Style] {
-                return Style.Wrap(MenuPanel {.Items = Items, .OnDismiss = OnClosed, .Width = Width});
+            [Items = std::move(Items), OnClosed, Width, Style, OnSideways] {
+                return Style.Wrap(
+                  MenuPanel {.Items = Items, .OnDismiss = OnClosed, .Width = Width, .OnSideways = OnSideways});
             },
           .OnDismissed = OnClosed,
           .Background  = Style.Palette.SurfaceRaised,

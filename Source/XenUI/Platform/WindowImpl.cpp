@@ -18,6 +18,7 @@
 #include "XenUI/Widgets/WindowChrome.hpp"
 #include "XenUI/Widgets/Theme.hpp"
 #include "XenUI/Core/Animation.hpp"
+#include "XenUI/Core/Timer.hpp"
 
 #include <windowsx.h>
 
@@ -32,6 +33,7 @@
 #include <dwmapi.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <mutex>
 #include <utility>
@@ -177,6 +179,7 @@ namespace XenUI {
     void WindowImpl::SetContent(const Node& Root) {
         if (!_Content) {
             _Content = std::make_unique<WidgetHost>();
+            _Content->SetRecordsFrames(false);
             _Content->SetOnUpdateRequested([this] { RequestFrame(); });
             _Content->GetInput().SetHost(this);
             if (_IsPopup) {
@@ -269,11 +272,37 @@ namespace XenUI {
     void WindowImpl::RenderFrame() {
         if (!_SwapChain) { return; }
 
+        const double Started  = TimerQueue::Get().Now();
+        const auto CallbackAt = std::chrono::steady_clock::now();
         RunFrameCallback();
+        const float CallbackMs =
+          std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - CallbackAt).count();
         UpdateContent();
         try {
             _Compositor.Render(*_SwapChain, AppContext::Get().GetGraphicsDevice(), _Background);
-        } catch (const DeviceLostError&) { AppContext::Get().HandleDeviceLost(); }
+        } catch (const DeviceLostError&) {
+            AppContext::Get().HandleDeviceLost();
+            return;
+        }
+
+        if (_Content) {
+            const UpdateTimings& Update        = _Content->GetLastUpdate();
+            const Compositor::Timings& Drawing = _Compositor.GetLastTimings();
+            _Content->GetFrameStatistics().Record({
+              .Time       = Started,
+              .CallbackMs = CallbackMs,
+              .BuildMs    = Update.BuildMs,
+              .LayoutMs   = Update.LayoutMs,
+              .PaintMs    = Update.PaintMs,
+              .DrawMs     = Drawing.DrawMs,
+              .PresentMs  = Drawing.PresentMs,
+              .WaitMs     = Drawing.WaitMs,
+              .Rebuilt    = Update.Rebuilt,
+              .LaidOut    = Update.LaidOut,
+              .Repainted  = Update.Repainted,
+              .Damage     = Drawing.Damage,
+            });
+        }
     }
 
     void WindowImpl::ReleaseSwapChain() {

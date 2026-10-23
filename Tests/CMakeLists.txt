@@ -11,6 +11,8 @@ add_executable(XenUITests
         DragDropTests.cpp
         AnimationTests.cpp
         AccessibilityTests.cpp
+        CatalogTests.cpp
+        DeveloperToolsTests.cpp
         TestWidgets.hpp
 )
 

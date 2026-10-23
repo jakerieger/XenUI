@@ -40,6 +40,10 @@ namespace XenUI {
         /// @brief Scrolls the minimum distance needed to bring [Start, End) into view.
         void EnsureVisible(float Start, float End);
 
+        /// @brief Like EnsureVisible, for content that is about to change size: the offset is clamped to the new
+        /// range at the next layout instead of now.
+        void RequestVisible(float Start, float End);
+
         /// @brief Sets the offset without clamping it, for when the content is about to change size (for example,
         /// while zooming). The next layout clamps it to the new range.
         void RequestOffset(float Offset) { _Offset = std::max(Offset, 0.0f); }

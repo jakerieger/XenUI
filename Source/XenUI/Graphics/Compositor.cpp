@@ -24,6 +24,7 @@
 #include "XenUI/Platform/WindowImpl.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <iterator>
 
@@ -94,7 +95,13 @@ namespace XenUI {
         const std::vector<RECT> ChangedPixels =
           Changed.IsFull() ? std::vector<RECT> {} : ToPixelRects(Changed, Target.GetWidth(), Target.GetHeight());
 
+        using Clock        = std::chrono::steady_clock;
+        const auto Elapsed = [](Clock::time_point From, Clock::time_point To) {
+            return std::chrono::duration<float, std::milli>(To - From).count();
+        };
+        const auto WaitStart = Clock::now();
         Target.WaitForFrame();
+        const auto DrawStart = Clock::now();
 
         if (_Root) {
             UpdateCaches(_Root->GetImpl(), Matrix3x2::Identity());
@@ -117,7 +124,21 @@ namespace XenUI {
         }
         CheckDeviceResult(_Context->EndDraw(), "ID2D1DeviceContext::EndDraw");
 
+        const auto PresentStart      = Clock::now();
         const bool PresentedNormally = Target.Present(ChangedPixels);
+        const auto PresentEnd        = Clock::now();
+
+        float Area = 0.0f;
+        for (const RECT& Pixels : ChangedPixels) {
+            Area += static_cast<float>((Pixels.right - Pixels.left) * (Pixels.bottom - Pixels.top));
+        }
+        const float WindowArea = static_cast<float>(Target.GetWidth()) * static_cast<float>(Target.GetHeight());
+        _LastTimings           = {
+          .WaitMs    = Elapsed(WaitStart, DrawStart),
+          .DrawMs    = Elapsed(DrawStart, PresentStart),
+          .PresentMs = Elapsed(PresentStart, PresentEnd),
+          .Damage    = Changed.IsFull() || WindowArea <= 0.0f ? 1.0f : std::min(1.0f, Area / WindowArea),
+        };
 
         ++_PlacementFrame;
         if (_Root) { PlaceNativeAnchors(_Root->GetImpl(), Matrix3x2::Identity(), std::nullopt); }
@@ -138,7 +159,7 @@ namespace XenUI {
         if (LiveState* Live = Node.GetLive()) {
             const LiveSurface& Surface = Live->Surface;
             const bool Stale           = !Surface.Bitmap || Surface.Generation != _Device->GetGeneration() ||
-                               Surface.Scale != World.GetMaxScale() * _DpiScale;
+                                         Surface.Scale != World.GetMaxScale() * _DpiScale;
             if (Live->Continuous || Live->Dirty || Stale) {
                 Live->Dirty = true;
                 AddDamage(World.TransformRect({0.0f, 0.0f, Live->Extent.Width, Live->Extent.Height}));

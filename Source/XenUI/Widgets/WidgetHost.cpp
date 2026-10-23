@@ -17,6 +17,9 @@
 #include "XenUI/Widgets/WindowChrome.hpp"
 #include "XenUI/Core/Error.hpp"
 #include "XenUI/Widgets/Overlay.hpp"
+#include "XenUI/Core/Timer.hpp"
+
+#include <chrono>
 
 namespace XenUI {
     WidgetHost::WidgetHost()
@@ -42,9 +45,13 @@ namespace XenUI {
     }
 
     void WidgetHost::SetRoot(const Node& Root) {
-        _Tree->SetRoot(Provide<WindowChromeHandle> {
-          .Value = {_Chrome},
-          .Child = OverlayHost {.Child = Root, .Expand = !_View->IsSizedToContent(), .Presenter = _Presenter},
+        _Tree->SetRoot(Provide<DeveloperHandle> {
+          .Value = {this},
+          .Child =
+            Provide<WindowChromeHandle> {
+              .Value = {_Chrome},
+              .Child = OverlayHost {.Child = Root, .Expand = !_View->IsSizedToContent(), .Presenter = _Presenter},
+            },
         });
         RequestUpdate();
     }
@@ -58,10 +65,42 @@ namespace XenUI {
     }
 
     void WidgetHost::Update() {
+        using Clock        = std::chrono::steady_clock;
+        const auto Elapsed = [](Clock::time_point From, Clock::time_point To) {
+            return std::chrono::duration<float, std::milli>(To - From).count();
+        };
+        const double Started    = TimerQueue::Get().Now();
+        FrameCounters& Counters = FrameCounters::Current();
+        Counters                = {};
+
+        const Clock::time_point Start = Clock::now();
         _Tree->Build();
+        const Clock::time_point Built = Clock::now();
         _Pipeline.FlushLayout();
+        const Clock::time_point LaidOut = Clock::now();
         _Pipeline.FlushPaint();
+        const Clock::time_point Painted = Clock::now();
         _Input->RefreshHover();
+
+        _LastUpdate = {
+          .BuildMs   = Elapsed(Start, Built),
+          .LayoutMs  = Elapsed(Built, LaidOut),
+          .PaintMs   = Elapsed(LaidOut, Painted),
+          .Rebuilt   = Counters.Rebuilt,
+          .LaidOut   = Counters.LaidOut,
+          .Repainted = Counters.Repainted,
+        };
+        if (_RecordsFrames) {
+            _Statistics.Record({
+              .Time      = Started,
+              .BuildMs   = _LastUpdate.BuildMs,
+              .LayoutMs  = _LastUpdate.LayoutMs,
+              .PaintMs   = _LastUpdate.PaintMs,
+              .Rebuilt   = _LastUpdate.Rebuilt,
+              .LaidOut   = _LastUpdate.LaidOut,
+              .Repainted = _LastUpdate.Repainted,
+            });
+        }
     }
 
     bool WidgetHost::NeedsUpdate() const {

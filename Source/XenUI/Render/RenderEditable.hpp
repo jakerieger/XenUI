@@ -33,13 +33,17 @@ namespace XenUI {
         std::string Placeholder;
     };
 
-    /// @brief A single line of editable text: draws the text, selection, composition and caret of a controller and
-    /// turns presses and drags into caret placement and selection. Scrolls horizontally to keep the caret in view.
-    /// Observes the controller directly, so typing and caret blinking repaint without rebuilding widgets.
+    /// @brief Editable text: draws the text, selection, composition and caret of a controller and turns presses
+    /// and drags into caret placement and selection. A single line scrolls horizontally to keep the caret in view;
+    /// in multi-line mode the text wraps to the width and scrolls vertically, also with the wheel. Observes the
+    /// controller directly, so typing and caret blinking repaint without rebuilding widgets.
     class XENUI_API RenderEditableText final : public RenderInteractive,
-                                               public Observer {
+                                               public Observer,
+                                               public TextLayoutNavigator {
     public:
         static constexpr float kCaretWidth = 1.5f;
+
+        ~RenderEditableText() override;
 
         void SetController(TextEditingController* Controller);
         /// @brief The name screen readers announce; the placeholder when empty.
@@ -49,6 +53,8 @@ namespace XenUI {
         void SetFocused(bool Focused);
         void SetEnabled(bool Enabled);
         void SetCaretVisible(const Signal<bool>* Visible);
+        /// @brief Wraps text to the width and scrolls vertically instead of horizontally.
+        void SetMultiline(bool Multiline);
 
         [[nodiscard]] bool IsRepaintBoundary() const override { return true; }
         bool HitTest(HitTestResult& Result, const Vec2& Position) override;
@@ -60,13 +66,21 @@ namespace XenUI {
         /// @brief The text offset under a point in this box's coordinates.
         [[nodiscard]] size_t GetOffsetAt(const Vec2& Position) const;
         [[nodiscard]] float GetScrollOffset() const { return _Scroll; }
+        [[nodiscard]] float GetVerticalScrollOffset() const { return _ScrollY; }
+
+        [[nodiscard]] size_t GetVerticalTarget(size_t Offset, int Lines, float& PreferredX) override;
+        [[nodiscard]] size_t GetLineEdge(size_t Offset, bool End) override;
+        [[nodiscard]] int GetVisibleLineCount() const override;
 
     protected:
         void PerformLayout() override;
 
     private:
         void UpdateLayout(const std::string& Display);
+        [[nodiscard]] std::string GetDisplay() const;
         [[nodiscard]] float GetLineHeight() const;
+        [[nodiscard]] float GetWrapWidth() const;
+        [[nodiscard]] float GetMaxScrollY() const;
 
         TextEditingController* _Controller = nullptr;
         std::string _AccessibleLabel;
@@ -74,14 +88,19 @@ namespace XenUI {
         const Signal<bool>* _CaretVisible = nullptr;
         bool _Focused                     = false;
         bool _Enabled                     = true;
+        bool _Multiline                   = false;
 
         TextLayout _Layout;
         std::string _LayoutText;
-        bool _LayoutValid = false;
+        bool _LayoutValid  = false;
+        float _LayoutWidth = -1.0f;
         TextLayout _Placeholder;
         mutable float _LineHeight = -1.0f;
         float _Scroll             = 0.0f;
+        float _ScrollY            = 0.0f;
         float _TextTop            = 0.0f;
+        size_t _ShownCaret        = static_cast<size_t>(-1);
+        std::string _ShownText;
 
         bool _Selecting       = false;
         bool _SelectingWords  = false;

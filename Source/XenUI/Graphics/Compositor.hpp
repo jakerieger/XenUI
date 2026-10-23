@@ -37,6 +37,14 @@ namespace XenUI {
     /// buffers so that each back buffer is brought up to date with everything that changed since it was last shown.
     class Compositor {
     public:
+        struct Timings {
+            float WaitMs    = 0.0f;
+            float DrawMs    = 0.0f;
+            float PresentMs = 0.0f;
+            /// @brief Fraction of the window that changed, from 0 to 1.
+            float Damage = 0.0f;
+        };
+
         explicit Compositor(WindowImpl& Owner);
         ~Compositor();
 
@@ -44,6 +52,8 @@ namespace XenUI {
         Compositor& operator=(const Compositor&) = delete;
 
         void SetRoot(std::shared_ptr<Layer> Root);
+        /// @brief Timings of the last Render.
+        [[nodiscard]] const Timings& GetLastTimings() const { return _LastTimings; }
         [[nodiscard]] const std::shared_ptr<Layer>& GetRoot() const { return _Root; }
 
         /// @param Area Window-space rectangle in device-independent pixels.
@@ -90,5 +100,6 @@ namespace XenUI {
         ID2D1DeviceContext* _Context = nullptr;
         GraphicsDevice* _Device      = nullptr;
         float _DpiScale              = 1.0f;
+        Timings _LastTimings;
     };
 }  // namespace XenUI

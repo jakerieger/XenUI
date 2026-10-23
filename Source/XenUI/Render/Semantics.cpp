@@ -84,6 +84,13 @@ namespace XenUI {
             case SemanticsRole::ComboBox:
             case SemanticsRole::ListItem:
             case SemanticsRole::MenuItem:
+            case SemanticsRole::RadioButton:
+            case SemanticsRole::ProgressBar:
+            case SemanticsRole::TabItem:
+            case SemanticsRole::Spinner:
+            case SemanticsRole::TreeItem:
+            case SemanticsRole::TableRow:
+            case SemanticsRole::ColumnHeader:
                 return true;
             default:
                 return false;

@@ -82,10 +82,23 @@ namespace XenUI {
         return std::nullopt;
     }
 
+    uint64_t InputDispatcher::AddKeyInterceptor(std::function<bool(const KeyEvent&)> Interceptor) {
+        const uint64_t Id = _NextInterceptor++;
+        _Interceptors.emplace_back(Id, std::move(Interceptor));
+        return Id;
+    }
+
+    void InputDispatcher::RemoveKeyInterceptor(uint64_t Id) {
+        std::erase_if(_Interceptors, [Id](const auto& Entry) { return Entry.first == Id; });
+    }
+
     bool InputDispatcher::HandleKey(const KeyEvent& Event) {
         if (_DataDrag && Event.Pressed && Event.Code == KeyCode::Escape) {
             CancelDataDrag();
             return true;
+        }
+        for (const auto& [Id, Interceptor] : std::vector(_Interceptors)) {
+            if (Interceptor(Event)) { return true; }
         }
         if (_Focus.DispatchKey(Event)) { return true; }
 
@@ -405,10 +418,10 @@ namespace XenUI {
         Active.DataDrag    = true;
         Active.TapPossible = false;
         _DataDrag          = ActiveDataDrag {
-                   .PointerId = PointerId,
-                   .Source    = Source,
-                   .Data      = std::make_shared<DragData>(std::move(*Data)),
-                   .Allowed   = Callbacks.Allowed,
+          .PointerId = PointerId,
+          .Source    = Source,
+          .Data      = std::make_shared<DragData>(std::move(*Data)),
+          .Allowed   = Callbacks.Allowed,
         };
         MoveDataDrag(Event);
         return true;

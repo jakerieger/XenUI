@@ -42,7 +42,7 @@ re-lays it out at the new scale.
 
 A window renders a frame only when something changed: a rebuild, a repaint, an animation or a `LiveView`. While
 nothing changes, the run loop sleeps. `Window::SetShowDamageRegions(true)` briefly tints every repainted area, which
-helps find widgets that repaint more than they should.
+helps find widgets that repaint more than they should. [Developer tools](DeveloperTools.md) adds a frame stats overlay and a widget inspector.
 
 ## Custom title bars
 

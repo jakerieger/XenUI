@@ -49,6 +49,8 @@ add_library(XenUI SHARED
         Core/SlabPool.cpp
         Core/Timer.hpp
         Core/Timer.cpp
+        Core/FrameStats.hpp
+        Core/FrameStats.cpp
         Graphics/Brush.hpp
         Graphics/Compositor.hpp
         Graphics/Compositor.cpp
@@ -154,6 +156,24 @@ add_library(XenUI SHARED
         Widgets/Basic.hpp
         Widgets/Controls.hpp
         Widgets/Controls.cpp
+        Widgets/Radio.hpp
+        Widgets/Radio.cpp
+        Widgets/Progress.hpp
+        Widgets/Progress.cpp
+        Widgets/Tabs.hpp
+        Widgets/Tabs.cpp
+        Widgets/NumberField.hpp
+        Widgets/NumberField.cpp
+        Widgets/Dialog.hpp
+        Widgets/Dialog.cpp
+        Widgets/MenuBar.hpp
+        Widgets/MenuBar.cpp
+        Widgets/TreeView.hpp
+        Widgets/TreeView.cpp
+        Widgets/Table.hpp
+        Widgets/Table.cpp
+        Widgets/DeveloperTools.hpp
+        Widgets/DeveloperTools.cpp
         Widgets/DragDrop.hpp
         Widgets/DragDrop.cpp
         Widgets/Input.hpp

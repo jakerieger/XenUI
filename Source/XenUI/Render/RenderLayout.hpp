@@ -135,6 +135,52 @@ namespace XenUI {
         StackFit _Fit               = StackFit::Loose;
     };
 
+    enum class WrapAlignment : uint8_t { Start, Center, End, SpaceBetween };
+
+    /// @brief Lays children out left to right, starting a new run below whenever the next child would not fit.
+    class XENUI_API RenderWrap final : public RenderBox {
+    public:
+        void SetSpacing(float Spacing);
+        void SetRunSpacing(float RunSpacing);
+        void SetAlignment(WrapAlignment Alignment);
+        void SetCrossAlignment(CrossAxisAlignment Alignment);
+
+    protected:
+        void PerformLayout() override;
+
+    private:
+        float _Spacing                     = 0.0f;
+        float _RunSpacing                  = 0.0f;
+        WrapAlignment _Alignment           = WrapAlignment::Start;
+        CrossAxisAlignment _CrossAlignment = CrossAxisAlignment::Start;
+    };
+
+    /// @brief Lays children out in equal-width columns, row by row. Each row is as tall as its tallest child, or
+    /// RowHeight when set.
+    class XENUI_API RenderGrid final : public RenderBox {
+    public:
+        struct Configuration {
+            int Columns          = 0;
+            float MinColumnWidth = 120.0f;
+            float Spacing        = 0.0f;
+            float RunSpacing     = 0.0f;
+            std::optional<float> RowHeight;
+
+            bool operator==(const Configuration&) const = default;
+        };
+
+        void SetConfiguration(const Configuration& NewConfiguration);
+        /// @brief The number of columns used by the last layout.
+        [[nodiscard]] int GetColumnCount() const { return _ColumnCount; }
+
+    protected:
+        void PerformLayout() override;
+
+    private:
+        Configuration _Configuration;
+        int _ColumnCount = 1;
+    };
+
     class XENUI_API RenderRepaintBoundary final : public RenderBox {
     public:
         /// @brief Rasterizes the subtree into a cached bitmap, reused while nothing inside it changes.

@@ -70,6 +70,7 @@ Focus {
 - **Tab and Shift+Tab move focus** between focusable widgets in paint order.
 - **Clicking focuses** a `Focus` widget unless `FocusOnTap = false`. `AutoFocus = true` focuses it when it appears,
   and `CanRequestFocus = false` makes it skip focus altogether.
+- **`TrapsFocus = true` keeps Tab and Shift+Tab inside the widget** while focus is in it, as dialogs do.
 
 To read or move focus from code, own a `FocusNode` in your state and pass it as `Target`:
 

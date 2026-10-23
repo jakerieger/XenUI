@@ -189,6 +189,52 @@ namespace XenUI {
         }
     };
 
+    /// @brief Lays children out left to right and starts a new run below when the next child does not fit, like
+    /// words in a paragraph. Suited to tag lists and toolbars that reflow.
+    struct Wrap {
+        float Spacing                     = 0.0f;
+        float RunSpacing                  = 0.0f;
+        WrapAlignment Alignment           = WrapAlignment::Start;
+        CrossAxisAlignment CrossAlignment = CrossAxisAlignment::Start;
+        NodeList Children;
+
+        [[nodiscard]] std::unique_ptr<RenderWrap> CreateRenderObject() const {
+            auto Result = std::make_unique<RenderWrap>();
+            UpdateRenderObject(*Result);
+            return Result;
+        }
+
+        void UpdateRenderObject(RenderWrap& Target) const {
+            Target.SetSpacing(Spacing);
+            Target.SetRunSpacing(RunSpacing);
+            Target.SetAlignment(Alignment);
+            Target.SetCrossAlignment(CrossAlignment);
+        }
+    };
+
+    /// @brief Lays children out in equal-width columns, filling rows left to right. Set Columns for a fixed count,
+    /// or leave it 0 to fit as many columns of at least MinColumnWidth as the width allows, so the grid reflows as
+    /// its container resizes.
+    struct Grid {
+        int Columns          = 0;
+        float MinColumnWidth = 120.0f;
+        float Spacing        = 0.0f;
+        float RunSpacing     = 0.0f;
+        /// @brief Fixed row height. Without it, each row is as tall as its tallest child.
+        std::optional<float> RowHeight;
+        NodeList Children;
+
+        [[nodiscard]] std::unique_ptr<RenderGrid> CreateRenderObject() const {
+            auto Result = std::make_unique<RenderGrid>();
+            UpdateRenderObject(*Result);
+            return Result;
+        }
+
+        void UpdateRenderObject(RenderGrid& Target) const {
+            Target.SetConfiguration({Columns, MinColumnWidth, Spacing, RunSpacing, RowHeight});
+        }
+    };
+
     struct Stack {
         Alignment DefaultAlignment = Alignment::TopLeft();
         StackFit Fit               = StackFit::Loose;

@@ -34,6 +34,7 @@ namespace XenUI {
         bool Enabled                     = true;
         const Signal<bool>* CaretVisible = nullptr;
         std::string Label;
+        bool Multiline = false;
 
         [[nodiscard]] std::unique_ptr<RenderEditableText> CreateRenderObject() const {
             auto Result = std::make_unique<RenderEditableText>();
@@ -48,6 +49,7 @@ namespace XenUI {
             Target.SetEnabled(Enabled);
             Target.SetCaretVisible(CaretVisible);
             Target.SetAccessibleLabel(Label);
+            Target.SetMultiline(Multiline);
         }
     };
 
@@ -80,6 +82,10 @@ namespace XenUI {
         Node Leading;
         /// @brief The name screen readers announce; the placeholder when empty.
         std::string Label;
+        /// @brief Visible lines. More than one makes a multi-line editor: text wraps and scrolls vertically, Enter
+        /// inserts a line break, Ctrl+Enter calls OnSubmit, and Up, Down, Home, End, Page Up and Page Down move by
+        /// visual lines (Ctrl+Home and Ctrl+End go to the start and end of the text).
+        int Lines = 1;
 
         class XENUI_API State : public ComponentState<TextField> {
         public:
@@ -111,5 +117,31 @@ namespace XenUI {
             bool _WasFocused = false;
             bool _Syncing    = false;
         };
+    };
+
+    /// @brief A multi-line text editor: a TextField that shows several lines, wraps text and scrolls vertically.
+    /// Enter inserts a line break and Ctrl+Enter calls OnSubmit.
+    struct XENUI_API TextArea {
+        TextEditingController* Controller = nullptr;
+        Signal<std::string>* Bind         = nullptr;
+        std::string InitialText;
+        std::function<void(const std::string&)> OnChanged;
+        /// @brief Called on Ctrl+Enter.
+        std::function<void(const std::string&)> OnSubmit;
+        std::function<void(bool Focused)> OnFocusChanged;
+        std::string Placeholder;
+        std::optional<XenUI::Font> TextFont;
+        FocusNode* FocusTarget = nullptr;
+        bool AutoFocus         = false;
+        bool Enabled           = true;
+        /// @brief Limit in characters; 0 for none.
+        size_t MaxLength = 0;
+        /// @brief Visible lines, which set the height.
+        int Lines = 5;
+        std::optional<float> Width;
+        /// @brief The name screen readers announce; the placeholder when empty.
+        std::string Label;
+
+        [[nodiscard]] Node Build(BuildContext& Context) const;
     };
 }  // namespace XenUI

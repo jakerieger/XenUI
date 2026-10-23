@@ -251,6 +251,146 @@ namespace XenUI {
         }
     }
 
+    void RenderWrap::SetSpacing(float Spacing) {
+        if (Spacing == _Spacing) { return; }
+        _Spacing = Spacing;
+        MarkNeedsLayout();
+    }
+
+    void RenderWrap::SetRunSpacing(float RunSpacing) {
+        if (RunSpacing == _RunSpacing) { return; }
+        _RunSpacing = RunSpacing;
+        MarkNeedsLayout();
+    }
+
+    void RenderWrap::SetAlignment(WrapAlignment Alignment) {
+        if (Alignment == _Alignment) { return; }
+        _Alignment = Alignment;
+        MarkNeedsLayout();
+    }
+
+    void RenderWrap::SetCrossAlignment(CrossAxisAlignment Alignment) {
+        if (Alignment == _CrossAlignment) { return; }
+        _CrossAlignment = Alignment;
+        MarkNeedsLayout();
+    }
+
+    void RenderWrap::PerformLayout() {
+        const BoxConstraints& Constraints = GetConstraints();
+        const float Limit                 = Constraints.MaxWidth;
+        const BoxConstraints ChildConstraints {0.0f, Limit, 0.0f, kUnbounded};
+
+        struct Run {
+            size_t First = 0;
+            size_t Count = 0;
+            float Width  = 0.0f;
+            float Height = 0.0f;
+        };
+        std::vector<Run> Runs;
+        Run Current;
+        for (size_t i = 0; i < GetChildCount(); ++i) {
+            RenderBox& Child = GetChild(i);
+            Child.Layout(ChildConstraints, true);
+            const Size& Extent = Child.GetSize();
+            const float Needed = Current.Count == 0 ? Extent.Width : Current.Width + _Spacing + Extent.Width;
+            if (Current.Count > 0 && Needed > Limit) {
+                Runs.push_back(Current);
+                Current = Run {.First = i};
+            }
+            Current.Width  = Current.Count == 0 ? Extent.Width : Current.Width + _Spacing + Extent.Width;
+            Current.Height = std::max(Current.Height, Extent.Height);
+            ++Current.Count;
+        }
+        if (Current.Count > 0) { Runs.push_back(Current); }
+
+        float ContentWidth  = 0.0f;
+        float ContentHeight = 0.0f;
+        for (const Run& Line : Runs) {
+            ContentWidth = std::max(ContentWidth, Line.Width);
+            ContentHeight += Line.Height;
+        }
+        if (Runs.size() > 1) { ContentHeight += _RunSpacing * static_cast<float>(Runs.size() - 1); }
+
+        const Size Final = Constraints.Constrain(
+          {std::isfinite(Limit) && _Alignment != WrapAlignment::Start ? Limit : ContentWidth, ContentHeight});
+        SetSize(Final);
+
+        float Y = 0.0f;
+        for (const Run& Line : Runs) {
+            const float Free = std::max(0.0f, Final.Width - Line.Width);
+            float X          = 0.0f;
+            float Gap        = _Spacing;
+            switch (_Alignment) {
+                case WrapAlignment::Center:
+                    X = Free * 0.5f;
+                    break;
+                case WrapAlignment::End:
+                    X = Free;
+                    break;
+                case WrapAlignment::SpaceBetween:
+                    if (Line.Count > 1) { Gap += Free / static_cast<float>(Line.Count - 1); }
+                    break;
+                default:
+                    break;
+            }
+            for (size_t i = Line.First; i < Line.First + Line.Count; ++i) {
+                RenderBox& Child   = GetChild(i);
+                const Size& Extent = Child.GetSize();
+                float Offset       = 0.0f;
+                if (_CrossAlignment == CrossAxisAlignment::Center) { Offset = (Line.Height - Extent.Height) * 0.5f; }
+                if (_CrossAlignment == CrossAxisAlignment::End) { Offset = Line.Height - Extent.Height; }
+                Child.SetOffset({X, Y + Offset});
+                X += Extent.Width + Gap;
+            }
+            Y += Line.Height + _RunSpacing;
+        }
+    }
+
+    void RenderGrid::SetConfiguration(const Configuration& NewConfiguration) {
+        if (NewConfiguration == _Configuration) { return; }
+        _Configuration = NewConfiguration;
+        MarkNeedsLayout();
+    }
+
+    void RenderGrid::PerformLayout() {
+        const BoxConstraints& Constraints = GetConstraints();
+        const Configuration& Grid         = _Configuration;
+        const float Spacing               = std::max(0.0f, Grid.Spacing);
+        const float MinColumn             = std::max(1.0f, Grid.MinColumnWidth);
+
+        float Available = Constraints.MaxWidth;
+        int Columns     = Grid.Columns;
+        if (!std::isfinite(Available)) {
+            Columns   = std::max(Columns, 1);
+            Available = MinColumn * static_cast<float>(Columns) + Spacing * static_cast<float>(Columns - 1);
+        } else if (Columns <= 0) {
+            Columns = std::max(1, static_cast<int>(std::floor((Available + Spacing) / (MinColumn + Spacing))));
+        }
+        _ColumnCount = Columns;
+
+        const float CellWidth =
+          std::max(0.0f, (Available - Spacing * static_cast<float>(Columns - 1)) / static_cast<float>(Columns));
+        const BoxConstraints CellConstraints = Grid.RowHeight ? BoxConstraints::Tight({CellWidth, *Grid.RowHeight})
+                                                              : BoxConstraints {CellWidth, CellWidth, 0.0f, kUnbounded};
+
+        const size_t Count = GetChildCount();
+        float Y            = 0.0f;
+        for (size_t RowStart = 0; RowStart < Count; RowStart += static_cast<size_t>(Columns)) {
+            const size_t RowEnd = std::min(Count, RowStart + static_cast<size_t>(Columns));
+            float RowHeight     = 0.0f;
+            for (size_t i = RowStart; i < RowEnd; ++i) {
+                GetChild(i).Layout(CellConstraints, true);
+                RowHeight = std::max(RowHeight, GetChild(i).GetSize().Height);
+            }
+            for (size_t i = RowStart; i < RowEnd; ++i) {
+                GetChild(i).SetOffset({static_cast<float>(i - RowStart) * (CellWidth + Spacing), Y});
+            }
+            Y += RowHeight;
+            if (RowEnd < Count) { Y += Grid.RunSpacing; }
+        }
+        SetSize(Constraints.Constrain({Available, Y}));
+    }
+
     void RenderPositioned::SetPlacement(const Placement& NewPlacement) {
         if (NewPlacement == _Placement) { return; }
         _Placement = NewPlacement;

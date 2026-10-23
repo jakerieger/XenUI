@@ -48,11 +48,66 @@ namespace XenUI {
         return true;
     }
 
+    RenderEditableText::~RenderEditableText() {
+        if (_Controller != nullptr && _Controller->GetNavigator() == this) { _Controller->SetNavigator(nullptr); }
+    }
+
     void RenderEditableText::SetController(TextEditingController* Controller) {
         if (Controller == _Controller) { return; }
+        if (_Controller != nullptr && _Controller->GetNavigator() == this) { _Controller->SetNavigator(nullptr); }
         _Controller  = Controller;
         _LayoutValid = false;
+        if (_Controller != nullptr) { _Controller->SetNavigator(this); }
         MarkNeedsLayout();
+    }
+
+    void RenderEditableText::SetMultiline(bool Multiline) {
+        if (Multiline == _Multiline) { return; }
+        _Multiline   = Multiline;
+        _LayoutValid = false;
+        _Placeholder = {};
+        _Scroll      = 0.0f;
+        _ScrollY     = 0.0f;
+        MarkNeedsLayout();
+    }
+
+    std::string RenderEditableText::GetDisplay() const {
+        if (_Controller == nullptr) { return {}; }
+        return ComposeDisplay(_Controller->PeekText(),
+                              _Controller->GetEditor().GetSelection(),
+                              _Controller->PeekComposition());
+    }
+
+    float RenderEditableText::GetWrapWidth() const {
+        return _Multiline ? std::max(GetSize().Width - kCaretWidth, 1.0f) : kUnbounded;
+    }
+
+    float RenderEditableText::GetMaxScrollY() const {
+        return _Multiline ? std::max(0.0f, std::ceil(_Layout.GetMeasuredSize().Height) - GetSize().Height) : 0.0f;
+    }
+
+    size_t RenderEditableText::GetVerticalTarget(size_t Offset, int Lines, float& PreferredX) {
+        UpdateLayout(GetDisplay());
+        const Rect Caret = _Layout.GetCaretBounds(Offset);
+        if (PreferredX < 0.0f) { PreferredX = Caret.X; }
+        const float Target = Caret.Y + Caret.Height * 0.5f + static_cast<float>(Lines) * GetLineHeight();
+        if (Target < 0.0f) { return 0; }
+        if (Target > _Layout.GetMeasuredSize().Height) { return _LayoutText.size(); }
+        return _Layout.HitTest({PreferredX, Target});
+    }
+
+    size_t RenderEditableText::GetLineEdge(size_t Offset, bool End) {
+        UpdateLayout(GetDisplay());
+        const Rect Caret = _Layout.GetCaretBounds(Offset);
+        size_t Result    = _Layout.HitTest({End ? kUnbounded : 0.0f, Caret.Y + Caret.Height * 0.5f});
+        if (End && Result > 0 && Result <= _LayoutText.size() && _LayoutText[Result - 1] == '\n' && Result > Offset) {
+            --Result;
+        }
+        return Result;
+    }
+
+    int RenderEditableText::GetVisibleLineCount() const {
+        return std::max(1, static_cast<int>(GetSize().Height / std::max(GetLineHeight(), 1.0f)));
     }
 
     void RenderEditableText::SetStyle(EditableStyle Style) {
@@ -92,20 +147,33 @@ namespace XenUI {
     }
 
     size_t RenderEditableText::GetOffsetAt(const Vec2& Position) const {
+        if (_Multiline) {
+            return _Layout.HitTest(
+              {Position.X,
+               std::clamp(Position.Y + _ScrollY, 0.0f, std::max(_Layout.GetMeasuredSize().Height - 1.0f, 0.0f))});
+        }
         return _Layout.HitTest(
           {Position.X + _Scroll, std::clamp(Position.Y - _TextTop, 0.0f, std::max(GetLineHeight() - 1.0f, 0.0f))});
     }
 
     bool RenderEditableText::HandlePointer(const PointerEvent& Event) {
+        if (Event.Phase == PointerPhase::Wheel) {
+            if (!_Multiline || Event.WheelDelta.Y == 0.0f) { return false; }
+            const float Before = _ScrollY;
+            _ScrollY = std::clamp(_ScrollY - Event.WheelDelta.Y * GetLineHeight() * 3.0f, 0.0f, GetMaxScrollY());
+            if (_ScrollY == Before) { return false; }
+            MarkNeedsPaint();
+            return true;
+        }
         if (_Controller == nullptr || !_Enabled || _Controller->IsComposing()) { return false; }
         switch (Event.Phase) {
             case PointerPhase::Down: {
                 if (Event.Button != MouseButton::Primary) { return false; }
                 const bool Repeated = Event.Time - _LastClickTime <= kMultiClickInterval &&
                                       Distance(Event.LocalPosition, _LastClickPosition) <= kMultiClickDistance;
-                _ClickCount        = Repeated ? std::min<uint32_t>(_ClickCount + 1, 3) : 1;
-                _LastClickTime     = Event.Time;
-                _LastClickPosition = Event.LocalPosition;
+                _ClickCount         = Repeated ? std::min<uint32_t>(_ClickCount + 1, 3) : 1;
+                _LastClickTime      = Event.Time;
+                _LastClickPosition  = Event.LocalPosition;
 
                 const size_t Offset = GetOffsetAt(Event.LocalPosition);
                 const bool Extend   = HasFlags(Event.Modifiers, KeyModifiers::Shift) && _ClickCount == 1;
@@ -153,7 +221,10 @@ namespace XenUI {
     }
 
     void RenderEditableText::OnDependencyChanged() {
-        if (GetConstraints().HasBoundedWidth()) {
+        const BoxConstraints& Constraints = GetConstraints();
+        if (_Multiline && Constraints.MinHeight < Constraints.MaxHeight) {
+            MarkNeedsLayout();
+        } else if (Constraints.HasBoundedWidth()) {
             MarkNeedsPaint();
         } else {
             MarkNeedsLayout();
@@ -166,16 +237,30 @@ namespace XenUI {
     }
 
     void RenderEditableText::UpdateLayout(const std::string& Display) {
-        if (_LayoutValid && Display == _LayoutText) { return; }
-        _Layout      = TextLayout(Display, _Style.TextFont);
+        const float Width = GetWrapWidth();
+        if (_LayoutValid && Display == _LayoutText && Width == _LayoutWidth) { return; }
+        _Layout      = _Multiline
+                         ? TextLayout(Display, _Style.TextFont, {.Wrapping = TextWrapping::Wrap}, {Width, kUnbounded})
+                         : TextLayout(Display, _Style.TextFont);
         _LayoutText  = Display;
+        _LayoutWidth = Width;
         _LayoutValid = true;
     }
 
     void RenderEditableText::PerformLayout() {
         const BoxConstraints& Constraints = GetConstraints();
         const float LineHeight            = GetLineHeight();
-        float Width                       = Constraints.MaxWidth;
+        if (_Multiline) {
+            const float Width = Constraints.HasBoundedWidth() ? Constraints.MaxWidth : 300.0f;
+            SetSize({Width, GetSize().Height});
+            if (_LayoutWidth != GetWrapWidth()) { _Placeholder = {}; }
+            UpdateLayout(GetDisplay());
+            SetSize(Constraints.Constrain({Width, std::max(std::ceil(_Layout.GetMeasuredSize().Height), LineHeight)}));
+            _TextTop = 0.0f;
+            _ScrollY = std::clamp(_ScrollY, 0.0f, GetMaxScrollY());
+            return;
+        }
+        float Width = Constraints.MaxWidth;
         if (!Constraints.HasBoundedWidth()) {
             std::string Display;
             if (_Controller != nullptr) {
@@ -211,22 +296,41 @@ namespace XenUI {
         const bool Rebuilt        = !_LayoutValid || Display != _LayoutText;
         UpdateLayout(Display);
         if (Rebuilt && !Composing) { _Controller->GetEditor().SetCaretStops(_Layout.GetCaretStops()); }
-        if (_Placeholder.IsEmpty() && !_Style.Placeholder.empty()) {
+        if (_Placeholder.IsEmpty() && !_Style.Placeholder.empty() && !_Multiline) {
             _Placeholder = TextLayout(_Style.Placeholder, _Style.TextFont);
+        }
+
+        if (_Placeholder.IsEmpty() && !_Style.Placeholder.empty() && _Multiline) {
+            _Placeholder = TextLayout(_Style.Placeholder,
+                                      _Style.TextFont,
+                                      {.Wrapping = TextWrapping::Wrap},
+                                      {GetWrapWidth(), kUnbounded});
         }
 
         const size_t CaretOffset =
           Composing ? Selection.GetStart() + _Controller->GetCompositionCaret() : Selection.Caret;
-        const Rect Caret    = _Layout.GetCaretBounds(CaretOffset);
-        const float Width   = GetSize().Width;
-        const float Visible = std::max(Width - kCaretWidth, 0.0f);
-        if (Caret.X - _Scroll > Visible) { _Scroll = Caret.X - Visible; }
-        if (Caret.X - _Scroll < 0.0f) { _Scroll = Caret.X; }
-        _Scroll = std::clamp(_Scroll, 0.0f, std::max(0.0f, _Layout.GetMeasuredSize().Width + kCaretWidth - Width));
+        const Rect Caret   = _Layout.GetCaretBounds(CaretOffset);
+        const float Width  = GetSize().Width;
+        const float Height = GetSize().Height;
+        if (_Multiline) {
+            if (CaretOffset != _ShownCaret || Display != _ShownText) {
+                if (Caret.Y - _ScrollY < 0.0f) { _ScrollY = Caret.Y; }
+                if (Caret.Y + Caret.Height - _ScrollY > Height) { _ScrollY = Caret.Y + Caret.Height - Height; }
+            }
+            _ScrollY = std::clamp(_ScrollY, 0.0f, GetMaxScrollY());
+            _Scroll  = 0.0f;
+        } else {
+            const float Visible = std::max(Width - kCaretWidth, 0.0f);
+            if (Caret.X - _Scroll > Visible) { _Scroll = Caret.X - Visible; }
+            if (Caret.X - _Scroll < 0.0f) { _Scroll = Caret.X; }
+            _Scroll = std::clamp(_Scroll, 0.0f, std::max(0.0f, _Layout.GetMeasuredSize().Width + kCaretWidth - Width));
+        }
+        _ShownCaret = CaretOffset;
+        _ShownText  = Display;
 
         Painter& Canvas = Context.GetPainter();
-        Canvas.PushClip({0.0f, 0.0f, Width, GetSize().Height});
-        Canvas.PushTransform(Matrix3x2::Translation(-_Scroll, _TextTop));
+        Canvas.PushClip({0.0f, 0.0f, Width, Height});
+        Canvas.PushTransform(Matrix3x2::Translation(-_Scroll, _TextTop - _ScrollY));
 
         if (_Focused && !Composing && !Selection.IsCollapsed()) {
             for (const Rect& Range : _Layout.GetRangeBounds(Selection.GetStart(), Selection.GetEnd())) {
@@ -251,7 +355,7 @@ namespace XenUI {
         Canvas.PopTransform();
         Canvas.PopClip();
         _Controller->SetCaretBounds(
-          Rect::FromOriginSize(GetGlobalOffset() + Vec2 {Caret.X - _Scroll, Caret.Y + _TextTop},
+          Rect::FromOriginSize(GetGlobalOffset() + Vec2 {Caret.X - _Scroll, Caret.Y + _TextTop - _ScrollY},
                                {kCaretWidth, Caret.Height}));
     }
 }  // namespace XenUI

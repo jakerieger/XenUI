@@ -38,6 +38,16 @@ namespace XenUI {
         }
     }
 
+    void ScrollController::RequestVisible(float Start, float End) {
+        const float Current  = _Offset.Peek();
+        const float Viewport = _ViewportExtent.Peek();
+        if (Start < Current) {
+            RequestOffset(Start);
+        } else if (End > Current + Viewport) {
+            RequestOffset(End - Viewport);
+        }
+    }
+
     void ScrollController::UpdateMetrics(float ViewportExtent, float ContentExtent) {
         Batch([&] {
             _ViewportExtent = ViewportExtent;

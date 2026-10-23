@@ -23,6 +23,21 @@
 #include <string>
 
 namespace XenUI {
+    /// @internal Resolves caret moves that depend on how the text is laid out, such as moving up a line in wrapped
+    /// text. Implemented by the render object that shows the text.
+    class XENUI_API TextLayoutNavigator {
+    public:
+        virtual ~TextLayoutNavigator();
+
+        /// @brief The offset reached by moving Lines visual lines from Offset. PreferredX is the horizontal position
+        /// to aim for; when negative it is set to the caret's position, so repeated moves keep their column.
+        [[nodiscard]] virtual size_t GetVerticalTarget(size_t Offset, int Lines, float& PreferredX) = 0;
+        /// @brief The start or end of the visual line containing Offset.
+        [[nodiscard]] virtual size_t GetLineEdge(size_t Offset, bool End) = 0;
+        /// @brief How many lines fit in the visible area, for page moves.
+        [[nodiscard]] virtual int GetVisibleLineCount() const = 0;
+    };
+
     /// @brief The text, selection and input-method composition of a text field. Own one to read or change a field's
     /// contents from a component; reads through Get* are tracked, so components and render objects update when
     /// the text or selection changes.
@@ -46,6 +61,21 @@ namespace XenUI {
         /// the text, which also calls the text-changed callback.
         bool Edit(const std::function<bool(TextEditor&)>& Operation);
 
+        /// @brief Moves the caret by visual lines, keeping its column across consecutive moves. Returns false when no
+        /// laid-out view is attached to resolve the move.
+        bool MoveVertical(int Lines, bool Extend);
+        /// @brief Moves the caret to the start or end of its visual line. Returns false without a laid-out view.
+        bool MoveToLineEdge(bool End, bool Extend);
+        /// @brief Lines visible in the attached view, or 1 without one.
+        [[nodiscard]] int GetVisibleLineCount() const {
+            return _Navigator != nullptr ? _Navigator->GetVisibleLineCount() : 1;
+        }
+
+        /// @internal Set by the render object that shows this controller's text.
+        void SetNavigator(TextLayoutNavigator* Navigator) { _Navigator = Navigator; }
+        /// @internal
+        [[nodiscard]] TextLayoutNavigator* GetNavigator() const { return _Navigator; }
+
         /// @brief Called after every change to the text, whether by editing or SetText.
         void SetOnTextChanged(std::function<void()> Callback) { _OnTextChanged = std::move(Callback); }
 
@@ -66,5 +96,7 @@ namespace XenUI {
         size_t _CompositionCaret = 0;
         Rect _CaretBounds;
         std::function<void()> _OnTextChanged;
+        TextLayoutNavigator* _Navigator = nullptr;
+        float _PreferredX               = -1.0f;
     };
 }  // namespace XenUI

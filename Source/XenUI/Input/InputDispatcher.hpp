@@ -74,6 +74,12 @@ namespace XenUI {
 
         /// @return true if the key was handled, so the platform should not process it further.
         bool HandleKey(const KeyEvent& Event);
+
+        /// @brief Adds a handler that sees every key before focused widgets do; return true to consume the key. For
+        /// window-wide tools, such as DeveloperTools, that must work wherever focus is. Returns an id for
+        /// RemoveKeyInterceptor.
+        uint64_t AddKeyInterceptor(std::function<bool(const KeyEvent&)> Interceptor);
+        void RemoveKeyInterceptor(uint64_t Id);
         bool HandleText(const TextEvent& Event);
 
         /// @brief Cancels every active pointer, for example when the window loses focus.
@@ -169,6 +175,8 @@ namespace XenUI {
         FocusManager _Focus;
         InputHost* _Host = nullptr;
         GestureSettings _Settings;
+        std::vector<std::pair<uint64_t, std::function<bool(const KeyEvent&)>>> _Interceptors;
+        uint64_t _NextInterceptor = 1;
         std::unordered_map<uint32_t, Session> _Sessions;
         std::vector<Target> _Hovered;
         std::optional<PointerEvent> _LastHoverEvent;

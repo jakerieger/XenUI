@@ -41,6 +41,7 @@ namespace {
     const Font kTitleFont {.Size = 22.0f, .Weight = FontWeight::Bold};
     const Font kHeadingFont {.Size = 14.0f, .Weight = FontWeight::SemiBold};
     const Font kSmallFont {.Size = 11.0f};
+    const Font kMediumFont {.Size = 13.0f};
 
     const char* const kSections[] = {"Controls",
                                      "Text input",
@@ -51,7 +52,8 @@ namespace {
                                      "Live canvas",
                                      "Painting",
                                      "Layout",
-                                     "Animation"};
+                                     "Animation",
+                                     "More controls"};
 
     struct Swatch {
         const char* Name;
@@ -83,7 +85,15 @@ namespace {
         Signal<bool> FileHover  = false;
         Signal<bool> ShowNative = true;
         /// @brief 0 follows Windows, 1 is dark and 2 is light.
-        Signal<int> ThemeMode = 0;
+        Signal<int> ThemeMode       = 0;
+        Signal<int> Channels        = 1;
+        Signal<float> Progress      = 0.35f;
+        Signal<bool> Busy           = true;
+        Signal<float> Tempo         = 120.0f;
+        Signal<float> GainDb        = -6.0f;
+        Signal<int> SettingsTab     = 0;
+        Signal<bool> ShowInspector  = false;
+        Signal<bool> ShowFrameStats = false;
         Theme ActiveTheme;
 
         void Report(std::string Message) { Status = std::move(Message); }
@@ -248,6 +258,18 @@ namespace {
                         .MainSize       = MainAxisSize::Min,
                         .Children = {TextField {.Bind = &Model->Name, .Placeholder = "Your name", .Label = "Name"},
                                      Greeting {Model}}}),
+              Card("Multi-line text",
+                   "TextArea wraps and scrolls vertically. Enter inserts a line break, Ctrl+Enter submits, and Up, "
+                   "Down, Home and End follow the wrapped lines.",
+                   TextArea {
+                     .OnSubmit =
+                       [Model](const std::string& Text) {
+                           Model->Report(std::format("Submitted {} characters of notes", Text.size()));
+                       },
+                     .Placeholder = "Session notes...",
+                     .Lines       = 5,
+                     .Label       = "Session notes",
+                   }),
               Card("Submitting",
                    "Enter calls OnSubmit; the field also limits its length to 20 characters.",
                    TextField {
@@ -703,11 +725,45 @@ namespace {
                               .ChildAlignment = Alignment::Center(),
                               .Child          = Text {.Content = Label, .Font = kSmallFont}};
         };
+        NodeList Tags;
+        for (const char* Tag : {"Kick",
+                                "Snare",
+                                "Closed hat",
+                                "Open hat",
+                                "Ride",
+                                "Crash",
+                                "Tom",
+                                "Clap",
+                                "Shaker",
+                                "Percussion",
+                                "Vocal chop",
+                                "FX"}) {
+            Tags.push_back(Container {.Padding      = EdgeInsets::Symmetric(10.0f, 4.0f),
+                                      .Background   = Ink().SurfaceRaised,
+                                      .CornerRadius = 12.0f,
+                                      .BorderColor  = Ink().Border,
+                                      .Child        = Text {.Content = Tag, .Font = kSmallFont}});
+        }
+        NodeList Tiles;
+        for (int i = 0; i < 10; ++i) {
+            Tiles.push_back(Pane(kSwatches[i % std::size(kSwatches)].Name, kSwatches[i % std::size(kSwatches)].Tint));
+        }
         return Column {
           .Spacing        = 16.0f,
           .CrossAlignment = CrossAxisAlignment::Stretch,
           .Children =
             {
+              Card("Wrap",
+                   "Children flow left to right and start a new run when the next one does not fit. Resize the window "
+                   "to reflow.",
+                   Wrap {.Spacing = 8.0f, .RunSpacing = 8.0f, .Children = std::move(Tags)}),
+              Card("Grid",
+                   "Equal-width columns, as many of at least 120 DIPs as fit, with a fixed row height.",
+                   Grid {.MinColumnWidth = 120.0f,
+                         .Spacing        = 8.0f,
+                         .RunSpacing     = 8.0f,
+                         .RowHeight      = 56.0f,
+                         .Children       = std::move(Tiles)}),
               Card(
                 "Split views",
                 "Drag the dividers. Ratios live in signals, so they survive rebuilds.",
@@ -880,6 +936,311 @@ namespace {
         };
     };
 
+    /// @brief The menu bar in the title strip. Items report what they would do in the status bar.
+    Node ShowcaseMenus(ShowcaseState& State) {
+        ShowcaseState* Model = &State;
+        const auto Item      = [Model](std::string Label, std::string Shortcut = {}) {
+            return MenuItem {.Label = Label, .ShortcutText = std::move(Shortcut), .OnSelect = [Model, Label] {
+                                 Model->Report(std::format("Menu: {}", Label));
+                             }};
+        };
+        return MenuBar {
+          .Menus =
+            {
+              Menu {.Label = "File",
+                    .Items = {Item("New", "Ctrl+N"),
+                              Item("Open...", "Ctrl+O"),
+                              Item("Save", "Ctrl+S"),
+                              MenuItem::Divider(),
+                              Item("Exit")}},
+              Menu {.Label = "Edit",
+                    .Items = {Item("Undo", "Ctrl+Z"),
+                              Item("Redo", "Ctrl+Y"),
+                              MenuItem::Divider(),
+                              Item("Cut", "Ctrl+X"),
+                              Item("Copy", "Ctrl+C"),
+                              Item("Paste", "Ctrl+V")}},
+              Menu {.Label = "View",
+                    .Items = {MenuItem {.Label    = "Dark theme",
+                                        .OnSelect = [Model] { Model->ThemeMode = 1; },
+                                        .Checked  = Model->ThemeMode() == 1},
+                              MenuItem {.Label    = "Light theme",
+                                        .OnSelect = [Model] { Model->ThemeMode = 2; },
+                                        .Checked  = Model->ThemeMode() == 2},
+                              MenuItem {.Label    = "Follow Windows",
+                                        .OnSelect = [Model] { Model->ThemeMode = 0; },
+                                        .Checked  = Model->ThemeMode() == 0}}},
+              Menu {.Label = "Help",
+                    .Items = {MenuItem {.Label        = "Widget inspector",
+                                        .ShortcutText = "F12",
+                                        .OnSelect = [Model] { Model->ShowInspector = !Model->ShowInspector.Peek(); },
+                                        .Checked  = Model->ShowInspector()},
+                              MenuItem {.Label        = "Frame stats",
+                                        .ShortcutText = "Shift+F12",
+                                        .OnSelect = [Model] { Model->ShowFrameStats = !Model->ShowFrameStats.Peek(); },
+                                        .Checked  = Model->ShowFrameStats()},
+                              MenuItem::Divider(),
+                              Item("Documentation"),
+                              Item("About XenUI")}},
+            },
+          .Height = 26.0f,
+        };
+    }
+
+    /// @brief Opens a confirmation dialog and reports the choice.
+    struct DialogDemo {
+        ShowcaseState* Model = nullptr;
+
+        class State : public ComponentState<DialogDemo> {
+        protected:
+            Node Build(BuildContext& Context) override {
+                _Overlay = OverlayController::Of(Context);
+                _Style   = PopupStyle::Capture(Context);
+                return Row {.Spacing  = 12.0f,
+                            .Children = {Button {.Label = "Delete track...", .OnPressed = [this] { Open(); }}}};
+            }
+
+        private:
+            void Open() {
+                ShowcaseState* Shared = GetWidget().Model;
+                _Dialog               = ShowDialog(
+                  *_Overlay,
+                  _Style,
+                  Dialog {
+                                  .Title = "Delete track?",
+                                  .Content =
+                      Text {.Content = "The track and its clips will be removed. You can undo this with Ctrl+Z.",
+                                          .Color   = Ink().TextMuted},
+                                  .Actions =
+                                    {
+                        DialogAction {.Label     = "Cancel",
+                                                    .OnPressed = [this, Shared] { Finish(Shared, "Kept the track"); }},
+                        DialogAction {.Label     = "Delete",
+                                                    .OnPressed = [this, Shared] { Finish(Shared, "Deleted the track"); },
+                                                    .Variant   = ButtonVariant::Primary},
+                      },
+                                  .OnDismiss = [this, Shared] { Finish(Shared, "Dismissed the dialog"); },
+                  });
+            }
+
+            void Finish(ShowcaseState* Shared, const char* Message) {
+                Shared->Report(Message);
+                _Dialog.Reset();
+            }
+
+            OverlayController* _Overlay = nullptr;
+            PopupStyle _Style;
+            OverlayEntry _Dialog;
+        };
+    };
+
+    std::vector<TreeItem> SampleTree(const std::string& Parent) {
+        if (Parent.empty()) {
+            return {{"drums", "Drums", true},
+                    {"bass", "Bass", true},
+                    {"fx", "Effects", true},
+                    {"notes", "Notes.txt", false}};
+        }
+        if (Parent == "drums") {
+            return {{"drums/kicks", "Kicks", true},
+                    {"drums/snares", "Snares", true},
+                    {"drums/loop", "Break 174.wav", false}};
+        }
+        if (Parent == "drums/kicks" || Parent == "drums/snares") {
+            std::vector<TreeItem> Files;
+            const char* Kind = Parent == "drums/kicks" ? "Kick" : "Snare";
+            for (int i = 1; i <= 8; ++i) {
+                Files.push_back({std::format("{}/{}", Parent, i), std::format("{} {:02}.wav", Kind, i), false});
+            }
+            return Files;
+        }
+        if (Parent == "bass") { return {{"bass/sub", "Sub 808.wav", false}, {"bass/reese", "Reese.wav", false}}; }
+        if (Parent == "fx") { return {{"fx/riser", "Riser.wav", false}, {"fx/impact", "Impact.wav", false}}; }
+        return {};
+    }
+
+    struct SampleRow {
+        std::string Name;
+        int Bpm       = 0;
+        float Seconds = 0.0f;
+        std::string Key;
+    };
+
+    /// @brief A sortable table of generated sample files. The table reports sort requests; this component sorts.
+    struct TableDemo {
+        ShowcaseState* Model = nullptr;
+
+        class State : public ComponentState<TableDemo> {
+        protected:
+            void Init() override {
+                constexpr const char* kKinds[] = {"Kick", "Snare", "Hat", "Clap", "Bass", "Pad", "Lead", "Vox"};
+                constexpr const char* kKeys[]  = {"C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"};
+                for (int i = 0; i < 500; ++i) {
+                    _Rows.push_back({std::format("{} {:03}.wav", kKinds[i % 8], i),
+                                     80 + (i * 37) % 100,
+                                     0.5f + static_cast<float>((i * 53) % 400) / 20.0f,
+                                     kKeys[(i * 7) % 12]});
+                }
+            }
+
+            Node Build(BuildContext& Context) override {
+                (void)Context;
+                ShowcaseState* Shared = GetWidget().Model;
+                return SizedBox {
+                  .Height = 260.0f,
+                  .Child  = Table {
+                     .Columns =
+                       {
+                        TableColumn {.Title = "Name", .Width = 220.0f, .MinWidth = 80.0f},
+                        TableColumn {.Title = "BPM", .Width = 80.0f, .Alignment = TextAlignment::Trailing},
+                        TableColumn {.Title = "Length", .Width = 90.0f, .Alignment = TextAlignment::Trailing},
+                        TableColumn {.Title = "Key"},
+                      },
+                     .RowCount = static_cast<int>(_Rows.size()),
+                     .CellText = [this](int Row, int Column) -> std::string {
+                        const SampleRow& Entry = _Rows[static_cast<size_t>(Row)];
+                        switch (Column) {
+                            case 0:
+                                return Entry.Name;
+                            case 1:
+                                return std::to_string(Entry.Bpm);
+                            case 2:
+                                return std::format("{:.1f} s", Entry.Seconds);
+                            default:
+                                return Entry.Key;
+                        }
+                    },
+                     .OnActivated =
+                      [this, Shared](int Row) {
+                          Shared->Report(std::format("Opened {}", _Rows[static_cast<size_t>(Row)].Name));
+                      },
+                     .OnSort = [this](const TableSort& Sort) { Order(Sort); },
+                     .Label  = "Samples",
+                  },
+                };
+            }
+
+        private:
+            void Order(const TableSort& Sort) {
+                const auto Before = [Sort](const SampleRow& Left, const SampleRow& Right) {
+                    switch (Sort.Column) {
+                        case 1:
+                            return Left.Bpm < Right.Bpm;
+                        case 2:
+                            return Left.Seconds < Right.Seconds;
+                        case 3:
+                            return Left.Key < Right.Key;
+                        default:
+                            return Left.Name < Right.Name;
+                    }
+                };
+                std::ranges::stable_sort(_Rows, [&](const SampleRow& Left, const SampleRow& Right) {
+                    return Sort.Ascending ? Before(Left, Right) : Before(Right, Left);
+                });
+                MarkNeedsBuild();
+            }
+
+            std::vector<SampleRow> _Rows;
+        };
+    };
+
+    Node MoreControlsSection(ShowcaseState& State) {
+        ShowcaseState* Model                  = &State;
+        constexpr const char* kChannelNames[] = {"Mono", "Stereo", "Surround"};
+        const auto Caption                    = [](std::string Content) {
+            return Text {.Content = std::move(Content), .Font = kSmallFont, .Color = Ink().TextMuted};
+        };
+        return Column {
+          .Spacing        = 16.0f,
+          .CrossAlignment = CrossAxisAlignment::Stretch,
+          .Children =
+            {
+              Card("Radio buttons",
+                   "One choice from a few. Click an option, or move with the arrow keys once one has focus.",
+                   Row {
+                     .Spacing        = 32.0f,
+                     .CrossAlignment = CrossAxisAlignment::Start,
+                     .Children =
+                       {
+                         RadioGroup {
+                           .Options       = {"Mono", "Stereo", "Surround"},
+                           .SelectedIndex = Model->Channels(),
+                           .OnChanged     = [Model](int Index) { Model->Channels = Index; },
+                           .Label         = "Channels",
+                         },
+                         RadioGroup {
+                           .Options       = {"Mono", "Stereo", "Surround"},
+                           .SelectedIndex = Model->Channels(),
+                           .OnChanged     = [Model](int Index) { Model->Channels = Index; },
+                           .Direction     = Axis::Horizontal,
+                           .Spacing       = 16.0f,
+                           .Label         = "Channels, in a row",
+                         },
+                         Caption(std::format("Output: {}", kChannelNames[Model->Channels()])),
+                       },
+                   }),
+              Card("Progress",
+                   "Determinate bars animate to new values; indeterminate bars show that work is happening.",
+                   Column {
+                     .Spacing        = 12.0f,
+                     .CrossAlignment = CrossAxisAlignment::Stretch,
+                     .MainSize       = MainAxisSize::Min,
+                     .Children =
+                       {
+                         ProgressBar {.Value = Model->Progress(), .Label = "Export"},
+                         Row {.Spacing  = 12.0f,
+                              .Children = {SizedBox {.Width = 220.0f, .Child = Slider {.Bind = &Model->Progress, .Label = "Export progress"}},
+                                           Caption(std::format("{:.0f}%", Model->Progress() * 100.0f))}},
+                         ProgressBar {.Value = Model->Busy() ? std::nullopt : std::optional<float>(1.0f), .Height = 4.0f, .Label = "Scanning"},
+                         Switch {.Value = Model->Busy(), .OnChanged = [Model](bool On) { Model->Busy = On; }, .Label = "Scanning the sample library"},
+                       },
+                   }),
+              Card("Number fields",
+                   "Type a value and press Enter, or use Up and Down, the wheel or the step buttons. Shift steps ten times further.",
+                   Row {
+                     .Spacing = 16.0f,
+                     .Children =
+                       {
+                         NumberField {.Bind = &Model->Tempo, .Min = 20.0f, .Max = 300.0f, .Step = 1.0f, .Decimals = 1, .Suffix = " BPM", .Label = "Tempo"},
+                         NumberField {.Bind = &Model->GainDb, .Min = -60.0f, .Max = 12.0f, .Step = 0.5f, .Decimals = 1, .Suffix = " dB", .Label = "Gain"},
+                         Caption(std::format("{:.1f} BPM at {:+.1f} dB", Model->Tempo(), Model->GainDb())),
+                       },
+                   }),
+              Card("Dialogs",
+                   "Modal dialogs dim the window, keep Tab inside themselves and return focus when they close. Enter presses the primary action and Escape dismisses.",
+                   DialogDemo {Model}),
+              Card("Tree view",
+                   "Children are supplied on demand and rows are virtualized. Arrow keys navigate, Right and Left expand and collapse, Enter or double-click opens.",
+                   SizedBox {
+                     .Height = 220.0f,
+                     .Child  = TreeView {.ChildrenOf  = SampleTree,
+                                         .OnActivated = [Model](const std::string& Id) { Model->Report(std::format("Opened {}", Id)); },
+                                         .Label       = "Sample library"},
+                   }),
+              Card("Tables",
+                   "Resizable columns over virtualized rows. Click a header to sort, drag a header divider to resize, and use the arrow keys, Page Up and Page Down once a row is selected.",
+                   TableDemo {Model}),
+              Card("Tabs",
+                   "Only the selected tab is built. Switch with the mouse, Left and Right on a focused tab, or Ctrl+Tab.",
+                   SizedBox {
+                     .Height = 150.0f,
+                     .Child =
+                       TabView {
+                         .Tabs =
+                           {
+                             Tab {.Label = "General", .Content = Padding {.Insets = EdgeInsets::All(12.0f), .Child = Checkbox {.Value = Model->Notifications(), .OnChanged = [Model](bool On) { Model->Notifications = On; }, .Label = "Show notifications"}}},
+                             Tab {.Label   = "Audio",
+                                  .Content = Padding {.Insets = EdgeInsets::All(12.0f),
+                                                      .Child  = Row {.Spacing = 12.0f, .Children = {Caption("Buffer size"), Select {.Options = {"128", "256", "512"}, .SelectedIndex = 1, .Width = 100.0f, .Label = "Buffer size"}}}}},
+                             Tab {.Label = "About", .Content = Padding {.Insets = EdgeInsets::All(12.0f), .Child = Caption(std::format("XenUI {}", XENUI_VERSION_STRING))}},
+                           },
+                         .Selected = &Model->SettingsTab,
+                       },
+                   }),
+            },
+        };
+    }
+
     struct SectionView {
         ShowcaseState* State = nullptr;
 
@@ -915,8 +1276,11 @@ namespace {
                 case 8:
                     Content = LayoutSection(*State);
                     break;
-                default:
+                case 9:
                     Content = AnimationSection {State};
+                    break;
+                default:
+                    Content = MoreControlsSection(*State);
                     break;
             }
             return ScrollView {
@@ -996,7 +1360,12 @@ namespace {
             State->ActiveTheme =
               Mode == 0 ? Theme::FromSystem() : Theme::For(Mode == 1 ? Appearance::Dark : Appearance::Light);
             CurrentTheme = &State->ActiveTheme;
-            return Provide<Theme> {.Value = State->ActiveTheme, .Child = BuildShowcase(*State)};
+            return Provide<Theme> {
+              .Value = State->ActiveTheme,
+              .Child = DeveloperTools {.Child          = BuildShowcase(*State),
+                                       .ShowInspector  = &State->ShowInspector,
+                                       .ShowFrameStats = &State->ShowFrameStats},
+            };
         }
     };
 
@@ -1020,28 +1389,33 @@ namespace {
                       Container {
                         .Height     = 34.0f,
                         .Background = Ink().Chrome,
-                        .Child      = WindowDragArea {.Child =
+                        .Child = WindowDragArea {.Child = Stack {
+                                                   .Fit = StackFit::Expand,
+                                                   .Children =
+                                                     {
+                                                       IgnorePointer {.Child = Center {.Child = Text {.Content = "XenUI Showcase",
+                                                                                                      .Font    = kMediumFont,
+                                                                                                      .Color   = Ink().TextMuted}}},
                                                    Row {
-                                                          .Spacing = 10.0f,
-                                                          .Children =
-                                                            {
-                                                         Padding {.Insets = {.Left = 14.0f},
-                                                                       .Child  = Text {.Content = "XenUI Showcase",
-                                                                                       .Font    = kSmallFont,
-                                                                                       .Color   = Ink().TextMuted}},
+                                                     .Spacing = 10.0f,
+                                                     .Children =
+                                                       {
+                                                         Padding {.Insets = {.Left = 6.0f}, .Child = ShowcaseMenus(State)},
                                                          Spacer {},
                                                          Text {.Content = "Theme",
-                                                                    .Font    = kSmallFont,
-                                                                    .Color   = Ink().TextMuted},
+                                                               .Font    = kSmallFont,
+                                                               .Color   = Ink().TextMuted},
                                                          Select {.Options       = {"System", "Dark", "Light"},
-                                                                      .SelectedIndex = State.ThemeMode.Peek(),
-                                                                      .OnChanged     = [&State](
+                                                                 .SelectedIndex = State.ThemeMode.Peek(),
+                                                                 .OnChanged = [&State](
                                                                                 int Index) { State.ThemeMode = Index; },
-                                                                      .Width = 96.0f,
-                                                                      .Label = "Theme"},
+                                                                 .Width     = 96.0f,
+                                                                 .Label     = "Theme"},
                                                          WindowControls {.Height = 34.0f},
                                                        },
-                                                   }},
+                                                   },
+                                                     },
+                                                 }},
                       },
                       Expanded {
                         .Child =

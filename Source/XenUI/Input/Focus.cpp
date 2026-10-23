@@ -106,8 +106,18 @@ namespace XenUI {
     }
 
     void FocusManager::MoveFocus(bool Forward) {
+        RenderObject* Scope = &_Root;
+        if (_Focused != nullptr && _Focused->_Attached != nullptr) {
+            for (RenderObject* Node = _Focused->_Attached; Node != nullptr; Node = Node->GetParent()) {
+                if (const auto* Trap = dynamic_cast<const RenderFocus*>(Node); Trap != nullptr && Trap->TrapsFocus()) {
+                    Scope = Node;
+                    break;
+                }
+            }
+        }
+
         std::vector<RenderFocus*> Focusable;
-        CollectFocusable(_Root, Focusable);
+        CollectFocusable(*Scope, Focusable);
         if (Focusable.empty()) { return; }
 
         const auto Current = std::find_if(Focusable.begin(), Focusable.end(), [this](const RenderFocus* Candidate) {

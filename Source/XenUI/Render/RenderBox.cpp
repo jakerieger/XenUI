@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "XenUI/Render/RenderBox.hpp"
+#include "XenUI/Core/FrameStats.hpp"
 
 #include <algorithm>
 #include <array>
@@ -34,6 +35,7 @@ namespace XenUI {
 
         _Constraints = Constraints;
         _InLayout    = true;
+        ++FrameCounters::Current().LaidOut;
         PerformLayout();
         _InLayout    = false;
         _NeedsLayout = false;
@@ -110,6 +112,7 @@ namespace XenUI {
     }
 
     void RenderBox::RepaintLayer() {
+        ++FrameCounters::Current().Repainted;
         PaintContext Context(*this);
         Paint(Context);
         Context.Finish();
