@@ -59,7 +59,7 @@ namespace XenUI {
         const Color FillColor  = Props.Fill.value_or(Style.Accent);
         const Color TrackColor = Style.Track;
         const Node Bar         = CustomPaint {
-          .OnPaint =
+                  .OnPaint =
             [this, Indeterminate, Animating, FillColor, TrackColor](Painter& Canvas, const Size& Extent) {
                 const float Radius = Extent.Height * 0.5f;
                 Canvas.FillRoundedRect({0.0f, 0.0f, Extent.Width, Extent.Height}, Radius, TrackColor);
@@ -81,7 +81,7 @@ namespace XenUI {
                     Canvas.FillRoundedRect({Left, 0.0f, Right - Left, Extent.Height}, Radius, FillColor);
                 }
             },
-          .Height = Props.Height,
+                  .Height = Props.Height,
         };
 
         return Semantics {
@@ -89,7 +89,7 @@ namespace XenUI {
           .Label    = Props.Label,
           .Range    = Indeterminate ? std::nullopt
                                     : std::optional<SemanticsRange>(
-                                        SemanticsRange {std::clamp(*Props.Value, Low, High), Low, High, 0.0f}),
+                                     SemanticsRange {std::clamp(*Props.Value, Low, High), Low, High, 0.0f}),
           .ReadOnly = true,
           .Child    = Bar,
         };

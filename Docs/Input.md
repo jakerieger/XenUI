@@ -4,11 +4,11 @@
 
 Three widgets receive the mouse, from lowest to highest level:
 
-| Widget | Receives |
-|---|---|
-| `Listener` | Raw `OnDown`, `OnMove`, `OnUp`, `OnCancel` and `OnWheel` events |
-| `MouseRegion` | `OnEnter`, `OnExit` and `OnHover`, and sets the `Cursor` shown over it |
-| `GestureDetector` | Taps, double taps, right-clicks (`OnSecondaryTap`) and drags |
+| Widget            | Receives                                                               |
+|-------------------|------------------------------------------------------------------------|
+| `Listener`        | Raw `OnDown`, `OnMove`, `OnUp`, `OnCancel` and `OnWheel` events        |
+| `MouseRegion`     | `OnEnter`, `OnExit` and `OnHover`, and sets the `Cursor` shown over it |
+| `GestureDetector` | Taps, double taps, right-clicks (`OnSecondaryTap`) and drags           |
 
 ```cpp
 MouseRegion {
@@ -156,8 +156,8 @@ DropTarget {
 
 - **Inside the application**, `DragData::Value` (a `std::any`) carries any C++ value. Read it with `Get<T>()`.
 - **Between applications**, drags go through Windows (OLE) drag and drop:
-  - Dragging out of the window hands the drag to the system with `Files` and `Text`, so files can be dropped into
-    Explorer or another program.
-  - Files and text dragged in from other programs arrive with `External = true` and an empty `Value`.
+    - Dragging out of the window hands the drag to the system with `Files` and `Text`, so files can be dropped into
+      Explorer or another program.
+    - Files and text dragged in from other programs arrive with `External = true` and an empty `Value`.
 - **`OnOver` decides whether a drop is accepted**, and with which effect. It is called as the pointer moves. Return
   `DropEffect::None` to refuse the drop.

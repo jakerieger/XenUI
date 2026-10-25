@@ -7,15 +7,15 @@ they use `Theme::Dark()`.
 
 `Theme` (in `Widgets/Theme.hpp`) is a plain struct of design tokens:
 
-| Group | Tokens |
-|---|---|
-| Surfaces | `Background`, `Surface`, `SurfaceRaised`, `Chrome` (title bars and sidebars) |
-| Control states | `Hover`, `Pressed`, `Border` |
-| Text | `Text`, `TextMuted`, `TextDisabled` |
-| Accent | `Accent`, `AccentText` (text drawn on accent fills, such as primary buttons) |
-| Status | `Danger`, `Warning`, `Success` |
-| Other | `Track` (slider and field backgrounds), `Overlay`, `ScrollbarThumb`, `ScrollbarTrack` |
-| Fonts and metrics | `BodyFont`, `SmallFont`, `CornerRadius`, `ControlHeight`, `IsDark` |
+| Group             | Tokens                                                                                |
+|-------------------|---------------------------------------------------------------------------------------|
+| Surfaces          | `Background`, `Surface`, `SurfaceRaised`, `Chrome` (title bars and sidebars)          |
+| Control states    | `Hover`, `Pressed`, `Border`                                                          |
+| Text              | `Text`, `TextMuted`, `TextDisabled`                                                   |
+| Accent            | `Accent`, `AccentText` (text drawn on accent fills, such as primary buttons)          |
+| Status            | `Danger`, `Warning`, `Success`                                                        |
+| Other             | `Track` (slider and field backgrounds), `Overlay`, `ScrollbarThumb`, `ScrollbarTrack` |
+| Fonts and metrics | `BodyFont`, `SmallFont`, `CornerRadius`, `ControlHeight`, `IsDark`                    |
 
 `Theme::Dark()` and `Theme::Light()` are the built-in palettes. `Theme::For(Appearance::Light)` picks one, and
 `Theme::FromSystem()` follows the Windows light or dark app setting.

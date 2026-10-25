@@ -26,12 +26,12 @@ struct Expander {
 };
 ```
 
-| Member | Meaning |
-|---|---|
+| Member                              | Meaning                                                                                        |
+|-------------------------------------|------------------------------------------------------------------------------------------------|
 | `AnimateTo(Target, Seconds, Curve)` | Animates from the current value. Asking for the target already in progress does not restart it |
-| `Set(Value)` | Jumps to `Value` and stops any animation |
-| `Get()`, `operator()`, `Peek()` | Read the current value, tracked or not |
-| `GetTarget()`, `IsAnimating()` | Where it is heading, and whether it is moving |
+| `Set(Value)`                        | Jumps to `Value` and stops any animation                                                       |
+| `Get()`, `operator()`, `Peek()`     | Read the current value, tracked or not                                                         |
+| `GetTarget()`, `IsAnimating()`      | Where it is heading, and whether it is moving                                                  |
 
 `T` can be `float`, `double`, `Vec2`, `Size`, `Rect`, `Color`, or any type with an `Interpolate(From, To, Amount)`
 overload in the `XenUI` namespace. Colors interpolate channel by channel, including alpha.

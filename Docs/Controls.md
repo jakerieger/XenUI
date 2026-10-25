@@ -11,13 +11,13 @@ Button {.Label = "Save", .OnPressed = [this] { Save(); }, .Variant = ButtonVaria
 Button {.Label = "■", .OnPressed = [this] { Stop(); }, .Width = 36.0f, .AccessibleLabel = "Stop"}
 ```
 
-| Field | Meaning |
-|---|---|
-| `Label`, `OnPressed` | Text and action. Enter and Space press a focused button |
-| `Variant` | `Primary` (accent fill), `Secondary` (default, bordered) or `Ghost` (no fill until hovered) |
-| `Enabled` | A disabled button is dimmed, not focusable and ignores the pointer |
-| `Width` | Fixed width; otherwise the button fits its label, or fills the width a column stretches it to |
-| `AccessibleLabel` | What screen readers say when `Label` is a symbol |
+| Field                | Meaning                                                                                       |
+|----------------------|-----------------------------------------------------------------------------------------------|
+| `Label`, `OnPressed` | Text and action. Enter and Space press a focused button                                       |
+| `Variant`            | `Primary` (accent fill), `Secondary` (default, bordered) or `Ghost` (no fill until hovered)   |
+| `Enabled`            | A disabled button is dimmed, not focusable and ignores the pointer                            |
+| `Width`              | Fixed width; otherwise the button fits its label, or fills the width a column stretches it to |
+| `AccessibleLabel`    | What screen readers say when `Label` is a symbol                                              |
 
 ## Toggles
 
@@ -121,18 +121,18 @@ TextField {
 }
 ```
 
-| Field | Meaning |
-|---|---|
-| `Controller` | An external `TextEditingController` for reading and changing text and selection from code |
-| `Bind` | Two-way binding to a `Signal<std::string>` |
-| `InitialText`, `OnChanged` | Starting text and a callback after every edit |
-| `OnSubmit` | Called on Enter. Without it, Enter passes to the field's ancestors |
-| `OnFocusChanged` | Called when the field gains or loses focus, for example to commit an inline rename |
-| `OnKey` | Sees keys before editing does; return `true` to consume one |
-| `Placeholder`, `TextFont`, `Width`, `Leading` | Appearance |
-| `FocusTarget`, `AutoFocus`, `SelectAllOnFocus` | Focus behavior |
-| `Enabled`, `MaxLength` | Editing limits (`MaxLength` in characters; 0 for none) |
-| `Label` | Screen reader name; the placeholder is used when empty |
+| Field                                          | Meaning                                                                                   |
+|------------------------------------------------|-------------------------------------------------------------------------------------------|
+| `Controller`                                   | An external `TextEditingController` for reading and changing text and selection from code |
+| `Bind`                                         | Two-way binding to a `Signal<std::string>`                                                |
+| `InitialText`, `OnChanged`                     | Starting text and a callback after every edit                                             |
+| `OnSubmit`                                     | Called on Enter. Without it, Enter passes to the field's ancestors                        |
+| `OnFocusChanged`                               | Called when the field gains or loses focus, for example to commit an inline rename        |
+| `OnKey`                                        | Sees keys before editing does; return `true` to consume one                               |
+| `Placeholder`, `TextFont`, `Width`, `Leading`  | Appearance                                                                                |
+| `FocusTarget`, `AutoFocus`, `SelectAllOnFocus` | Focus behavior                                                                            |
+| `Enabled`, `MaxLength`                         | Editing limits (`MaxLength` in characters; 0 for none)                                    |
+| `Label`                                        | Screen reader name; the placeholder is used when empty                                    |
 
 Text fields support mouse and keyboard selection, Ctrl word movement, Ctrl+A/C/X/V, Ctrl/Shift+Insert, undo and redo,
 and IME composition for languages such as Japanese and Chinese.
@@ -305,8 +305,8 @@ _Dialog = ShowDialog(*OverlayController::Of(Context), PopupStyle::Capture(Contex
   uses Enter itself.
 - **Clicking outside.** A click on the dimmed area also calls `OnDismiss`. Pass `DismissOnBarrier = false` to
   `ShowDialog` for dialogs that must be answered.
-- **Content.** `Content` can be any widget, including text fields and other controls. `Width` sets the panel width
-  (420 DIPs by default).
+- **Content.** `Content` can be any widget, including text fields and other controls. `Width` sets the panel width (420
+  DIPs by default).
 
 Capture the overlay and style while building, as above, and call `ShowDialog` from an event handler.
 
@@ -356,5 +356,7 @@ An expandable hierarchy:
 
 ## Window controls
 
-For windows with a custom title bar, `WindowDragArea` marks where the window can be dragged, and `WindowControls`
-draws the minimize, maximize and close buttons. Both are covered in [Windows](Windows.md#custom-title-bars).
+For windows with a custom title bar, `TitleBar` is a complete title bar with menus, the title, your own widgets and
+the caption buttons. To build a different one, `WindowDragArea` marks where the window can be dragged, and
+`WindowControls` draws the minimize, maximize and close buttons. All three are covered in
+[Windows](Windows.md#custom-title-bars).

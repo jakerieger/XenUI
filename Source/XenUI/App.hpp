@@ -16,6 +16,7 @@
 
 #include "XenUI/Api.hpp"
 
+#include <functional>
 #include <memory>
 
 namespace XenUI {
@@ -37,6 +38,12 @@ namespace XenUI {
         int Run();
 
         void Quit(int ExitCode = 0);
+
+        /// @brief Runs Work on the UI thread, soon after the call. Safe to call from any thread, which makes it the way
+        /// for worker threads to update signals and widgets. Posted work runs in the order it was posted, also while a
+        /// modal loop such as a file dialog is open. Work that captures objects must not outlive them.
+        /// @return False when no App exists, in which case Work is dropped.
+        static bool Post(std::function<void()> Work);
 
     private:
         std::unique_ptr<AppContext> _Context;

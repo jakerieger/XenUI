@@ -340,9 +340,9 @@ namespace XenUI {
               .Background   = Style.Track,
               .CornerRadius = Style.CornerRadius,
               .BorderColor  = Focused && Props.Enabled ? Style.Accent : Style.Border,
-              .Child = Row {.Spacing        = 6.0f,
-                            .CrossAlignment = Multiline ? CrossAxisAlignment::Stretch : CrossAxisAlignment::Center,
-                            .Children       = std::move(Children)},
+              .Child        = Row {.Spacing        = 6.0f,
+                                   .CrossAlignment = Multiline ? CrossAxisAlignment::Stretch : CrossAxisAlignment::Center,
+                                   .Children       = std::move(Children)},
             },
         };
     }

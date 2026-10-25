@@ -65,20 +65,20 @@ namespace XenUI {
           .Child      = Semantics {.Role  = SemanticsRole::Dialog,
                                    .Label = Title,
                                    .Child =
-                                     Container {
+                                Container {
                                        .Width        = Width,
                                        .Padding      = EdgeInsets::All(20.0f),
                                        .Background   = Style.SurfaceRaised,
                                        .CornerRadius = Style.CornerRadius * 2.0f,
                                        .BorderColor  = Style.Border,
                                        .Child =
-                                         Column {
+                                    Column {
                                            .Spacing        = 16.0f,
                                            .CrossAlignment = CrossAxisAlignment::Stretch,
                                            .MainSize       = MainAxisSize::Min,
                                            .Children       = std::move(Children),
-                                         },
-                                     }},
+                                    },
+                                }},
         };
     }
 

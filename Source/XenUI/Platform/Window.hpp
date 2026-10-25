@@ -21,6 +21,7 @@
 #include "XenUI/Tree/Node.hpp"
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
@@ -41,6 +42,9 @@ namespace XenUI {
         /// @brief Lets the content draw the title bar: the client area covers the whole window inside the resize
         /// borders. Mark draggable areas with WindowDragArea and add WindowControls for the caption buttons.
         bool CustomTitleBar = false;
+        /// @brief Resource ID of the icon shown in the title bar, the taskbar and Alt+Tab, from the executable's
+        /// resources. 0 uses the executable's first icon, the one Explorer shows for the file.
+        int Icon = 0;
     };
 
     struct FrameInfo {
@@ -66,8 +70,12 @@ namespace XenUI {
         void Show();
         void Maximize();
 
-        /// @brief Requests the window to close, as if the user clicked the close button.
+        /// @brief Requests the window to close, as if the user clicked the close button. The close-request callback
+        /// can refuse.
         void Close();
+        /// @brief Closes the window without asking the close-request callback, for example after the user confirmed
+        /// discarding changes. The window is destroyed once the current message has been handled.
+        void Destroy();
 
         void SetTitle(std::string_view Title);
 
@@ -94,8 +102,15 @@ namespace XenUI {
         /// keep animating; the window renders nothing and uses no CPU while no frames are requested.
         void SetFrameCallback(FrameCallback Callback);
 
-        /// @brief Called once the window has been destroyed, by the user or by Close.
+        /// @brief Called when the user or Close asks the window to close, before anything happens. Return false to
+        /// keep the window open, for example to ask about unsaved changes first; call Destroy to close it afterwards.
+        void SetOnCloseRequested(std::function<bool()> Callback);
+        /// @brief Called once the window has been destroyed, by the user, Close or Destroy.
         void SetOnClosed(std::function<void()> Callback);
+        /// @brief Uses the icon with this resource ID from the executable's resources. 0 uses its first icon.
+        void SetIcon(int ResourceId);
+        /// @brief Uses the icon in an .ico file. Throws if it can't be loaded.
+        void SetIconFile(const std::filesystem::path& IconFile);
 
         /// @brief Window-wide key bindings, tried after the focused widgets decline a key.
         void SetShortcuts(std::vector<Shortcut> Shortcuts);

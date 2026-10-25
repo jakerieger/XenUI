@@ -6,21 +6,21 @@ in signals, and the framework rebuilds, lays out and repaints only what changed.
 Start with **Getting started**, then read **Widgets** and **Signals**. Together they explain almost everything
 you'll write day to day. The other pages can be read in any order.
 
-| Page | What it covers |
-|---|---|
-| [Getting started](GettingStarted.md) | Requirements, building, adding XenUI to a project, a first window |
-| [Widgets](Widgets.md) | Widget kinds, stateful components, keys, providing values, custom render objects |
-| [Signals](Signals.md) | `Signal`, `Computed`, `Effect`, tracking, `Peek`, `Batch` and `Untracked` |
-| [Layout](Layout.md) | Constraints, rows and columns, flex, wrap and grids, stacks, sizing, scrolling and custom painting |
-| [Input](Input.md) | Pointer events, gestures, focus, keyboard shortcuts, text input, clipboard, drag and drop |
-| [Controls](Controls.md) | Buttons, toggles, radio buttons, sliders, knobs, number fields, progress bars, tabs, text fields, selects, menus, menu bars, dialogs, tooltips, lists, tree views, tables, multi-line text, split views |
-| [Theming](Theming.md) | The `Theme` struct, custom themes, text styles, switching themes at run time |
-| [Animation](Animation.md) | `Animated<T>`, easing, timers and frame callbacks |
-| [Windows](Windows.md) | `App` and `Window`, custom title bars, popups, multiple windows, embedding native windows |
-| [Live rendering](LiveRendering.md) | `LiveView`, `LiveCanvas`, `LiveTexture` and feeding them from other threads |
-| [Accessibility](Accessibility.md) | How widgets reach screen readers, and describing your own widgets |
-| [Developer tools](DeveloperTools.md) | The widget inspector, the frame stats overlay and reading frame timings in code |
-| [Architecture](Architecture.md) | How a frame is built, laid out, painted and composited |
+| Page                                 | What it covers                                                                                                                                                                                          |
+|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [Getting started](GettingStarted.md) | Requirements, building, adding XenUI to a project, a first window                                                                                                                                       |
+| [Widgets](Widgets.md)                | Widget kinds, stateful components, keys, providing values, custom render objects                                                                                                                        |
+| [Signals](Signals.md)                | `Signal`, `Computed`, `Effect`, tracking, `Peek`, `Batch` and `Untracked`                                                                                                                               |
+| [Layout](Layout.md)                  | Constraints, rows and columns, flex, wrap and grids, stacks, sizing, scrolling and custom painting                                                                                                      |
+| [Input](Input.md)                    | Pointer events, gestures, focus, keyboard shortcuts, text input, clipboard, drag and drop                                                                                                               |
+| [Controls](Controls.md)              | Buttons, toggles, radio buttons, sliders, knobs, number fields, progress bars, tabs, text fields, selects, menus, menu bars, dialogs, tooltips, lists, tree views, tables, multi-line text, split views |
+| [Theming](Theming.md)                | The `Theme` struct, custom themes, text styles, switching themes at run time                                                                                                                            |
+| [Animation](Animation.md)            | `Animated<T>`, easing, timers and frame callbacks                                                                                                                                                       |
+| [Windows](Windows.md)                | `App` and `Window`, icons, closing, work from other threads, file dialogs, custom title bars, popups, multiple windows, embedding native windows                                                        |
+| [Live rendering](LiveRendering.md)   | `LiveView`, `LiveCanvas`, `LiveTexture` and feeding them from other threads                                                                                                                             |
+| [Accessibility](Accessibility.md)    | How widgets reach screen readers, and describing your own widgets                                                                                                                                       |
+| [Developer tools](DeveloperTools.md) | The widget inspector, the frame stats overlay and reading frame timings in code                                                                                                                         |
+| [Architecture](Architecture.md)      | How a frame is built, laid out, painted and composited                                                                                                                                                  |
 
 The API reference is generated from the headers with Doxygen. The headers themselves are documented and are the
 final word on every type: start from `Source/XenUI/XenUI.hpp`, which includes everything.

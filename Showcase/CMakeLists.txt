@@ -1,5 +1,6 @@
 add_executable(XenUIShowcase WIN32
         main.cpp
+        Showcase.rc
 )
 
 XenUI_ConfigureTarget(XenUIShowcase)

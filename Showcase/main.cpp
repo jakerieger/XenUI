@@ -19,11 +19,13 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
 #include <format>
 #include <memory>
 #include <numbers>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace {
@@ -43,17 +45,18 @@ namespace {
     const Font kSmallFont {.Size = 11.0f};
     const Font kMediumFont {.Size = 13.0f};
 
-    const char* const kSections[] = {"Controls",
-                                     "Text input",
-                                     "Lists",
-                                     "Menus & tooltips",
-                                     "Drag & drop",
-                                     "Native windows",
-                                     "Live canvas",
-                                     "Painting",
-                                     "Layout",
-                                     "Animation",
-                                     "More controls"};
+    constexpr std::array<std::string_view, 12> kSections = {"Controls",
+                                                            "Text input",
+                                                            "Lists",
+                                                            "Menus & tooltips",
+                                                            "Drag & drop",
+                                                            "Native windows",
+                                                            "Live canvas",
+                                                            "Painting",
+                                                            "Layout",
+                                                            "Animation",
+                                                            "More controls",
+                                                            "System"};
 
     struct Swatch {
         const char* Name;
@@ -94,6 +97,10 @@ namespace {
         Signal<int> SettingsTab     = 0;
         Signal<bool> ShowInspector  = false;
         Signal<bool> ShowFrameStats = false;
+        Signal<bool> ConfirmClose   = false;
+        Signal<int> IconChoice      = 0;
+        Signal<std::string> Picked  = std::string("Nothing picked yet");
+        Window* MainWindow          = nullptr;
         Theme ActiveTheme;
 
         void Report(std::string Message) { Status = std::move(Message); }
@@ -936,54 +943,108 @@ namespace {
         };
     };
 
-    /// @brief The menu bar in the title strip. Items report what they would do in the status bar.
-    Node ShowcaseMenus(ShowcaseState& State) {
+    std::string DisplayPath(const std::filesystem::path& Path) {
+        const std::u8string Text = Path.u8string();
+        return {Text.begin(), Text.end()};
+    }
+
+    const std::vector<FileFilter> kAudioFilters = {{"Audio files", "*.wav;*.flac;*.mp3;*.ogg"}, {"All files", "*.*"}};
+
+    void ShowPicked(ShowcaseState* Model, std::string Message) {
+        Model->Report(Message);
+        Model->Picked = std::move(Message);
+    }
+
+    void OpenSample(ShowcaseState* Model) {
+        if (const auto File = FileDialog::OpenFile({.Title = "Open a sample", .Filters = kAudioFilters})) {
+            ShowPicked(Model, "Opened " + DisplayPath(*File));
+        } else {
+            ShowPicked(Model, "Cancelled opening a file");
+        }
+    }
+
+    void OpenSamples(ShowcaseState* Model) {
+        const std::vector<std::filesystem::path> Files =
+          FileDialog::OpenFiles({.Title = "Open samples", .Filters = kAudioFilters});
+        if (Files.empty()) {
+            ShowPicked(Model, "Cancelled opening files");
+        } else {
+            ShowPicked(Model,
+                       std::format("Opened {} file{}, starting with {}",
+                                   Files.size(),
+                                   Files.size() == 1 ? "" : "s",
+                                   DisplayPath(Files.front().filename())));
+        }
+    }
+
+    void SaveProject(ShowcaseState* Model) {
+        if (const auto File = FileDialog::SaveFile({.Title            = "Save project",
+                                                    .FileName         = "Untitled",
+                                                    .Filters          = {{"Xen project", "*.xen"}},
+                                                    .DefaultExtension = "xen"})) {
+            ShowPicked(Model, "Would save to " + DisplayPath(*File));
+        } else {
+            ShowPicked(Model, "Cancelled saving");
+        }
+    }
+
+    void PickExportFolder(ShowcaseState* Model) {
+        if (const auto Folder = FileDialog::PickFolder({.Title = "Export stems to"})) {
+            ShowPicked(Model, "Picked " + DisplayPath(*Folder));
+        } else {
+            ShowPicked(Model, "Cancelled picking a folder");
+        }
+    }
+
+    /// @brief The menus in the title bar. Items report what they would do in the status bar.
+    std::vector<Menu> ShowcaseMenus(ShowcaseState& State) {
         ShowcaseState* Model = &State;
         const auto Item      = [Model](std::string Label, std::string Shortcut = {}) {
             return MenuItem {.Label = Label, .ShortcutText = std::move(Shortcut), .OnSelect = [Model, Label] {
                                  Model->Report(std::format("Menu: {}", Label));
                              }};
         };
-        return MenuBar {
-          .Menus =
-            {
-              Menu {.Label = "File",
-                    .Items = {Item("New", "Ctrl+N"),
-                              Item("Open...", "Ctrl+O"),
-                              Item("Save", "Ctrl+S"),
-                              MenuItem::Divider(),
-                              Item("Exit")}},
-              Menu {.Label = "Edit",
-                    .Items = {Item("Undo", "Ctrl+Z"),
-                              Item("Redo", "Ctrl+Y"),
-                              MenuItem::Divider(),
-                              Item("Cut", "Ctrl+X"),
-                              Item("Copy", "Ctrl+C"),
-                              Item("Paste", "Ctrl+V")}},
-              Menu {.Label = "View",
-                    .Items = {MenuItem {.Label    = "Dark theme",
-                                        .OnSelect = [Model] { Model->ThemeMode = 1; },
-                                        .Checked  = Model->ThemeMode() == 1},
-                              MenuItem {.Label    = "Light theme",
-                                        .OnSelect = [Model] { Model->ThemeMode = 2; },
-                                        .Checked  = Model->ThemeMode() == 2},
-                              MenuItem {.Label    = "Follow Windows",
-                                        .OnSelect = [Model] { Model->ThemeMode = 0; },
-                                        .Checked  = Model->ThemeMode() == 0}}},
-              Menu {.Label = "Help",
-                    .Items = {MenuItem {.Label        = "Widget inspector",
-                                        .ShortcutText = "F12",
-                                        .OnSelect = [Model] { Model->ShowInspector = !Model->ShowInspector.Peek(); },
-                                        .Checked  = Model->ShowInspector()},
-                              MenuItem {.Label        = "Frame stats",
-                                        .ShortcutText = "Shift+F12",
-                                        .OnSelect = [Model] { Model->ShowFrameStats = !Model->ShowFrameStats.Peek(); },
-                                        .Checked  = Model->ShowFrameStats()},
-                              MenuItem::Divider(),
-                              Item("Documentation"),
-                              Item("About XenUI")}},
-            },
-          .Height = 26.0f,
+        return {
+          Menu {.Label = "File",
+                // The dialogs open once the menu has closed: App::Post runs them after the current input.
+                .Items = {Item("New", "Ctrl+N"),
+                          MenuItem {.Label        = "Open...",
+                                    .ShortcutText = "Ctrl+O",
+                                    .OnSelect     = [Model] { App::Post([Model] { OpenSample(Model); }); }},
+                          MenuItem {.Label        = "Save as...",
+                                    .ShortcutText = "Ctrl+Shift+S",
+                                    .OnSelect     = [Model] { App::Post([Model] { SaveProject(Model); }); }},
+                          MenuItem::Divider(),
+                          MenuItem {.Label = "Exit", .OnSelect = [Model] { Model->MainWindow->Close(); }}}},
+          Menu {.Label = "Edit",
+                .Items = {Item("Undo", "Ctrl+Z"),
+                          Item("Redo", "Ctrl+Y"),
+                          MenuItem::Divider(),
+                          Item("Cut", "Ctrl+X"),
+                          Item("Copy", "Ctrl+C"),
+                          Item("Paste", "Ctrl+V")}},
+          Menu {.Label = "View",
+                .Items = {MenuItem {.Label    = "Dark theme",
+                                    .OnSelect = [Model] { Model->ThemeMode = 1; },
+                                    .Checked  = Model->ThemeMode() == 1},
+                          MenuItem {.Label    = "Light theme",
+                                    .OnSelect = [Model] { Model->ThemeMode = 2; },
+                                    .Checked  = Model->ThemeMode() == 2},
+                          MenuItem {.Label    = "Follow Windows",
+                                    .OnSelect = [Model] { Model->ThemeMode = 0; },
+                                    .Checked  = Model->ThemeMode() == 0}}},
+          Menu {.Label = "Help",
+                .Items = {MenuItem {.Label        = "Widget inspector",
+                                    .ShortcutText = "F12",
+                                    .OnSelect     = [Model] { Model->ShowInspector = !Model->ShowInspector.Peek(); },
+                                    .Checked      = Model->ShowInspector()},
+                          MenuItem {.Label        = "Frame stats",
+                                    .ShortcutText = "Shift+F12",
+                                    .OnSelect     = [Model] { Model->ShowFrameStats = !Model->ShowFrameStats.Peek(); },
+                                    .Checked      = Model->ShowFrameStats()},
+                          MenuItem::Divider(),
+                          Item("Documentation"),
+                          Item("About XenUI")}},
         };
     }
 
@@ -1241,6 +1302,235 @@ namespace {
         };
     }
 
+    /// @brief Counts through simulated work on a worker thread, which reports each step with App::Post.
+    struct BackgroundDemo {
+        ShowcaseState* Model = nullptr;
+
+        class State : public ComponentState<BackgroundDemo> {
+        public:
+            static constexpr int kSteps = 120;
+
+        protected:
+            void Dispose() override {
+                // Posted steps that are still queued find the token gone; then the worker is stopped and joined.
+                _Alive.reset();
+                _Worker = {};
+            }
+
+            Node Build(BuildContext& Context) override {
+                (void)Context;
+                const bool Running = _Running();
+                return Column {
+                  .Spacing        = 12.0f,
+                  .CrossAlignment = CrossAxisAlignment::Stretch,
+                  .MainSize       = MainAxisSize::Min,
+                  .Children =
+                    {
+                      ProgressBar {.Value = static_cast<float>(_Done()) / kSteps, .Label = "Analysis"},
+                      Row {.Spacing  = 12.0f,
+                           .Children = {Button {.Label     = "Analyze library",
+                                                .OnPressed = [this] { Start(); },
+                                                .Variant   = ButtonVariant::Primary,
+                                                .Enabled   = !Running},
+                                        Button {.Label     = "Cancel",
+                                                .OnPressed = [this] { _Worker.request_stop(); },
+                                                .Enabled   = Running},
+                                        Text {.Content = _Message(), .Font = kSmallFont, .Color = Ink().TextMuted}}},
+                    },
+                };
+            }
+
+        private:
+            /// @brief Runs Work on the UI thread unless this component is gone by then. Safe from any thread.
+            void Post(std::function<void()> Work) {
+                App::Post([Alive = std::weak_ptr(_Alive), Work = std::move(Work)] {
+                    if (Alive.lock()) { Work(); }
+                });
+            }
+
+            void Start() {
+                _Running = true;
+                _Done    = 0;
+                _Message = "Starting...";
+                _Worker  = std::jthread([this](const std::stop_token& Stop) {
+                    // Only App::Post is called here; the signals are written by the posted work, on the UI thread.
+                    for (int Step = 1; Step <= kSteps; ++Step) {
+                        if (Stop.stop_requested()) {
+                            Post([this, Step] {
+                                Finish(std::format("Cancelled after {} of {} samples", Step - 1, kSteps));
+                            });
+                            return;
+                        }
+                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                        Post([this, Step] {
+                            _Done    = Step;
+                            _Message = std::format("Analyzed sample {} of {} on a worker thread", Step, kSteps);
+                        });
+                    }
+                    Post([this] { Finish(std::format("Analyzed all {} samples", kSteps)); });
+                });
+            }
+
+            void Finish(std::string Message) {
+                _Running = false;
+                _Message = Message;
+                GetWidget().Model->Report(std::move(Message));
+            }
+
+            Signal<bool> _Running        = false;
+            Signal<int> _Done            = 0;
+            Signal<std::string> _Message = std::string("Idle");
+            std::shared_ptr<bool> _Alive = std::make_shared<bool>(true);
+            // Declared last, so it is stopped and joined before the state above is destroyed.
+            std::jthread _Worker;
+        };
+    };
+
+    void ApplyIcon(ShowcaseState* Model, int Choice) {
+        Window& Target = *Model->MainWindow;
+        if (Choice == 2) {
+            const auto File = FileDialog::OpenFile({.Title = "Choose an icon", .Filters = {{"Icons", "*.ico"}}});
+            if (!File) {
+                Model->Report("Kept the current icon");
+                return;
+            }
+            try {
+                Target.SetIconFile(*File);
+                Model->Report("Using the icon " + DisplayPath(File->filename()));
+            } catch (const Error& Failure) {
+                Model->Report(Failure.what());
+                return;
+            }
+        } else {
+            Target.SetIcon(Choice + 1);
+            Model->Report(Choice == 0 ? "Using the blue icon (resource 1)" : "Using the mint icon (resource 2)");
+        }
+        Model->IconChoice = Choice;
+    }
+
+    Node SystemSection(ShowcaseState& State) {
+        ShowcaseState* Model = &State;
+        const auto Caption   = [](std::string Content) {
+            return Text {.Content = std::move(Content), .Font = kSmallFont, .Color = Ink().TextMuted};
+        };
+        return Column {
+          .Spacing        = 16.0f,
+          .CrossAlignment = CrossAxisAlignment::Stretch,
+          .Children =
+            {
+              Card(
+                "File dialogs",
+                "The system's open, save and folder dialogs. They block until closed, while the window keeps painting. "
+                "File > Open and File > Save as use them too.",
+                Column {
+                  .Spacing        = 12.0f,
+                  .CrossAlignment = CrossAxisAlignment::Stretch,
+                  .MainSize       = MainAxisSize::Min,
+                  .Children =
+                    {
+                      Row {.Spacing  = 12.0f,
+                           .Children = {Button {.Label = "Open file...", .OnPressed = [Model] { OpenSample(Model); }},
+                                        Button {.Label = "Open files...", .OnPressed = [Model] { OpenSamples(Model); }},
+                                        Button {.Label = "Save as...", .OnPressed = [Model] { SaveProject(Model); }},
+                                        Button {.Label     = "Pick folder...",
+                                                .OnPressed = [Model] { PickExportFolder(Model); }}}},
+                      Text {.Content  = Model->Picked(),
+                            .Font     = kSmallFont,
+                            .Color    = Ink().TextMuted,
+                            .Wrapping = TextWrapping::NoWrap,
+                            .Trimming = TextTrimming::Ellipsis},
+                    },
+                }),
+              Card("Background work",
+                   "A worker thread does the work and hands each update to the UI thread with App::Post. The UI stays "
+                   "responsive, and leaving the page cancels the work.",
+                   BackgroundDemo {Model}),
+              Card("Closing",
+                   "Windows can refuse to close, for example to ask about unsaved changes. This applies to the close "
+                   "button, Alt+F4, the taskbar and File > Exit.",
+                   Row {.Spacing  = 16.0f,
+                        .Children = {Switch {.Value     = Model->ConfirmClose(),
+                                             .OnChanged = [Model](bool On) { Model->ConfirmClose = On; },
+                                             .Label     = "Ask before closing"},
+                                     Button {.Label     = "Close window",
+                                             .OnPressed = [Model] { Model->MainWindow->Close(); }}}}),
+              Card("Window icon",
+                   "Windows use the executable's first icon unless told otherwise. This one has two icon resources; it "
+                   "can also load an .ico file. Look at the taskbar or Alt+Tab.",
+                   Row {
+                     .Spacing        = 32.0f,
+                     .CrossAlignment = CrossAxisAlignment::Start,
+                     .Children =
+                       {
+                         RadioGroup {
+                           .Options       = {"Blue (resource 1)", "Mint (resource 2)", "From an .ico file..."},
+                           .SelectedIndex = Model->IconChoice(),
+                           .OnChanged = [Model](int Index) { App::Post([Model, Index] { ApplyIcon(Model, Index); }); },
+                           .Label     = "Window icon",
+                         },
+                         Caption("Choosing a file opens the file dialog."),
+                       },
+                   }),
+            },
+        };
+    }
+
+    /// @brief Asks before the window closes while "Ask before closing" is on.
+    struct CloseGuard {
+        ShowcaseState* Model = nullptr;
+        Node Child;
+
+        class State : public ComponentState<CloseGuard> {
+        protected:
+            void Init() override {
+                ShowcaseState* Shared = GetWidget().Model;
+                Shared->MainWindow->SetOnCloseRequested([this, Shared] {
+                    if (!Shared->ConfirmClose.Peek()) { return true; }
+                    Ask(Shared);
+                    return false;
+                });
+            }
+
+            Node Build(BuildContext& Context) override {
+                _Overlay = OverlayController::Of(Context);
+                _Style   = PopupStyle::Capture(Context);
+                return GetWidget().Child;
+            }
+
+        private:
+            void Ask(ShowcaseState* Shared) {
+                if (_Asking || _Overlay == nullptr) { return; }
+                _Asking           = true;
+                const auto Cancel = [this, Shared] {
+                    Shared->Report("Kept the window open");
+                    _Asking = false;
+                    _Dialog.Reset();
+                };
+                _Dialog =
+                  ShowDialog(*_Overlay,
+                             _Style,
+                             Dialog {
+                               .Title   = "Close the showcase?",
+                               .Content = Text {.Content = "\"Ask before closing\" is on in the System section.",
+                                                .Color   = Ink().TextMuted},
+                               .Actions =
+                                 {
+                                   DialogAction {.Label = "Cancel", .OnPressed = Cancel},
+                                   DialogAction {.Label     = "Close",
+                                                 .OnPressed = [Shared] { Shared->MainWindow->Destroy(); },
+                                                 .Variant   = ButtonVariant::Primary},
+                                 },
+                               .OnDismiss = Cancel,
+                             });
+            }
+
+            OverlayController* _Overlay = nullptr;
+            PopupStyle _Style;
+            OverlayEntry _Dialog;
+            bool _Asking = false;
+        };
+    };
+
     struct SectionView {
         ShowcaseState* State = nullptr;
 
@@ -1279,17 +1569,21 @@ namespace {
                 case 9:
                     Content = AnimationSection {State};
                     break;
-                default:
+                case 10:
                     Content = MoreControlsSection(*State);
+                    break;
+                default:
+                    Content = SystemSection(*State);
                     break;
             }
             return ScrollView {
-              .Child = Padding {.Insets = EdgeInsets::All(24.0f),
-                                .Child  = Column {.Spacing        = 18.0f,
-                                                  .CrossAlignment = CrossAxisAlignment::Stretch,
-                                                  .MainSize       = MainAxisSize::Min,
-                                                  .Children = {Text {.Content = kSections[Section], .Font = kTitleFont},
-                                                               Keyed(Section, Content)}}}};
+              .Child =
+                Padding {.Insets = EdgeInsets::All(24.0f),
+                         .Child  = Column {.Spacing        = 18.0f,
+                                           .CrossAlignment = CrossAxisAlignment::Stretch,
+                                           .MainSize       = MainAxisSize::Min,
+                                           .Children = {Text {.Content = kSections[Section].data(), .Font = kTitleFont},
+                                                        Keyed(Section, Content)}}}};
         }
     };
 
@@ -1323,7 +1617,7 @@ namespace {
                               Selected ? Ink().Accent.WithAlpha(0.18f) : (_Hovered() ? Ink().Hover : Ink().Chrome),
                                .CornerRadius = 6.0f,
                                .Child        = Align {.Position = Alignment::CenterLeft(),
-                                                      .Child    = Text {.Content = kSections[Props.Index],
+                                                      .Child    = Text {.Content = kSections[Props.Index].data(),
                                                                         .Color   = Selected ? Ink().Text : Ink().TextMuted}},
                           },
                       },
@@ -1362,7 +1656,7 @@ namespace {
             CurrentTheme = &State->ActiveTheme;
             return Provide<Theme> {
               .Value = State->ActiveTheme,
-              .Child = DeveloperTools {.Child          = BuildShowcase(*State),
+              .Child = DeveloperTools {.Child          = CloseGuard {State, BuildShowcase(*State)},
                                        .ShowInspector  = &State->ShowInspector,
                                        .ShowFrameStats = &State->ShowFrameStats},
             };
@@ -1386,55 +1680,33 @@ namespace {
                   .CrossAlignment = CrossAxisAlignment::Stretch,
                   .Children =
                     {
-                      Container {
-                        .Height     = 34.0f,
-                        .Background = Ink().Chrome,
-                        .Child = WindowDragArea {.Child = Stack {
-                                                   .Fit = StackFit::Expand,
-                                                   .Children =
-                                                     {
-                                                       IgnorePointer {.Child = Center {.Child = Text {.Content = "XenUI Showcase",
-                                                                                                      .Font    = kMediumFont,
-                                                                                                      .Color   = Ink().TextMuted}}},
-                                                   Row {
-                                                     .Spacing = 10.0f,
-                                                     .Children =
-                                                       {
-                                                         Padding {.Insets = {.Left = 6.0f}, .Child = ShowcaseMenus(State)},
-                                                         Spacer {},
-                                                         Text {.Content = "Theme",
-                                                               .Font    = kSmallFont,
-                                                               .Color   = Ink().TextMuted},
-                                                         Select {.Options       = {"System", "Dark", "Light"},
-                                                                 .SelectedIndex = State.ThemeMode.Peek(),
-                                                                 .OnChanged = [&State](
-                                                                                int Index) { State.ThemeMode = Index; },
-                                                                 .Width     = 96.0f,
-                                                                 .Label     = "Theme"},
-                                                         WindowControls {.Height = 34.0f},
-                                                       },
-                                                   },
-                                                     },
-                                                 }},
+                      TitleBar {
+                        .Title   = "XenUI Showcase",
+                        .Menus   = ShowcaseMenus(State),
+                        .Actions = {Text {.Content = "Theme", .Font = kSmallFont, .Color = Ink().TextMuted},
+                                    Select {.Options       = {"System", "Dark", "Light"},
+                                            .SelectedIndex = State.ThemeMode.Peek(),
+                                            .OnChanged     = [&State](int Index) { State.ThemeMode = Index; },
+                                            .Width         = 96.0f,
+                                            .Label         = "Theme"}},
                       },
-                      Expanded {
-                        .Child =
-                          Row {
-                            .CrossAlignment = CrossAxisAlignment::Stretch,
-                            .Children =
-                              {
-                                Container {.Width      = 210.0f,
-                                           .Padding    = EdgeInsets::All(12.0f),
-                                           .Background = Ink().Chrome,
-                                           .Child =
-                                             Semantics {.Role  = SemanticsRole::List,
-                                                        .Label = "Sections",
-                                                        .Child = Column {.Spacing        = 4.0f,
-                                                                         .CrossAlignment = CrossAxisAlignment::Stretch,
-                                                                         .Children       = std::move(Navigation)}}},
-                                Expanded {.Child = SectionView {&State}},
-                              },
-                          }},
+                      Expanded {.Child =
+                                  Row {
+                                    .CrossAlignment = CrossAxisAlignment::Stretch,
+                                    .Children =
+                                      {
+                                        Container {.Width      = 210.0f,
+                                                   .Padding    = EdgeInsets::All(12.0f),
+                                                   .Background = Ink().Chrome,
+                                                   .Child =
+                                                     Semantics {.Role  = SemanticsRole::List,
+                                                                .Label = "Sections",
+                                                                .Child = Column {.Spacing = 4.0f,
+                                                                                 .CrossAlignment = CrossAxisAlignment::Stretch,
+                                                                                 .Children = std::move(Navigation)}}},
+                                        Expanded {.Child = SectionView {&State}},
+                                      },
+                                  }},
                       Container {.Height     = 28.0f,
                                  .Padding    = EdgeInsets::Symmetric(14.0f, 0.0f),
                                  .Background = Ink().Chrome,
@@ -1454,6 +1726,7 @@ int main() {
         MainWindow.SetOnClosed([&ShowcaseApp] { ShowcaseApp.Quit(); });
 
         ShowcaseState State;
+        State.MainWindow = &MainWindow;
         MainWindow.SetContent(ShowcaseRoot {&State});
         MainWindow.Show();
         return ShowcaseApp.Run();

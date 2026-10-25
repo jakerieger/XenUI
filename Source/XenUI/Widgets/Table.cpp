@@ -128,9 +128,9 @@ namespace XenUI {
                                                             Owner->Resize(ColumnIndex, Drag.Delta.X);
                                                         },
                                                       .Behavior = HitTestBehavior::Opaque,
-                                                      .Child = Center {.Child = Container {.Width      = 1.0f,
-                                                                                           .Height     = 14.0f,
-                                                                                           .Background = Style.Border}},
+                                                      .Child    = Center {.Child = Container {.Width      = 1.0f,
+                                                                                              .Height     = 14.0f,
+                                                                                              .Background = Style.Border}},
                                                     },
                                                 }},
                         });
@@ -166,17 +166,17 @@ namespace XenUI {
                     const Node Cells       = CellRow(*Owner, Props.Columns.size(), [&](size_t Column) -> Node {
                         const Node Content =
                           Props.CellBuilder
-                            ? Props.CellBuilder(RowIndex, static_cast<int>(Column))
-                            : Node(Text {.Content = Props.CellText ? Props.CellText(RowIndex, static_cast<int>(Column))
-                                                                   : std::string(),
-                                         .Font    = Style.BodyFont,
-                                         .Color   = Style.Text,
-                                         .Alignment = Props.Columns[Column].Alignment,
-                                         .Wrapping  = TextWrapping::NoWrap,
-                                         .Trimming  = TextTrimming::Ellipsis});
+                                  ? Props.CellBuilder(RowIndex, static_cast<int>(Column))
+                                  : Node(Text {.Content = Props.CellText ? Props.CellText(RowIndex, static_cast<int>(Column))
+                                                                         : std::string(),
+                                               .Font    = Style.BodyFont,
+                                               .Color   = Style.Text,
+                                               .Alignment = Props.Columns[Column].Alignment,
+                                               .Wrapping  = TextWrapping::NoWrap,
+                                               .Trimming  = TextTrimming::Ellipsis});
                         return Padding {.Insets = EdgeInsets::Symmetric(kCellPadding, 0.0f),
-                                        .Child  = Align {.Position = CellAlignment(Props.Columns[Column].Alignment),
-                                                         .Child    = Content}};
+                                              .Child  = Align {.Position = CellAlignment(Props.Columns[Column].Alignment),
+                                                               .Child    = Content}};
                     });
 
                     return Semantics {

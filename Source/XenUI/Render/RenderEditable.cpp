@@ -171,9 +171,9 @@ namespace XenUI {
                 if (Event.Button != MouseButton::Primary) { return false; }
                 const bool Repeated = Event.Time - _LastClickTime <= kMultiClickInterval &&
                                       Distance(Event.LocalPosition, _LastClickPosition) <= kMultiClickDistance;
-                _ClickCount         = Repeated ? std::min<uint32_t>(_ClickCount + 1, 3) : 1;
-                _LastClickTime      = Event.Time;
-                _LastClickPosition  = Event.LocalPosition;
+                _ClickCount        = Repeated ? std::min<uint32_t>(_ClickCount + 1, 3) : 1;
+                _LastClickTime     = Event.Time;
+                _LastClickPosition = Event.LocalPosition;
 
                 const size_t Offset = GetOffsetAt(Event.LocalPosition);
                 const bool Extend   = HasFlags(Event.Modifiers, KeyModifiers::Shift) && _ClickCount == 1;

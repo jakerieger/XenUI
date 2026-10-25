@@ -29,13 +29,13 @@ LiveView {
 
 ## LiveCanvas
 
-| Call | Draws |
-|---|---|
-| `FillRect(Bounds, Color)` | A solid rectangle |
-| `DrawLine(Start, End, Width, Color)` | A line segment |
-| `DrawPolyline(Points, Width, Color)` | Connected segments with round joins, one primitive per segment |
-| `FillColumns(Left, ColumnWidth, Baseline, Tops, Color)` | Vertical bars from a baseline, one per value, for spectra and waveforms |
-| `DrawTexture(Texture, Destination, SourceOffset, Opacity)` | A `LiveTexture`, optionally scrolled horizontally |
+| Call                                                       | Draws                                                                   |
+|------------------------------------------------------------|-------------------------------------------------------------------------|
+| `FillRect(Bounds, Color)`                                  | A solid rectangle                                                       |
+| `DrawLine(Start, End, Width, Color)`                       | A line segment                                                          |
+| `DrawPolyline(Points, Width, Color)`                       | Connected segments with round joins, one primitive per segment          |
+| `FillColumns(Left, ColumnWidth, Baseline, Tops, Color)`    | Vertical bars from a baseline, one per value, for spectra and waveforms |
+| `DrawTexture(Texture, Destination, SourceOffset, Opacity)` | A `LiveTexture`, optionally scrolled horizontally                       |
 
 `GetSize()` returns the view's size.
 

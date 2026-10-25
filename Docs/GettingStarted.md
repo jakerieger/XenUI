@@ -23,12 +23,12 @@ ctest --test-dir build/debug --output-on-failure
 
 The `release` preset builds `RelWithDebInfo`. Everything is written to `build/<preset>/bin`:
 
-| File | What it is |
-|---|---|
-| `XenUId.dll`, `XenUI.dll` | The library (Debug and optimized) |
-| `XenUIShowcase.exe` | A tour of every widget, with a theme switcher |
-| `XenUIHello.exe` | The smallest complete application |
-| `XenUITests.exe` | The unit tests |
+| File                      | What it is                                    |
+|---------------------------|-----------------------------------------------|
+| `XenUId.dll`, `XenUI.dll` | The library (Debug and optimized)             |
+| `XenUIShowcase.exe`       | A tour of every widget, with a theme switcher |
+| `XenUIHello.exe`          | The smallest complete application             |
+| `XenUITests.exe`          | The unit tests                                |
 
 Turn parts off with `-DXENUI_BUILD_TESTS=OFF`, `-DXENUI_BUILD_SHOWCASE=OFF` or `-DXENUI_BUILD_EXAMPLES=OFF`.
 

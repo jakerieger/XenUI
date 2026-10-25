@@ -621,3 +621,27 @@ TEST_CASE("Tree views scroll to a selection made from outside, even inside newly
     CHECK(Scroll.PeekOffset() > 100.0f);
     CHECK(Test.Tree.FindByLabel("Item 5/5/5/5") != nullptr);
 }
+
+TEST_CASE("Title bars center the title beside menus and put it on the left without them") {
+    const auto TitleBounds = [](const Node& Bar) {
+        Harness Test(Column {.CrossAlignment = CrossAxisAlignment::Stretch, .Children = {Bar}}, {600.0f, 200.0f});
+        WidgetInspector Inspector(Test.Host);
+        Inspector.Refresh();
+        for (const InspectorNode& Entry : Inspector.GetNodes()) {
+            if (Entry.Semantics == "Text \"My App\"" && Entry.Bounds) { return *Entry.Bounds; }
+        }
+        FAIL("The title was not found");
+        return Rect {};
+    };
+
+    const Rect Plain = TitleBounds(TitleBar {.Title = "My App"});
+    CHECK(Plain.X == doctest::Approx(12.0f));
+
+    const Rect WithMenus = TitleBounds(TitleBar {
+      .Title   = "My App",
+      .Menus   = {Menu {.Label = "File", .Items = {MenuItem {.Label = "Exit"}}}},
+      .Actions = {Button {.Label = "Theme"}},
+    });
+    CHECK(WithMenus.Center().X == doctest::Approx(300.0f).epsilon(0.01));
+    CHECK(WithMenus.Y + WithMenus.Height <= 34.0f);
+}

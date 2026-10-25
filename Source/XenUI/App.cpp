@@ -15,6 +15,8 @@
 #include "XenUI/App.hpp"
 #include "XenUI/AppContext.hpp"
 
+#include <utility>
+
 namespace XenUI {
     App::App() : _Context(std::make_unique<AppContext>()) {}
 
@@ -26,5 +28,9 @@ namespace XenUI {
 
     void App::Quit(int ExitCode) {
         _Context->Quit(ExitCode);
+    }
+
+    bool App::Post(std::function<void()> Work) {
+        return AppContext::Post(std::move(Work));
     }
 }  // namespace XenUI

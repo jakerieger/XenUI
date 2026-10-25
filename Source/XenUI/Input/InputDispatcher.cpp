@@ -418,10 +418,10 @@ namespace XenUI {
         Active.DataDrag    = true;
         Active.TapPossible = false;
         _DataDrag          = ActiveDataDrag {
-          .PointerId = PointerId,
-          .Source    = Source,
-          .Data      = std::make_shared<DragData>(std::move(*Data)),
-          .Allowed   = Callbacks.Allowed,
+                   .PointerId = PointerId,
+                   .Source    = Source,
+                   .Data      = std::make_shared<DragData>(std::move(*Data)),
+                   .Allowed   = Callbacks.Allowed,
         };
         MoveDataDrag(Event);
         return true;

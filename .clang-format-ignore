@@ -1,0 +1,2 @@
+# CMake templates: clang-format splits their @VARIABLE@ placeholders, which breaks configure_file.
+cmake/*.in

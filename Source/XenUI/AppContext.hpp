@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <exception>
+#include <functional>
 #include <vector>
 
 namespace XenUI {
@@ -64,6 +65,11 @@ namespace XenUI {
         /// @brief Defers an exception caught inside a window procedure so Run can rethrow it outside of user32 frames.
         void ReportException(std::exception_ptr Exception);
 
+        /// @brief Queues Work for the UI thread from any thread. See App::Post.
+        static bool Post(std::function<void()> Work);
+        /// @brief Runs the work posted so far, on the UI thread.
+        void RunPosted();
+
         /// @brief Seconds since the App was created.
         [[nodiscard]] double GetTime() const;
 
@@ -73,7 +79,11 @@ namespace XenUI {
         void RethrowPendingException();
         void RenderNextReadyWindow();
 
+        void CreateDispatcher();
+
         ComApartment _ComApartment;
+        /// @brief A message-only window that wakes the UI thread for posted work, also inside modal loops.
+        HWND__* _Dispatcher = nullptr;
         GraphicsDevice _GraphicsDevice;
         std::vector<WindowImpl*> _Windows;
         std::exception_ptr _PendingException;

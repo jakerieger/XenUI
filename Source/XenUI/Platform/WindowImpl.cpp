@@ -44,9 +44,31 @@ namespace XenUI {
     namespace {
         constexpr wchar_t kWindowClassName[] = L"XenUI.Window";
         constexpr wchar_t kPopupClassName[]  = L"XenUI.Popup";
+        constexpr UINT kDestroyWindowMessage = WM_APP + 2;
+
+        using IconName = std::variant<WORD, std::wstring>;
 
         HINSTANCE GetModuleInstance() {
             return reinterpret_cast<HINSTANCE>(&__ImageBase);
+        }
+
+        /// @brief The name of the first icon group in Module, which Explorer shows for the file, or nothing.
+        std::optional<IconName> FindFirstIcon(HMODULE Module) {
+            std::optional<IconName> Found;
+            EnumResourceNamesW(
+              Module,
+              RT_GROUP_ICON,
+              [](HMODULE, LPCWSTR, LPWSTR Name, LONG_PTR Param) -> BOOL {
+                  auto& Result = *reinterpret_cast<std::optional<IconName>*>(Param);
+                  if (IS_INTRESOURCE(Name)) {
+                      Result = static_cast<WORD>(reinterpret_cast<ULONG_PTR>(Name));
+                  } else {
+                      Result = std::wstring(Name);
+                  }
+                  return FALSE;
+              },
+              reinterpret_cast<LONG_PTR>(&Found));
+            return Found;
         }
 
         float DpiToScale(UINT Dpi) {
@@ -90,6 +112,8 @@ namespace XenUI {
             CenterOnMonitor(Desc.ClientSize);
         });
         _DropRegistration = std::make_unique<SystemDropRegistration>(*this);
+        _IconSource       = Desc.Icon;
+        ApplyIcon();
         if (_Chrome) {
             SetWindowPos(_Hwnd,
                          nullptr,
@@ -153,6 +177,7 @@ namespace XenUI {
 
     WindowImpl::~WindowImpl() {
         if (_Hwnd != nullptr) { DestroyWindow(_Hwnd); }
+        ReleaseIcons();
     }
 
     void WindowImpl::Show() {
@@ -165,6 +190,70 @@ namespace XenUI {
 
     void WindowImpl::Close() {
         if (_Hwnd != nullptr) { PostMessageW(_Hwnd, WM_CLOSE, 0, 0); }
+    }
+
+    void WindowImpl::Destroy() {
+        if (_Hwnd != nullptr) { PostMessageW(_Hwnd, kDestroyWindowMessage, 0, 0); }
+    }
+
+    void WindowImpl::SetIcon(int ResourceId) {
+        _IconSource = ResourceId;
+        ApplyIcon();
+    }
+
+    void WindowImpl::SetIconFile(const std::filesystem::path& IconFile) {
+        _IconSource = IconFile;
+        if (!ApplyIcon()) { throw Error("Couldn't load the icon " + IconFile.string()); }
+    }
+
+    bool WindowImpl::ApplyIcon() {
+        if (_Hwnd == nullptr || _IsPopup) { return false; }
+
+        const int LargeSize = GetSystemMetricsForDpi(SM_CXICON, _Dpi);
+        const int SmallSize = GetSystemMetricsForDpi(SM_CXSMICON, _Dpi);
+        HICON Large         = nullptr;
+        HICON Small         = nullptr;
+        if (const auto* File = std::get_if<std::filesystem::path>(&_IconSource)) {
+            const auto Load = [File](int Size) {
+                return static_cast<HICON>(LoadImageW(nullptr, File->c_str(), IMAGE_ICON, Size, Size, LR_LOADFROMFILE));
+            };
+            Large = Load(LargeSize);
+            Small = Load(SmallSize);
+        } else {
+            // Icons live in the application's executable, not in this DLL.
+            const HMODULE Executable = GetModuleHandleW(nullptr);
+            const int ResourceId     = std::get<int>(_IconSource);
+            IconName Name            = static_cast<WORD>(ResourceId);
+            if (ResourceId == 0) {
+                const std::optional<IconName> First = FindFirstIcon(Executable);
+                if (!First) { return false; }
+                Name = *First;
+            }
+            const LPCWSTR Resource = std::holds_alternative<WORD>(Name) ? MAKEINTRESOURCEW(std::get<WORD>(Name))
+                                                                        : std::get<std::wstring>(Name).c_str();
+            const auto Load        = [Executable, Resource](int Size) {
+                return static_cast<HICON>(LoadImageW(Executable, Resource, IMAGE_ICON, Size, Size, 0));
+            };
+            Large = Load(LargeSize);
+            Small = Load(SmallSize);
+        }
+        if (Large == nullptr || Small == nullptr) {
+            if (Large != nullptr) { DestroyIcon(Large); }
+            if (Small != nullptr) { DestroyIcon(Small); }
+            return false;
+        }
+
+        SendMessageW(_Hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(Large));
+        SendMessageW(_Hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Small));
+        ReleaseIcons();
+        _LargeIcon = Large;
+        _SmallIcon = Small;
+        return true;
+    }
+
+    void WindowImpl::ReleaseIcons() {
+        if (_LargeIcon != nullptr) { DestroyIcon(std::exchange(_LargeIcon, nullptr)); }
+        if (_SmallIcon != nullptr) { DestroyIcon(std::exchange(_SmallIcon, nullptr)); }
     }
 
     void WindowImpl::SetTitle(std::string_view Title) {
@@ -360,6 +449,13 @@ namespace XenUI {
                 return _IsPopup ? MA_NOACTIVATE : DefWindowProcW(_Hwnd, Message, WParam, LParam);
             case WM_NCHITTEST:
                 return _ClickThrough ? HTTRANSPARENT : DefWindowProcW(_Hwnd, Message, WParam, LParam);
+            case WM_CLOSE:
+                if (const std::function<bool()> Requested = _OnCloseRequested; Requested && !Requested()) { return 0; }
+                DestroyWindow(_Hwnd);
+                return 0;
+            case kDestroyWindowMessage:
+                DestroyWindow(_Hwnd);
+                return 0;
             case kDestroyPopupsMessage:
                 if (_Popups) { _Popups->DestroyClosed(); }
                 return 0;
@@ -574,6 +670,7 @@ namespace XenUI {
 
     void WindowImpl::OnDpiChanged(UINT Dpi, const RECT& SuggestedRect) {
         _Dpi = Dpi;
+        ApplyIcon();
         if (_SwapChain) {
             _SwapChain->SetDpi(static_cast<float>(Dpi));
             _Compositor.AddFullDamage();

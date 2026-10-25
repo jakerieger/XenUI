@@ -9,13 +9,13 @@ Work moves through five stages, each owned by a different part of the code:
 
 ![The big picture](Images/big-picture.svg)
 
-| Stage | Code | Responsibility |
-|---|---|---|
-| Widgets and signals | Your code, `Tree/`, `Reactive/` | Describe the interface and hold state |
-| Elements | `Tree/` | Identity, state and reconciliation: decide what changed |
-| Render objects | `Render/` | Layout, hit testing and painting into display lists |
-| Layers | `Graphics/` | Retained display lists, live content, transforms and clips |
-| Compositor | `Graphics/` | Damage tracking, caching and drawing to the swap chain |
+| Stage               | Code                            | Responsibility                                             |
+|---------------------|---------------------------------|------------------------------------------------------------|
+| Widgets and signals | Your code, `Tree/`, `Reactive/` | Describe the interface and hold state                      |
+| Elements            | `Tree/`                         | Identity, state and reconciliation: decide what changed    |
+| Render objects      | `Render/`                       | Layout, hit testing and painting into display lists        |
+| Layers              | `Graphics/`                     | Retained display lists, live content, transforms and clips |
+| Compositor          | `Graphics/`                     | Damage tracking, caching and drawing to the swap chain     |
 
 Each stage only does work for the parts of the interface that changed.
 
@@ -131,16 +131,16 @@ behavior.
 
 ## Source layout
 
-| Directory | Contents |
-|---|---|
-| `Core/` | Math, colors, timers, animation, lock-free helpers |
-| `Reactive/` | Signals, computed values, effects |
-| `Tree/` | Nodes, the widget concepts, elements, components, keys, `Provide` |
-| `Layout/` | Constraints, insets, alignment |
-| `Render/` | Render objects, semantics |
+| Directory   | Contents                                                                                     |
+|-------------|----------------------------------------------------------------------------------------------|
+| `Core/`     | Math, colors, timers, animation, lock-free helpers                                           |
+| `Reactive/` | Signals, computed values, effects                                                            |
+| `Tree/`     | Nodes, the widget concepts, elements, components, keys, `Provide`                            |
+| `Layout/`   | Constraints, insets, alignment                                                               |
+| `Render/`   | Render objects, semantics                                                                    |
 | `Graphics/` | Device, swap chain, painter, display lists, layers, compositor, text, images, live rendering |
-| `Input/` | Events, the input dispatcher, focus, shortcuts, text editing, drag and drop |
-| `Platform/` | Windows, popups, clipboard, OLE drag and drop, UI Automation |
-| `Widgets/` | Every widget, the theme and `WidgetHost` |
+| `Input/`    | Events, the input dispatcher, focus, shortcuts, text editing, drag and drop                  |
+| `Platform/` | Windows, popups, clipboard, OLE drag and drop, UI Automation                                 |
+| `Widgets/`  | Every widget, the theme and `WidgetHost`                                                     |
 
 The diagrams on this page are generated from Mermaid sources in `Docs/Images/Source`.

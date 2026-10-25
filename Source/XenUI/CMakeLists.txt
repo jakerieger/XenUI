@@ -113,7 +113,7 @@ add_library(XenUI SHARED
         Render/RenderInput.hpp
         Render/RenderInput.cpp
         Render/RenderLayout.hpp
-                        Render/RenderNativeHost.hpp
+        Render/RenderNativeHost.hpp
         Render/RenderWindowChrome.hpp
         Render/RenderNativeHost.cpp
         Render/RenderLive.hpp
@@ -141,6 +141,8 @@ add_library(XenUI SHARED
         Tree/WidgetArena.cpp
         Platform/Clipboard.hpp
         Platform/Clipboard.cpp
+        Platform/FileDialog.hpp
+        Platform/FileDialog.cpp
         Platform/HResult.hpp
         Platform/PopupManager.hpp
         Platform/PopupManager.cpp
@@ -177,9 +179,11 @@ add_library(XenUI SHARED
         Widgets/DragDrop.hpp
         Widgets/DragDrop.cpp
         Widgets/Input.hpp
-                Widgets/Live.hpp
-                Widgets/NativeHost.hpp
+        Widgets/Live.hpp
+        Widgets/NativeHost.hpp
         Widgets/WindowChrome.hpp
+        Widgets/TitleBar.hpp
+        Widgets/TitleBar.cpp
         Widgets/Semantics.hpp
         Render/Semantics.hpp
         Render/Semantics.cpp
@@ -193,7 +197,7 @@ add_library(XenUI SHARED
         Widgets/Scroll.cpp
         Widgets/TextField.hpp
         Widgets/TextField.cpp
-                Widgets/Theme.hpp
+        Widgets/Theme.hpp
         Widgets/Theme.cpp
         Widgets/WidgetHost.hpp
         Widgets/WidgetHost.cpp

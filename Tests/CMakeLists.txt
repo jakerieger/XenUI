@@ -13,6 +13,7 @@ add_executable(XenUITests
         AccessibilityTests.cpp
         CatalogTests.cpp
         DeveloperToolsTests.cpp
+        PlatformTests.cpp
         TestWidgets.hpp
 )
 

@@ -42,12 +42,12 @@ An empty `Node {}` means "nothing here"; containers skip empty children.
 XenUI recognizes what a struct is by its shape, using C++20 concepts. There is no base class to inherit from, which
 is what lets every widget stay an aggregate with designated initializers.
 
-| Kind | How the struct looks | Use it for |
-|---|---|---|
-| Stateless | Has `Node Build(BuildContext&) const` | Composing other widgets from its fields |
-| Stateful | Has a nested `State` class deriving `ComponentState<T>` | Anything that keeps state between rebuilds |
-| Render | Has `CreateRenderObject()` and `UpdateRenderObject()` | Custom layout, painting or hit testing |
-| Provide | `Provide<T>` | Making a value available to everything below |
+| Kind      | How the struct looks                                    | Use it for                                   |
+|-----------|---------------------------------------------------------|----------------------------------------------|
+| Stateless | Has `Node Build(BuildContext&) const`                   | Composing other widgets from its fields      |
+| Stateful  | Has a nested `State` class deriving `ComponentState<T>` | Anything that keeps state between rebuilds   |
+| Render    | Has `CreateRenderObject()` and `UpdateRenderObject()`   | Custom layout, painting or hit testing       |
+| Provide   | `Provide<T>`                                            | Making a value available to everything below |
 
 ### Stateless widgets
 
@@ -104,13 +104,13 @@ struct Counter {
 
 `ComponentState` has a few lifecycle hooks:
 
-| Member | When it runs |
-|---|---|
-| `Init()` | Once, after the widget is mounted and before the first `Build` |
-| `Build(BuildContext&)` | Whenever the component needs to describe itself again |
-| `WidgetUpdated(const T& Previous)` | After the parent supplied a new description of the same type and key |
-| `Dispose()` | Once, when the widget leaves the tree for good |
-| `MarkNeedsBuild()` | Call it to rebuild on the next pass; rarely needed, since signals do this for you |
+| Member                             | When it runs                                                                      |
+|------------------------------------|-----------------------------------------------------------------------------------|
+| `Init()`                           | Once, after the widget is mounted and before the first `Build`                    |
+| `Build(BuildContext&)`             | Whenever the component needs to describe itself again                             |
+| `WidgetUpdated(const T& Previous)` | After the parent supplied a new description of the same type and key              |
+| `Dispose()`                        | Once, when the widget leaves the tree for good                                    |
+| `MarkNeedsBuild()`                 | Call it to rebuild on the next pass; rarely needed, since signals do this for you |
 
 Capturing `this` in callbacks, as above, is safe: callbacks are replaced by the next build, and the state outlives
 every description it produced.

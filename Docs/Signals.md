@@ -40,10 +40,10 @@ A `Peek` in `Build` is occasionally right too: for example, to read an initial v
 
 ## Writing
 
-| Call | Effect |
-|---|---|
-| `Value = X` or `Value.Set(X)` | Stores `X` and notifies readers. When `T` supports `==`, writing an equal value does nothing. |
-| `Value.Modify([](T& V) { ... })` | Changes the value in place and always notifies. Use it for containers. |
+| Call                             | Effect                                                                                        |
+|----------------------------------|-----------------------------------------------------------------------------------------------|
+| `Value = X` or `Value.Set(X)`    | Stores `X` and notifies readers. When `T` supports `==`, writing an equal value does nothing. |
+| `Value.Modify([](T& V) { ... })` | Changes the value in place and always notifies. Use it for containers.                        |
 
 ```cpp
 Signal<std::vector<std::string>> Names;

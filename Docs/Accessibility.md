@@ -5,26 +5,26 @@ voice control, and UI test tools use. Built-in controls describe themselves; you
 
 ## What you get for free
 
-| Widget | Announced as | Screen reader actions |
-|---|---|---|
-| `Button` | button | press |
-| `Checkbox` | check box | toggle |
-| `RadioGroup`, `RadioButton` | group of radio buttons | select |
-| `Switch` | toggle switch | toggle |
-| `Slider`, `Knob` | slider | set value, step with arrows |
-| `TextField` | edit | read and set text |
-| `NumberField` | spinner | read and set value, step |
-| `ProgressBar` | progress bar | read value |
-| `TabView` | tab list with tab items | select |
-| `TreeView` | tree with tree items | select, expand and collapse, activate |
-| `Table` | table with column headers and data items | sort by a column, select and activate rows |
-| `TextArea` | edit | read and set text |
-| `MenuBar` | menu bar with menu items | expand and collapse |
-| `Dialog` | dialog | none; its controls are operated as usual |
-| `Select` | combo box | read value, expand and collapse |
-| Menus, menu items | menu, menu item | invoke, read checked state and shortcut |
-| `WindowControls` | buttons | minimize, maximize or restore, close |
-| `Text` | text | read |
+| Widget                      | Announced as                             | Screen reader actions                      |
+|-----------------------------|------------------------------------------|--------------------------------------------|
+| `Button`                    | button                                   | press                                      |
+| `Checkbox`                  | check box                                | toggle                                     |
+| `RadioGroup`, `RadioButton` | group of radio buttons                   | select                                     |
+| `Switch`                    | toggle switch                            | toggle                                     |
+| `Slider`, `Knob`            | slider                                   | set value, step with arrows                |
+| `TextField`                 | edit                                     | read and set text                          |
+| `NumberField`               | spinner                                  | read and set value, step                   |
+| `ProgressBar`               | progress bar                             | read value                                 |
+| `TabView`                   | tab list with tab items                  | select                                     |
+| `TreeView`                  | tree with tree items                     | select, expand and collapse, activate      |
+| `Table`                     | table with column headers and data items | sort by a column, select and activate rows |
+| `TextArea`                  | edit                                     | read and set text                          |
+| `MenuBar`                   | menu bar with menu items                 | expand and collapse                        |
+| `Dialog`                    | dialog                                   | none; its controls are operated as usual   |
+| `Select`                    | combo box                                | read value, expand and collapse            |
+| Menus, menu items           | menu, menu item                          | invoke, read checked state and shortcut    |
+| `WindowControls`            | buttons                                  | minimize, maximize or restore, close       |
+| `Text`                      | text                                     | read                                       |
 
 Tooltips become the description of the control they wrap. Focus changes, value changes, toggles, expansion and
 structure changes are reported to Windows as they happen.
@@ -71,14 +71,14 @@ Semantics {
 }
 ```
 
-| Field | Meaning |
-|---|---|
-| `Role` | What it is: `Button`, `CheckBox`, `Switch`, `RadioButton`, `Slider`, `Spinner`, `ProgressBar`, `Edit`, `ComboBox`, `List`, `ListItem`, `TabList`, `TabItem`, `Tree`, `TreeItem`, `Table`, `TableRow`, `ColumnHeader`, `Dialog`, `MenuBar`, `Menu`, `MenuItem`, `Text`, `Image`, `Group`, `Pane`, `ToolBar` |
-| `Label`, `Description`, `Identifier` | Name, extra help, and a stable id for test automation |
-| `Value`, `Range`, `Toggled`, `Expanded`, `Selected` | State, each optional |
-| `Enabled`, `ReadOnly` | Whether it can be operated |
-| `OnInvoke`, `OnToggle`, `OnSetRange`, `OnSetValue`, `OnExpand`, `OnSelect` | The actions it supports |
-| `ReadRange` | Reads the current range value, for values that change without a rebuild, such as a bound signal |
+| Field                                                                      | Meaning                                                                                                                                                                                                                                                                                                    |
+|----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Role`                                                                     | What it is: `Button`, `CheckBox`, `Switch`, `RadioButton`, `Slider`, `Spinner`, `ProgressBar`, `Edit`, `ComboBox`, `List`, `ListItem`, `TabList`, `TabItem`, `Tree`, `TreeItem`, `Table`, `TableRow`, `ColumnHeader`, `Dialog`, `MenuBar`, `Menu`, `MenuItem`, `Text`, `Image`, `Group`, `Pane`, `ToolBar` |
+| `Label`, `Description`, `Identifier`                                       | Name, extra help, and a stable id for test automation                                                                                                                                                                                                                                                      |
+| `Value`, `Range`, `Toggled`, `Expanded`, `Selected`                        | State, each optional                                                                                                                                                                                                                                                                                       |
+| `Enabled`, `ReadOnly`                                                      | Whether it can be operated                                                                                                                                                                                                                                                                                 |
+| `OnInvoke`, `OnToggle`, `OnSetRange`, `OnSetValue`, `OnExpand`, `OnSelect` | The actions it supports                                                                                                                                                                                                                                                                                    |
+| `ReadRange`                                                                | Reads the current range value, for values that change without a rebuild, such as a bound signal                                                                                                                                                                                                            |
 
 Controls such as buttons, sliders, edits and list items are **leaves**. Their children are not exposed separately,
 and when they have no `Label` they are named after the text inside them. Containers such as `Group`, `List` and

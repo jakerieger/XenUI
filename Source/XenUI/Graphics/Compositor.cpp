@@ -134,10 +134,10 @@ namespace XenUI {
         }
         const float WindowArea = static_cast<float>(Target.GetWidth()) * static_cast<float>(Target.GetHeight());
         _LastTimings           = {
-          .WaitMs    = Elapsed(WaitStart, DrawStart),
-          .DrawMs    = Elapsed(DrawStart, PresentStart),
-          .PresentMs = Elapsed(PresentStart, PresentEnd),
-          .Damage    = Changed.IsFull() || WindowArea <= 0.0f ? 1.0f : std::min(1.0f, Area / WindowArea),
+                    .WaitMs    = Elapsed(WaitStart, DrawStart),
+                    .DrawMs    = Elapsed(DrawStart, PresentStart),
+                    .PresentMs = Elapsed(PresentStart, PresentEnd),
+                    .Damage    = Changed.IsFull() || WindowArea <= 0.0f ? 1.0f : std::min(1.0f, Area / WindowArea),
         };
 
         ++_PlacementFrame;
@@ -159,7 +159,7 @@ namespace XenUI {
         if (LiveState* Live = Node.GetLive()) {
             const LiveSurface& Surface = Live->Surface;
             const bool Stale           = !Surface.Bitmap || Surface.Generation != _Device->GetGeneration() ||
-                                         Surface.Scale != World.GetMaxScale() * _DpiScale;
+                               Surface.Scale != World.GetMaxScale() * _DpiScale;
             if (Live->Continuous || Live->Dirty || Stale) {
                 Live->Dirty = true;
                 AddDamage(World.TransformRect({0.0f, 0.0f, Live->Extent.Width, Live->Extent.Height}));

@@ -25,33 +25,14 @@ namespace {
         std::string Author;
     };
 
-    /// @brief The window has a custom title bar, so the content draws it: a strip the user can drag the window by,
-    /// with the minimize, maximize and close buttons on the right.
+    /// @brief The window has a custom title bar, so the content draws it. TitleBar is a strip the user can drag the
+    /// window by, with the title on the left and the minimize, maximize and close buttons on the right.
     struct TitleStrip {
         std::string Title;
 
         Node Build(BuildContext& Context) const {
-            const Theme& Style  = Theme::Of(Context);
             const auto* Globals = Context.Find<GlobalState>();
-            const auto TitleFmt = std::format("{} (v{})", Title, Globals->Version);
-
-            return Container {
-              .Height     = 32.0f,
-              .Background = Style.Chrome,
-              .Child =
-                WindowDragArea {
-                  .Child =
-                    Row {
-                      .Children =
-                        {
-                          Padding {.Insets = {.Left = 12.0f},
-                                   .Child =
-                                     Text {.Content = TitleFmt, .Font = Style.BodyFont, .Color = Style.TextMuted}},
-                          Spacer {},
-                          WindowControls {},
-                        },
-                    }},
-            };
+            return TitleBar {.Title = std::format("{} (v{})", Title, Globals->Version), .Height = 32.0f};
         }
     };
 

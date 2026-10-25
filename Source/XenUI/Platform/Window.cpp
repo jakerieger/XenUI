@@ -75,8 +75,24 @@ namespace XenUI {
         _Impl->SetFrameCallback(std::move(Callback));
     }
 
+    void Window::Destroy() {
+        _Impl->Destroy();
+    }
+
+    void Window::SetOnCloseRequested(std::function<bool()> Callback) {
+        _Impl->SetOnCloseRequested(std::move(Callback));
+    }
+
     void Window::SetOnClosed(std::function<void()> Callback) {
         _Impl->SetOnClosed(std::move(Callback));
+    }
+
+    void Window::SetIcon(int ResourceId) {
+        _Impl->SetIcon(ResourceId);
+    }
+
+    void Window::SetIconFile(const std::filesystem::path& IconFile) {
+        _Impl->SetIconFile(IconFile);
     }
 
     void Window::SetShortcuts(std::vector<Shortcut> Shortcuts) {

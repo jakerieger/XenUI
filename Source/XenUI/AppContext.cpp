@@ -25,14 +25,41 @@
 
 #include <algorithm>
 #include <cmath>
+#include <mutex>
 #include <utility>
+
+extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 namespace XenUI {
     namespace {
         constexpr double kMaxWaitMilliseconds      = 2147483647.0;
         constexpr DWORD kAnimationWaitMilliseconds = 16;
 
+        constexpr wchar_t kDispatcherClassName[] = L"XenUI.Dispatcher";
+        constexpr UINT kRunPostedMessage         = WM_APP;
+
         AppContext* CurrentContext = nullptr;
+
+        /// @brief Work posted from any thread. Outlives the App, so a late Post finds no target instead of a dangling
+        /// queue.
+        struct PostedWork {
+            std::mutex Mutex;
+            std::vector<std::function<void()>> Pending;
+            HWND Target = nullptr;
+        };
+
+        PostedWork& GetPostedWork() {
+            static PostedWork Instance;
+            return Instance;
+        }
+
+        LRESULT CALLBACK DispatcherProc(HWND Hwnd, UINT Message, WPARAM WParam, LPARAM LParam) {
+            if (Message == kRunPostedMessage) {
+                if (AppContext* Context = AppContext::TryGet()) { Context->RunPosted(); }
+                return 0;
+            }
+            return DefWindowProcW(Hwnd, Message, WParam, LParam);
+        }
 
         int64_t QueryTicks() {
             LARGE_INTEGER Ticks {};
@@ -62,10 +89,73 @@ namespace XenUI {
         _ClockStart  = QueryTicks();
 
         CurrentContext = this;
+        CreateDispatcher();
     }
 
     AppContext::~AppContext() {
+        {
+            PostedWork& Work = GetPostedWork();
+            std::lock_guard Lock(Work.Mutex);
+            Work.Target = nullptr;
+            Work.Pending.clear();
+        }
+        if (_Dispatcher != nullptr) { DestroyWindow(_Dispatcher); }
         CurrentContext = nullptr;
+    }
+
+    void AppContext::CreateDispatcher() {
+        static std::once_flag Registered;
+        std::call_once(Registered, [] {
+            const WNDCLASSEXW WindowClass {
+              .cbSize        = sizeof(WNDCLASSEXW),
+              .lpfnWndProc   = &DispatcherProc,
+              .hInstance     = reinterpret_cast<HINSTANCE>(&__ImageBase),
+              .lpszClassName = kDispatcherClassName,
+            };
+            if (RegisterClassExW(&WindowClass) == 0) { ThrowLastError("RegisterClassExW"); }
+        });
+        _Dispatcher = CreateWindowExW(0,
+                                      kDispatcherClassName,
+                                      L"",
+                                      0,
+                                      0,
+                                      0,
+                                      0,
+                                      0,
+                                      HWND_MESSAGE,
+                                      nullptr,
+                                      reinterpret_cast<HINSTANCE>(&__ImageBase),
+                                      nullptr);
+        if (_Dispatcher == nullptr) { ThrowLastError("CreateWindowExW"); }
+
+        PostedWork& Work = GetPostedWork();
+        std::lock_guard Lock(Work.Mutex);
+        Work.Target = _Dispatcher;
+    }
+
+    bool AppContext::Post(std::function<void()> Work) {
+        PostedWork& Queue = GetPostedWork();
+        std::lock_guard Lock(Queue.Mutex);
+        if (Queue.Target == nullptr || !Work) { return false; }
+        // One wake-up message covers everything queued until RunPosted takes the batch.
+        const bool Wake = Queue.Pending.empty();
+        Queue.Pending.push_back(std::move(Work));
+        if (Wake) { PostMessageW(Queue.Target, kRunPostedMessage, 0, 0); }
+        return true;
+    }
+
+    void AppContext::RunPosted() {
+        std::vector<std::function<void()>> Batch;
+        {
+            PostedWork& Queue = GetPostedWork();
+            std::lock_guard Lock(Queue.Mutex);
+            Batch.swap(Queue.Pending);
+        }
+        for (const std::function<void()>& Work : Batch) {
+            try {
+                Work();
+            } catch (...) { ReportException(std::current_exception()); }
+        }
     }
 
     AppContext& AppContext::Get() {

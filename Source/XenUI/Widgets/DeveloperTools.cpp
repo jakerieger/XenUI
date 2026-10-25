@@ -252,12 +252,12 @@ namespace XenUI {
                             .MinFirst     = 220.0f,
                             .MinSecond    = 220.0f,
                             .First        = Padding {.Insets = EdgeInsets::All(6.0f), .Child = Tree},
-                            .Second = ScrollView {.Child = Padding {.Insets = EdgeInsets::All(14.0f),
-                                                                    .Child  = Column {.Spacing = 8.0f,
-                                                                                      .CrossAlignment =
-                                                                                        CrossAxisAlignment::Stretch,
-                                                                                      .MainSize = MainAxisSize::Min,
-                                                                                      .Children = std::move(Details)}}},
+                            .Second       = ScrollView {.Child = Padding {.Insets = EdgeInsets::All(14.0f),
+                                                                          .Child  = Column {.Spacing = 8.0f,
+                                                                                            .CrossAlignment =
+                                                                                       CrossAxisAlignment::Stretch,
+                                                                                            .MainSize = MainAxisSize::Min,
+                                                                                            .Children = std::move(Details)}}},
                           }},
                     },
                 };
@@ -586,13 +586,13 @@ namespace XenUI {
                                                            .Child = DecoratedBox {.Background = Accent.WithAlpha(0.12f),
                                                                                   .BorderColor = Accent,
                                                                                   .BorderWidth = 1.5f}},
-                                               Positioned {.Left  = Area->X,
-                                                           .Top   = std::max(0.0f, Area->Y - 20.0f),
-                                                           .Child = Container {.Padding =
-                                                                                 EdgeInsets::Symmetric(6.0f, 2.0f),
-                                                                               .Background   = Accent,
-                                                                               .CornerRadius = 3.0f,
-                                                                               .Child = Text {.Content = std::format("{"
+                                               Positioned {.Left = Area->X,
+                                                           .Top  = std::max(0.0f, Area->Y - 20.0f),
+                                                           .Child =
+                                                             Container {.Padding    = EdgeInsets::Symmetric(6.0f, 2.0f),
+                                                                        .Background = Accent,
+                                                                        .CornerRadius = 3.0f,
+                                                                        .Child        = Text {.Content = std::format("{"
                                                                                                                      "}"
                                                                                                                      " "
                                                                                                                      " "
@@ -607,17 +607,13 @@ namespace XenUI {
                                                                                                                      ":"
                                                                                                                      "g"
                                                                                                                      "}",
-                                                                                                                     Label,
-                                                                                                                     Area
-                                                                                                                       ->Width,
-                                                                                                                     Area
-                                                                                                                       ->Height),
+                                                                                                              Label,
+                                                                                                              Area->Width,
+                                                                                                              Area->Height),
                                                                                               .Font    = kMonoFont,
-                                                                                              .Color =
-                                                                                                Style
+                                                                                              .Color   = Style
                                                                                                   .Palette.AccentText,
-                                                                                              .Wrapping =
-                                                                                                TextWrapping::NoWrap}}},
+                                                                                              .Wrapping = TextWrapping::NoWrap}}},
                                              },
                                          }});
                   });
@@ -631,7 +627,7 @@ namespace XenUI {
                 return Node(MouseRegion {
                   .Cursor = CursorShape::Crosshair,
                   .Child  = Listener {
-                    .OnDown =
+                     .OnDown =
                       [this](const PointerEvent& Event) {
                           const std::string Id = _Model->Inspector.HitTest(Event.Position);
                           _Model->Picking      = false;
@@ -642,15 +638,15 @@ namespace XenUI {
                           UpdateHighlight();
                           if (_Window != nullptr) { _Window->Activate(); }
                       },
-                    .OnMove =
+                     .OnMove =
                       [this](const PointerEvent& Event) {
                           const InspectorNode* Entry =
                             _Model->Inspector.Find(_Model->Inspector.HitTest(Event.Position));
                           _Model->Highlight      = Entry != nullptr ? Entry->Bounds : std::nullopt;
                           _Model->HighlightLabel = Entry != nullptr ? Entry->Name : std::string();
                       },
-                    .Behavior = HitTestBehavior::Opaque,
-                    .Child    = SizedBox {},
+                     .Behavior = HitTestBehavior::Opaque,
+                     .Child    = SizedBox {},
                   },
                 });
             });

@@ -20,17 +20,43 @@ Create exactly one `App`, before any window, and keep it alive until the end. `A
 
 `WindowDesc` configures a window when it is created:
 
-| Field | Default | Meaning |
-|---|---|---|
-| `Title` | `"XenUI"` | Title bar and taskbar text |
-| `ClientSize` | 1280 × 720 | Initial client area in DIPs; the window opens centered on its monitor |
-| `Background` | dark gray | Shown behind the content and while resizing |
-| `Resizable` | `true` | Whether the user can resize or maximize it |
-| `DarkTitleBar` | `true` | Whether the system title bar uses dark mode |
-| `CustomTitleBar` | `false` | Lets the content draw the title bar (see below) |
+| Field            | Default    | Meaning                                                                          |
+|------------------|------------|----------------------------------------------------------------------------------|
+| `Title`          | `"XenUI"`  | Title bar and taskbar text                                                       |
+| `ClientSize`     | 1280 × 720 | Initial client area in DIPs; the window opens centered on its monitor            |
+| `Background`     | dark gray  | Shown behind the content and while resizing                                      |
+| `Resizable`      | `true`     | Whether the user can resize or maximize it                                       |
+| `DarkTitleBar`   | `true`     | Whether the system title bar uses dark mode                                      |
+| `CustomTitleBar` | `false`    | Lets the content draw the title bar (see below)                                  |
+| `Icon`           | `0`        | Resource ID of the window's icon; 0 uses the executable's first icon (see below) |
 
-After creation, `Window` can `Show`, `Maximize`, `Activate`, `Close`, `SetTitle`, `SetClientSize`, `SetBackground`
-and `SetDarkTitleBar`, and report `GetClientSize`, `GetDpiScale` and `GetNativeHandle` (the `HWND`).
+After creation, `Window` can `Show`, `Maximize`, `Activate`, `Close`, `Destroy`, `SetTitle`, `SetClientSize`,
+`SetBackground`, `SetDarkTitleBar`, `SetIcon` and `SetIconFile`, and report `GetClientSize`, `GetDpiScale` and
+`GetNativeHandle` (the `HWND`).
+
+### Icons
+
+A window shows its icon in the title bar, the taskbar and Alt+Tab. By default it uses the executable's first icon
+resource, the one Explorer shows for the file, so an application that has an icon in its `.rc` file needs nothing
+else. To pick another icon, pass its resource ID as `WindowDesc::Icon` or call `SetIcon`; to load one from an `.ico`
+file, call `SetIconFile`. Icons are reloaded at the right size when the window moves to a monitor with different
+scaling.
+
+### Closing
+
+`Close` asks the window to close, exactly as the close button, Alt+F4 and the taskbar do. Each of them first calls the
+callback set with `SetOnCloseRequested`; return `false` from it to keep the window open. Once the window is gone,
+`SetOnClosed`'s callback runs. `Destroy` closes the window without asking, for when your callback has already
+decided:
+
+```cpp
+MainWindow.SetOnCloseRequested([&] {
+    if (!Document.IsModified()) { return true; }
+    // Ask first. ConfirmDiscard shows a dialog and calls its callback if the user chose "Discard".
+    ConfirmDiscard([&MainWindow] { MainWindow.Destroy(); });
+    return false;
+});
+```
 
 ### DPI
 
@@ -42,15 +68,43 @@ re-lays it out at the new scale.
 
 A window renders a frame only when something changed: a rebuild, a repaint, an animation or a `LiveView`. While
 nothing changes, the run loop sleeps. `Window::SetShowDamageRegions(true)` briefly tints every repainted area, which
-helps find widgets that repaint more than they should. [Developer tools](DeveloperTools.md) adds a frame stats overlay and a widget inspector.
+helps find widgets that repaint more than they should. [Developer tools](DeveloperTools.md) adds a frame stats overlay
+and a widget inspector.
 
 ## Custom title bars
 
 With `CustomTitleBar = true` the client area covers the whole window inside its resize borders, and your content
-draws the title bar:
+draws the title bar. `TitleBar` is a complete one:
 
 ```cpp
-struct TitleBar {
+Column {
+  .CrossAlignment = CrossAxisAlignment::Stretch,
+  .Children =
+    {
+      TitleBar {
+        .Title   = "Editor",
+        .Menus   = {Menu {.Label = "File", .Items = {...}}, Menu {.Label = "Edit", .Items = {...}}},
+        .Actions = {Select {.Options = {"System", "Dark", "Light"}, .Width = 96.0f, .Label = "Theme"}},
+      },
+      Expanded {.Child = EditorBody {}},
+    },
+}
+```
+
+- **Menus** go on the left, as a `MenuBar`. With menus, the title is centered on the bar; without them, it sits on
+  the left.
+- **Actions** go on the right, before the minimize, maximize and close buttons. Use them for a theme selector, a
+  search field or an account button.
+- The whole bar drags the window, and the title dims while the window is inactive, like a system title bar.
+- `Height` (34 DIPs), `MenuWidth` (the width of the open menus) and `Background` (the theme's chrome color) adjust
+  it.
+
+### Building your own
+
+For a different layout, build the title bar from the same parts `TitleBar` uses:
+
+```cpp
+struct MyTitleBar {
     std::string Title;
 
     Node Build(BuildContext& Context) const {
@@ -80,6 +134,66 @@ struct TitleBar {
   hovering the maximize button shows Snap Layouts, and screen readers can operate them.
 - **`WindowChrome::Of(Context)`** gives the title bar state, such as whether the window is maximized or active. Use it
   to restyle your own title bar, as `WindowControls` does.
+
+## Work from other threads
+
+Widgets, signals and windows belong to the UI thread. To update them from a worker thread, such as when a background
+job makes progress, hand the update to `App::Post`:
+
+```cpp
+Job.OnProgress = [this](int Done) {
+    // On the worker thread: copy what the UI needs, then post.
+    App::Post([this, Done] { _Done = Done; });
+};
+```
+
+Posted work runs on the UI thread soon after the call, in the order it was posted, and also while a modal loop such as
+a file dialog is open. `App::Post` is static and safe to call from any thread; it returns `false`, dropping the work,
+when no `App` exists.
+
+Posted work must not outlive what it captures. Stopping a job in `Dispose` isn't enough on its own, because updates it
+posted before stopping may still be queued. A component can guard them with a token that it drops in `Dispose`:
+
+```cpp
+std::shared_ptr<bool> _Alive = std::make_shared<bool>(true);
+
+void PostToUi(std::function<void()> Work) {
+    App::Post([Alive = std::weak_ptr(_Alive), Work = std::move(Work)] {
+        if (Alive.lock()) { Work(); }
+    });
+}
+
+void Dispose() override {
+    _Alive.reset();
+    _Job.Stop();
+}
+```
+
+For data that changes faster than the screen, such as meters or a playhead, use the lock-free queues in
+[Live rendering](LiveRendering.md) instead.
+
+## File dialogs
+
+`FileDialog` opens the system's open, save and folder dialogs. Each call blocks until the user closes the dialog and
+returns nothing if they cancelled:
+
+```cpp
+const std::optional<std::filesystem::path> Folder = FileDialog::PickFolder({.Title = "Export to"});
+
+const std::optional<std::filesystem::path> Sample = FileDialog::OpenFile({
+  .Filters = {{"Audio files", "*.wav;*.flac;*.mp3"}, {"All files", "*.*"}},
+});
+
+const std::optional<std::filesystem::path> Project = FileDialog::SaveFile({
+  .FileName         = "Untitled",
+  .Filters          = {{"Xen project", "*.xen"}},
+  .DefaultExtension = "xen",
+});
+```
+
+`OpenFiles` lets the user choose several files. `FileDialogOptions` also sets the `Title` and the `InitialFolder`.
+The dialog belongs to `Owner`, or to the active window when `Owner` is null, which is the right window when the dialog
+is opened from a button. That window is disabled while the dialog is open, but every window keeps painting.
 
 ## Multiple windows
 

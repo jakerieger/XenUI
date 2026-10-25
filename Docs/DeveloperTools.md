@@ -7,9 +7,9 @@ Both are switched on by wrapping your root widget in `DeveloperTools`:
 MainWindow.SetContent(DeveloperTools {.Child = MyRoot {}});
 ```
 
-| Key | Tool |
-|---|---|
-| F12 | Opens or closes the widget inspector in its own window |
+| Key       | Tool                                                                    |
+|-----------|-------------------------------------------------------------------------|
+| F12       | Opens or closes the widget inspector in its own window                  |
 | Shift+F12 | Shows or hides the frame stats overlay in the window's top-right corner |
 
 The shortcuts work wherever focus is, even inside a text field. To control the tools from your own UI instead, such
@@ -88,4 +88,5 @@ for (const FrameSample& Frame : Stats.GetRecent(60)) {
 ```
 
 Windows record complete frames, including drawing. A host driven on its own, such as in a test, records each
-`Update`. `FrameStatsPanel {&Host.GetFrameStatistics()}` is the overlay's panel as a widget, if you want to show it somewhere else.
+`Update`. `FrameStatsPanel {&Host.GetFrameStatistics()}` is the overlay's panel as a widget, if you want to show it
+somewhere else.

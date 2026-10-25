@@ -30,12 +30,12 @@ Row {
 }
 ```
 
-| Field | Meaning |
-|---|---|
-| `Spacing` | Gap between children along the main axis |
-| `MainAlignment` | Where children go along the main axis: `Start`, `End`, `Center`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly` |
-| `CrossAlignment` | Where children go across: `Start`, `End`, `Center`, or `Stretch` to make them fill it |
-| `MainSize` | `Max` (default) fills the main axis; `Min` shrinks to fit the children |
+| Field            | Meaning                                                                                                       |
+|------------------|---------------------------------------------------------------------------------------------------------------|
+| `Spacing`        | Gap between children along the main axis                                                                      |
+| `MainAlignment`  | Where children go along the main axis: `Start`, `End`, `Center`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly` |
+| `CrossAlignment` | Where children go across: `Start`, `End`, `Center`, or `Stretch` to make them fill it                         |
+| `MainSize`       | `Max` (default) fills the main axis; `Min` shrinks to fit the children                                        |
 
 `CrossAxisAlignment::Stretch` is the usual way to make a column's children as wide as the column, which is how a
 form's fields and buttons follow the window size.
@@ -65,14 +65,14 @@ bounded size to fill along the main axis.
 
 ## Padding, alignment and sizing
 
-| Widget | What it does |
-|---|---|
-| `Padding {.Insets, .Child}` | Insets the child. `EdgeInsets::All(8)`, `EdgeInsets::Symmetric(12, 4)`, or `{.Left = 8, .Top = 4}` |
-| `Center {.Child}` | Centers the child and fills the available space |
+| Widget                                                   | What it does                                                                                                                                                            |
+|----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Padding {.Insets, .Child}`                              | Insets the child. `EdgeInsets::All(8)`, `EdgeInsets::Symmetric(12, 4)`, or `{.Left = 8, .Top = 4}`                                                                      |
+| `Center {.Child}`                                        | Centers the child and fills the available space                                                                                                                         |
 | `Align {.Position, .Child, .WidthFactor, .HeightFactor}` | Places the child at an `Alignment` such as `Alignment::TopRight()`. Fills the space unless a factor is set, in which case its size is the child's size times the factor |
-| `SizedBox {.Width, .Height, .Child}` | Forces a size on either axis; also a fixed gap when it has no child |
-| `ConstrainedBox {.Limits, .Child}` | Adds extra constraints, such as `{.MaxWidth = 300}` |
-| `Container {...}` | Convenience for the common mix: size, margin, padding, background, corner radius, border and child alignment |
+| `SizedBox {.Width, .Height, .Child}`                     | Forces a size on either axis; also a fixed gap when it has no child                                                                                                     |
+| `ConstrainedBox {.Limits, .Child}`                       | Adds extra constraints, such as `{.MaxWidth = 300}`                                                                                                                     |
+| `Container {...}`                                        | Convenience for the common mix: size, margin, padding, background, corner radius, border and child alignment                                                            |
 
 ```cpp
 Container {

@@ -43,6 +43,7 @@
 #include "XenUI/Input/TextInput.hpp"
 #include "XenUI/Layout/BoxConstraints.hpp"
 #include "XenUI/Platform/Clipboard.hpp"
+#include "XenUI/Platform/FileDialog.hpp"
 #include "XenUI/Platform/Window.hpp"
 #include "XenUI/Reactive/Reactive.hpp"
 #include "XenUI/Reactive/Signal.hpp"
@@ -83,4 +84,5 @@
 #include "XenUI/Widgets/Theme.hpp"
 #include "XenUI/Widgets/TreeView.hpp"
 #include "XenUI/Widgets/WidgetHost.hpp"
+#include "XenUI/Widgets/TitleBar.hpp"
 #include "XenUI/Widgets/WindowChrome.hpp"

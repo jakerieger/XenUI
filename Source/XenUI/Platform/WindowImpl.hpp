@@ -22,9 +22,11 @@
 #include <Windows.h>
 
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <variant>
 #include <string_view>
 #include <vector>
 
@@ -58,6 +60,7 @@ namespace XenUI {
         void Show();
         void Maximize();
         void Close();
+        void Destroy();
         void SetTitle(std::string_view Title);
         void SetClientSize(const Size& ClientSize);
         void Activate();
@@ -71,6 +74,9 @@ namespace XenUI {
         void SetShowDamageRegions(bool Enabled);
         void SetShortcuts(std::vector<Shortcut> Shortcuts) { _Shortcuts.SetShortcuts(std::move(Shortcuts)); }
         void SetOnClosed(std::function<void()> Callback) { _OnClosed = std::move(Callback); }
+        void SetOnCloseRequested(std::function<bool()> Callback) { _OnCloseRequested = std::move(Callback); }
+        void SetIcon(int ResourceId);
+        void SetIconFile(const std::filesystem::path& IconFile);
 
         void Hide();
         /// @brief Lays the popup's content out at its natural size, up to Maximum, and returns that size.
@@ -112,6 +118,9 @@ namespace XenUI {
         void OnResize(uint32_t Width, uint32_t Height);
         void OnDpiChanged(UINT Dpi, const RECT& SuggestedRect);
         void OnDestroy();
+        /// @brief Loads the icon source at the window's DPI and hands it to the window. Returns false if it failed.
+        bool ApplyIcon();
+        void ReleaseIcons();
         void RunFrameCallback();
         void UpdateContent();
 
@@ -158,11 +167,16 @@ namespace XenUI {
 
         FrameCallback _FrameCallback;
         std::function<void()> _OnClosed;
-        bool _FrameRequested  = false;
-        bool _Minimized       = false;
-        bool _Animating       = false;
-        double _LastFrameTime = 0.0;
-        uint64_t _FrameIndex  = 0;
+        std::function<bool()> _OnCloseRequested;
+        /// @brief A resource ID in the executable (0 for its first icon) or an .ico file.
+        std::variant<int, std::filesystem::path> _IconSource = 0;
+        HICON _LargeIcon                                     = nullptr;
+        HICON _SmallIcon                                     = nullptr;
+        bool _FrameRequested                                 = false;
+        bool _Minimized                                      = false;
+        bool _Animating                                      = false;
+        double _LastFrameTime                                = 0.0;
+        uint64_t _FrameIndex                                 = 0;
 
         ShortcutMatcher _Shortcuts;
         CursorShape _Cursor      = CursorShape::Arrow;
