@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string_view>
 #include <vector>
 
 namespace XenUI {
@@ -49,6 +50,10 @@ namespace XenUI {
 
     class XENUI_API PathBuilder {
     public:
+        /// @brief Reads SVG path data, the value of a path element's d attribute, such as "M4 12h16M12 4v16". Every
+        /// command is supported, absolute and relative. Throws Error if the data is malformed.
+        [[nodiscard]] static PathBuilder FromSvgPathData(std::string_view Data);
+
         PathBuilder& MoveTo(const Vec2& Point);
         PathBuilder& LineTo(const Vec2& Point);
         PathBuilder& QuadTo(const Vec2& Control, const Vec2& End);

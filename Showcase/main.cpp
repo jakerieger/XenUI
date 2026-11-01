@@ -43,7 +43,6 @@ namespace {
     const Font kTitleFont {.Size = 22.0f, .Weight = FontWeight::Bold};
     const Font kHeadingFont {.Size = 14.0f, .Weight = FontWeight::SemiBold};
     const Font kSmallFont {.Size = 11.0f};
-    const Font kMediumFont {.Size = 13.0f};
 
     constexpr std::array<std::string_view, 12> kSections = {"Controls",
                                                             "Text input",
@@ -67,6 +66,29 @@ namespace {
                                     {"Mint", Color::FromHex(0x4DFFB8)},
                                     {"Amber", Color::FromHex(0xFFC94D)},
                                     {"Coral", Color::FromHex(0xFF6A3D)}};
+
+    const SvgIcon kPlayIcon =
+      SvgIcon::FromPathData("M8 5.5v13a1 1 0 0 0 1.5.86l10-6.5a1 1 0 0 0 0-1.72l-10-6.5A1 1 0 0 0 8 5.5z");
+    const SvgIcon kPauseIcon = SvgIcon::FromPathData("M6 5h4v14H6zM14 5h4v14h-4z");
+    const SvgIcon kStopIcon =
+      SvgIcon::FromPathData("M7 6h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z");
+    const SvgIcon kRecordIcon = SvgIcon::FromPathData("M12 5a7 7 0 1 0 0 14a7 7 0 1 0 0-14z");
+    const SvgIcon kLoopIcon   = SvgIcon::Parse(
+      R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/>
+    </svg>)svg");
+    const SvgIcon kSearchIcon = SvgIcon::Parse(
+      R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="11" cy="11" r="7"/><line x1="16" y1="16" x2="21" y2="21"/>
+    </svg>)svg");
+    const SvgIcon kFolderIcon = SvgIcon::Parse(
+      R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    </svg>)svg");
+    const SvgIcon kExportIcon = SvgIcon::Parse(
+      R"svg(<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>
+    </svg>)svg");
 
     struct ShowcaseState {
         Signal<int> Section        = 0;
@@ -98,6 +120,9 @@ namespace {
         Signal<bool> ShowInspector  = false;
         Signal<bool> ShowFrameStats = false;
         Signal<bool> ConfirmClose   = false;
+        Signal<bool> Playing        = false;
+        Signal<bool> Recording      = false;
+        Signal<bool> Looping        = true;
         Signal<int> IconChoice      = 0;
         Signal<std::string> Picked  = std::string("Nothing picked yet");
         Window* MainWindow          = nullptr;
@@ -1211,11 +1236,70 @@ namespace {
         const auto Caption                    = [](std::string Content) {
             return Text {.Content = std::move(Content), .Font = kSmallFont, .Color = Ink().TextMuted};
         };
+        const bool Playing = Model->Playing();
         return Column {
           .Spacing        = 16.0f,
           .CrossAlignment = CrossAxisAlignment::Stretch,
           .Children =
             {
+              Card("Icons",
+                   "Single-color SVG icons. They take the text color unless given one, so they follow button states "
+                   "and the theme. Icon-only buttons are named for screen readers by their AccessibleLabel.",
+                   Column {
+                     .Spacing        = 12.0f,
+                     .CrossAlignment = CrossAxisAlignment::Stretch,
+                     .MainSize       = MainAxisSize::Min,
+                     .Children =
+                       {
+                         Row {.Spacing  = 4.0f,
+                              .Children = {Button {.Icon      = Playing ? kPauseIcon : kPlayIcon,
+                                                   .OnPressed = [Model] { Model->Playing = !Model->Playing.Peek(); },
+                                                   .Variant   = ButtonVariant::Ghost,
+                                                   .AccessibleLabel = Playing ? "Pause" : "Play"},
+                                           Button {.Icon = kStopIcon,
+                                                   .OnPressed =
+                                                     [Model] {
+                                                         Model->Playing   = false;
+                                                         Model->Recording = false;
+                                                     },
+                                                   .Variant         = ButtonVariant::Ghost,
+                                                   .AccessibleLabel = "Stop"},
+                                           Button {
+                                             .Icon      = kRecordIcon,
+                                             .OnPressed = [Model] { Model->Recording = !Model->Recording.Peek(); },
+                                             .Variant =
+                                               Model->Recording() ? ButtonVariant::Primary : ButtonVariant::Ghost,
+                                             .AccessibleLabel = "Record"},
+                                           Button {.Icon      = kLoopIcon,
+                                                   .OnPressed = [Model] { Model->Looping = !Model->Looping.Peek(); },
+                                                   .Variant = Model->Looping() ? ButtonVariant::Primary : ButtonVariant::Ghost,
+                                                   .AccessibleLabel = "Loop"},
+                                           SizedBox {.Width = 8.0f},
+                                           Caption(std::format("{}{}{}",
+                                                               Playing ? "Playing" : "Stopped",
+                                                               Model->Recording() ? ", recording" : "",
+                                                               Model->Looping() ? ", looping" : ""))}},
+                         Row {.Spacing  = 12.0f,
+                              .Children = {Button {.Label     = "Open...",
+                                                   .Icon      = kFolderIcon,
+                                                   .OnPressed = [Model] { Model->Report("Open"); }},
+                                           Button {.Label     = "Export",
+                                                   .Icon      = kExportIcon,
+                                                   .OnPressed = [Model] { Model->Report("Export"); },
+                                                   .Variant   = ButtonVariant::Primary},
+                                           Button {.Label = "Search", .Icon = kSearchIcon, .Enabled = false}}},
+                         Row {.Spacing  = 16.0f,
+                              .Children = {Icon {.Source = kSearchIcon},
+                                           Icon {.Source = kSearchIcon, .Size = 24.0f},
+                                           Icon {.Source = kSearchIcon, .Size = 32.0f},
+                                           Icon {.Source = kRecordIcon,
+                                                 .Size   = 24.0f,
+                                                 .Color  = Ink().Danger,
+                                                 .Label  = "Recording"},
+                                           Icon {.Source = kLoopIcon, .Size = 32.0f, .Color = Ink().Accent},
+                                           Caption("Any size and color, crisp at every DPI")}},
+                       },
+                   }),
               Card("Radio buttons",
                    "One choice from a few. Click an option, or move with the arrow keys once one has focus.",
                    Row {
@@ -1250,54 +1334,92 @@ namespace {
                        {
                          ProgressBar {.Value = Model->Progress(), .Label = "Export"},
                          Row {.Spacing  = 12.0f,
-                              .Children = {SizedBox {.Width = 220.0f, .Child = Slider {.Bind = &Model->Progress, .Label = "Export progress"}},
+                              .Children = {SizedBox {.Width = 220.0f,
+                                                     .Child =
+                                                       Slider {.Bind = &Model->Progress, .Label = "Export progress"}},
                                            Caption(std::format("{:.0f}%", Model->Progress() * 100.0f))}},
-                         ProgressBar {.Value = Model->Busy() ? std::nullopt : std::optional<float>(1.0f), .Height = 4.0f, .Label = "Scanning"},
-                         Switch {.Value = Model->Busy(), .OnChanged = [Model](bool On) { Model->Busy = On; }, .Label = "Scanning the sample library"},
+                         ProgressBar {.Value  = Model->Busy() ? std::nullopt : std::optional<float>(1.0f),
+                                      .Height = 4.0f,
+                                      .Label  = "Scanning"},
+                         Switch {.Value     = Model->Busy(),
+                                 .OnChanged = [Model](bool On) { Model->Busy = On; },
+                                 .Label     = "Scanning the sample library"},
                        },
                    }),
               Card("Number fields",
-                   "Type a value and press Enter, or use Up and Down, the wheel or the step buttons. Shift steps ten times further.",
+                   "Type a value and press Enter, or use Up and Down, the wheel or the step buttons. Shift steps ten "
+                   "times further.",
                    Row {
                      .Spacing = 16.0f,
                      .Children =
                        {
-                         NumberField {.Bind = &Model->Tempo, .Min = 20.0f, .Max = 300.0f, .Step = 1.0f, .Decimals = 1, .Suffix = " BPM", .Label = "Tempo"},
-                         NumberField {.Bind = &Model->GainDb, .Min = -60.0f, .Max = 12.0f, .Step = 0.5f, .Decimals = 1, .Suffix = " dB", .Label = "Gain"},
+                         NumberField {.Bind     = &Model->Tempo,
+                                      .Min      = 20.0f,
+                                      .Max      = 300.0f,
+                                      .Step     = 1.0f,
+                                      .Decimals = 1,
+                                      .Suffix   = " BPM",
+                                      .Label    = "Tempo"},
+                         NumberField {.Bind     = &Model->GainDb,
+                                      .Min      = -60.0f,
+                                      .Max      = 12.0f,
+                                      .Step     = 0.5f,
+                                      .Decimals = 1,
+                                      .Suffix   = " dB",
+                                      .Label    = "Gain"},
                          Caption(std::format("{:.1f} BPM at {:+.1f} dB", Model->Tempo(), Model->GainDb())),
                        },
                    }),
               Card("Dialogs",
-                   "Modal dialogs dim the window, keep Tab inside themselves and return focus when they close. Enter presses the primary action and Escape dismisses.",
+                   "Modal dialogs dim the window, keep Tab inside themselves and return focus when they close. Enter "
+                   "presses the primary action and Escape dismisses.",
                    DialogDemo {Model}),
-              Card("Tree view",
-                   "Children are supplied on demand and rows are virtualized. Arrow keys navigate, Right and Left expand and collapse, Enter or double-click opens.",
-                   SizedBox {
-                     .Height = 220.0f,
-                     .Child  = TreeView {.ChildrenOf  = SampleTree,
-                                         .OnActivated = [Model](const std::string& Id) { Model->Report(std::format("Opened {}", Id)); },
-                                         .Label       = "Sample library"},
-                   }),
+              Card(
+                "Tree view",
+                "Children are supplied on demand and rows are virtualized. Arrow keys navigate, Right and Left expand "
+                "and collapse, Enter or double-click opens.",
+                SizedBox {
+                  .Height = 220.0f,
+                  .Child  = TreeView {.ChildrenOf = SampleTree,
+                                      .OnActivated =
+                                       [Model](const std::string& Id) { Model->Report(std::format("Opened {}", Id)); },
+                                      .Label = "Sample library"},
+                }),
               Card("Tables",
-                   "Resizable columns over virtualized rows. Click a header to sort, drag a header divider to resize, and use the arrow keys, Page Up and Page Down once a row is selected.",
+                   "Resizable columns over virtualized rows. Click a header to sort, drag a header divider to resize, "
+                   "and use the arrow keys, Page Up and Page Down once a row is selected.",
                    TableDemo {Model}),
-              Card("Tabs",
-                   "Only the selected tab is built. Switch with the mouse, Left and Right on a focused tab, or Ctrl+Tab.",
-                   SizedBox {
-                     .Height = 150.0f,
-                     .Child =
-                       TabView {
-                         .Tabs =
-                           {
-                             Tab {.Label = "General", .Content = Padding {.Insets = EdgeInsets::All(12.0f), .Child = Checkbox {.Value = Model->Notifications(), .OnChanged = [Model](bool On) { Model->Notifications = On; }, .Label = "Show notifications"}}},
-                             Tab {.Label   = "Audio",
-                                  .Content = Padding {.Insets = EdgeInsets::All(12.0f),
-                                                      .Child  = Row {.Spacing = 12.0f, .Children = {Caption("Buffer size"), Select {.Options = {"128", "256", "512"}, .SelectedIndex = 1, .Width = 100.0f, .Label = "Buffer size"}}}}},
-                             Tab {.Label = "About", .Content = Padding {.Insets = EdgeInsets::All(12.0f), .Child = Caption(std::format("XenUI {}", XENUI_VERSION_STRING))}},
-                           },
-                         .Selected = &Model->SettingsTab,
-                       },
-                   }),
+              Card(
+                "Tabs",
+                "Only the selected tab is built. Switch with the mouse, Left and Right on a focused tab, or Ctrl+Tab.",
+                SizedBox {
+                  .Height = 150.0f,
+                  .Child =
+                    TabView {
+                      .Tabs =
+                        {
+                          Tab {
+                            .Label   = "General",
+                            .Content = Padding {.Insets = EdgeInsets::All(12.0f),
+                                                .Child =
+                                                  Checkbox {.Value = Model->Notifications(),
+                                                            .OnChanged = [Model](bool On) { Model->Notifications = On; },
+                                                            .Label = "Show notifications"}}},
+                          Tab {.Label   = "Audio",
+                               .Content = Padding {.Insets = EdgeInsets::All(12.0f),
+                                                   .Child  = Row {.Spacing  = 12.0f,
+                                                                  .Children = {Caption("Buffer size"),
+                                                                               Select {.Options = {"128", "256", "512"},
+                                                                                       .SelectedIndex = 1,
+                                                                                       .Width         = 100.0f,
+                                                                                       .Label = "Buffer size"}}}}},
+                          Tab {.Label   = "About",
+                               .Content = Padding {.Insets = EdgeInsets::All(12.0f),
+                                                   .Child  = Caption(std::format("XenUI {}", XENUI_VERSION_STRING))}},
+                        },
+                      .Selected = &Model->SettingsTab,
+                    },
+                }),
             },
         };
     }

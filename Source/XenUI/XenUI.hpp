@@ -31,6 +31,7 @@
 #include "XenUI/Graphics/LiveCanvas.hpp"
 #include "XenUI/Graphics/Painter.hpp"
 #include "XenUI/Graphics/Path.hpp"
+#include "XenUI/Graphics/SvgIcon.hpp"
 #include "XenUI/Graphics/StrokeStyle.hpp"
 #include "XenUI/Graphics/Text.hpp"
 #include "XenUI/Input/DragDrop.hpp"

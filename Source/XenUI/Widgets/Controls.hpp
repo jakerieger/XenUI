@@ -49,6 +49,9 @@ namespace XenUI {
     /// @brief Push button. Activates on click, or on Enter or Space while focused.
     struct Button {
         std::string Label;
+        /// @brief Shown before the label, in the label's color. Without a label the button is a square icon button;
+        /// set AccessibleLabel so screen readers can name it.
+        SvgIcon Icon;
         std::function<void()> OnPressed;
         ButtonVariant Variant = ButtonVariant::Secondary;
         bool Enabled          = true;

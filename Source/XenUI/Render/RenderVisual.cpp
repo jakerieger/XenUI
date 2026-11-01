@@ -188,6 +188,43 @@ namespace XenUI {
         if (Overflows) { Canvas.PopClip(); }
     }
 
+    void RenderIcon::SetIcon(const SvgIcon& Source) {
+        if (Source == _Source) { return; }
+        _Source = Source;
+        MarkNeedsPaint();
+    }
+
+    void RenderIcon::SetColor(const Color& Tint) {
+        if (Tint == _Tint) { return; }
+        _Tint = Tint;
+        MarkNeedsPaint();
+    }
+
+    void RenderIcon::SetExtent(float Extent) {
+        if (Extent == _Extent) { return; }
+        _Extent = Extent;
+        MarkNeedsLayout();
+    }
+
+    void RenderIcon::SetLabel(std::string Label) {
+        _Label = std::move(Label);
+    }
+
+    void RenderIcon::PerformLayout() {
+        SetSize(GetConstraints().Constrain({_Extent, _Extent}));
+    }
+
+    void RenderIcon::Paint(PaintContext& Context) {
+        const Size Box = GetSize();
+        _Source.Draw(Context.GetPainter(), {0.0f, 0.0f, Box.Width, Box.Height}, _Tint);
+    }
+
+    bool RenderIcon::DescribeSemantics(SemanticsProperties& Properties) const {
+        if (_Label.empty()) { return false; }
+        Properties = {.Role = SemanticsRole::Image, .Label = _Label};
+        return true;
+    }
+
     void RenderCustomPaint::SetCallback(PaintCallback Callback) {
         _Callback = std::move(Callback);
         MarkNeedsPaint();

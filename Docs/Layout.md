@@ -156,6 +156,41 @@ Text {.Content = "Title", .Font = Font {.Size = 18.0f, .Weight = FontWeight::Sem
 `Wrapping = TextWrapping::NoWrap` and `Trimming = TextTrimming::Ellipsis` for single-line labels that end in "…"
 when there is no room.
 
+## Icons
+
+`Icon` draws an `SvgIcon`, a single-color vector icon read from SVG:
+
+```cpp
+const SvgIcon kSearch = SvgIcon::FromFile("Assets/Icons/search.svg");
+const SvgIcon kPlay   = SvgIcon::FromPathData("M8 5v14l11-7z");
+
+Icon {.Source = kSearch}
+Icon {.Source = kPlay, .Size = 24.0f, .Color = Style.Accent, .Label = "Playing"}
+Button {.Label = "Search", .Icon = kSearch}
+Button {.Icon = kPlay, .OnPressed = [this] { Play(); }, .AccessibleLabel = "Play"}
+```
+
+- **Loading.** `SvgIcon::FromFile` reads an `.svg` file and `SvgIcon::Parse` reads SVG markup.
+  `SvgIcon::FromResource` reads an icon compiled into the executable, such as `IDI_SEARCH RCDATA "Icons/search.svg"`
+  in your `.rc` file, so it ships without loose files. `SvgIcon::FromPathData` makes an icon from a single path's `d`
+  attribute, with a 24 × 24 view box unless you pass another. They throw `Error` if the icon can't be read.
+- **Load once.** Parsing doesn't need an `App`, so icons can be constants. Copies share the parsed icon, and the
+  geometry is created the first time the icon is drawn.
+- **Color.** An icon is drawn in the surrounding text color unless you set `Color`. Every painted shape uses that one
+  color, so the same icon follows the theme, a button's hover and disabled states, or a selected row. Opacity
+  attributes are kept, so duotone icons still work.
+- **Size.** Icons are square, 16 DIPs unless you set `Size`. The view box is scaled uniformly to fit and centered, and
+  strokes scale with it, so icons stay crisp at any size and DPI.
+- **Accessibility.** An icon with a `Label` is announced as an image. Without one, it is decorative and screen
+  readers skip it, which is right for an icon next to a label that already says what it means. Icon-only buttons are
+  named by their `AccessibleLabel`.
+
+Icon sets made for user interfaces work as they are: Lucide, Feather and Tabler (stroked), and Material Symbols,
+Fluent System Icons and Heroicons (filled). XenUI reads the view box; `path`, `rect`, `circle`, `ellipse`, `line`,
+`polyline` and `polygon` elements, in nested groups; `fill`, `stroke`, the `stroke-*` attributes, `fill-rule`,
+`opacity`, `fill-opacity` and `stroke-opacity`, also inside a `style` attribute; and `transform`. Gradients, patterns,
+masks, clip paths, text, images and `use` are ignored.
+
 ## Custom painting
 
 `CustomPaint` gives you a `Painter` in local coordinates, sized by its child or by `Width` and `Height`:
@@ -175,7 +210,7 @@ CustomPaint {
 
 The painter draws rectangles, rounded rectangles, ellipses and circles, lines, paths (`PathBuilder`), text layouts
 and images, with solid colors or `LinearGradient` and `RadialGradient` brushes, and supports transforms, clips and
-opacity. What you paint is recorded once and reused until it changes, so painting is cheap.
+opacity. `PathBuilder::FromSvgPathData` reads SVG path data, and `SvgIcon::Draw` paints an icon into any rectangle. What you paint is recorded once and reused until it changes, so painting is cheap.
 
 Signals read inside `OnPaint` are tracked: when they change, only this widget repaints, with no rebuild. Use that for
 values that change quickly, and capture the value instead, as above, when a rebuild is fine.

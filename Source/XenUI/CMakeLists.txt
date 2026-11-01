@@ -77,6 +77,8 @@ add_library(XenUI SHARED
         Graphics/Painter.hpp
         Graphics/Painter.cpp
         Graphics/Path.hpp
+        Graphics/SvgIcon.hpp
+        Graphics/SvgIcon.cpp
         Graphics/Path.cpp
         Graphics/PathData.hpp
         Graphics/StrokeStyle.hpp

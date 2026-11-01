@@ -17,6 +17,7 @@
 #include "XenUI/Api.hpp"
 #include "XenUI/Graphics/Brush.hpp"
 #include "XenUI/Graphics/Image.hpp"
+#include "XenUI/Graphics/SvgIcon.hpp"
 #include "XenUI/Graphics/Text.hpp"
 #include "XenUI/Reactive/Reactive.hpp"
 #include "XenUI/Render/RenderBox.hpp"
@@ -105,6 +106,26 @@ namespace XenUI {
     private:
         Image _Source;
         ImageStyle _Style;
+    };
+
+    /// @brief Paints an SvgIcon in one color, as a square of Extent device-independent pixels.
+    class XENUI_API RenderIcon final : public RenderBox {
+    public:
+        void SetIcon(const SvgIcon& Source);
+        void SetColor(const Color& Tint);
+        void SetExtent(float Extent);
+        void SetLabel(std::string Label);
+        void Paint(PaintContext& Context) override;
+        [[nodiscard]] bool DescribeSemantics(SemanticsProperties& Properties) const override;
+
+    protected:
+        void PerformLayout() override;
+
+    private:
+        SvgIcon _Source;
+        Color _Tint;
+        float _Extent = 16.0f;
+        std::string _Label;
     };
 
     using PaintCallback = std::function<void(Painter& Canvas, const Size& Extent)>;

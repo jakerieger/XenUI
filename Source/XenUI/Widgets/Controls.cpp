@@ -28,6 +28,7 @@ namespace XenUI {
         constexpr float kMenuRowHeight    = 24.0f;
         constexpr double kHoverDuration   = 0.12;
         constexpr double kPressDuration   = 0.05;
+        constexpr float kButtonIconSize   = 16.0f;
         constexpr double kToggleDuration  = 0.16;
 
         bool IsActivationKey(const KeyEvent& Event) {
@@ -139,19 +140,31 @@ namespace XenUI {
             _Shown = true;
         }
 
+        const Node Caption =
+          Text {.Content = Props.Label, .Font = Style.BodyFont, .Color = TextColor, .Wrapping = TextWrapping::NoWrap};
+        Node Content      = Caption;
+        float SidePadding = 12.0f;
+        if (!Props.Icon.IsEmpty()) {
+            // The member named Icon hides the widget type here.
+            const Node Glyph = XenUI::Icon {.Source = Props.Icon, .Size = kButtonIconSize, .Color = TextColor};
+            if (Props.Label.empty()) {
+                Content     = Glyph;
+                SidePadding = std::max(0.0f, (Style.ControlHeight - kButtonIconSize) / 2.0f);
+            } else {
+                Content = Row {.Spacing = 6.0f, .MainSize = MainAxisSize::Min, .Children = {Glyph, Caption}};
+            }
+        }
+
         const Node Face = Container {
           .Width        = Props.Width,
           .Height       = Style.ControlHeight,
-          .Padding      = EdgeInsets::Symmetric(12.0f, 0.0f),
+          .Padding      = EdgeInsets::Symmetric(SidePadding, 0.0f),
           .Background   = _Fill.Get(),
           .CornerRadius = Style.CornerRadius,
           .BorderColor  = Border,
           .Child =
             Align {
-              .Child       = Text {.Content  = Props.Label,
-                                   .Font     = Style.BodyFont,
-                                   .Color    = TextColor,
-                                   .Wrapping = TextWrapping::NoWrap},
+              .Child       = Content,
               .WidthFactor = Props.Width ? std::nullopt : std::optional<float>(1.0f),
             },
         };

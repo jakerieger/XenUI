@@ -14,6 +14,7 @@ add_executable(XenUITests
         CatalogTests.cpp
         DeveloperToolsTests.cpp
         PlatformTests.cpp
+        IconTests.cpp
         TestWidgets.hpp
 )
 

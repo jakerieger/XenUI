@@ -3,7 +3,6 @@
 GPU-accelerated Windows GUI framework for C++20 inspired by Flutter.
 
 ![Showcase](Docs/Images/screen.png)
-![Showcase](Docs/Images/screen-light.png)
 
 ## Overview
 

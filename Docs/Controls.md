@@ -8,16 +8,18 @@ each of them in use.
 
 ```cpp
 Button {.Label = "Save", .OnPressed = [this] { Save(); }, .Variant = ButtonVariant::Primary}
-Button {.Label = "■", .OnPressed = [this] { Stop(); }, .Width = 36.0f, .AccessibleLabel = "Stop"}
+Button {.Label = "Export", .Icon = kExportIcon, .OnPressed = [this] { Export(); }}
+Button {.Icon = kStopIcon, .OnPressed = [this] { Stop(); }, .Variant = ButtonVariant::Ghost, .AccessibleLabel = "Stop"}
 ```
 
 | Field                | Meaning                                                                                       |
 |----------------------|-----------------------------------------------------------------------------------------------|
 | `Label`, `OnPressed` | Text and action. Enter and Space press a focused button                                       |
+| `Icon`               | An `SvgIcon` before the label, in the label's color; alone, a square icon button ([Icons](Layout.md#icons)) |
 | `Variant`            | `Primary` (accent fill), `Secondary` (default, bordered) or `Ghost` (no fill until hovered)   |
 | `Enabled`            | A disabled button is dimmed, not focusable and ignores the pointer                            |
 | `Width`              | Fixed width; otherwise the button fits its label, or fills the width a column stretches it to |
-| `AccessibleLabel`    | What screen readers say when `Label` is a symbol                                              |
+| `AccessibleLabel`    | What screen readers say for an icon button, or when `Label` is a symbol                       |
 
 ## Toggles
 
