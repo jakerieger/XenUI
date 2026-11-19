@@ -243,18 +243,24 @@ namespace XenUI {
     void PipelineOwner::Unschedule(RenderBox& Box) {
         std::erase(_LayoutQueue, &Box);
         std::erase(_PaintQueue, &Box);
+        // Laying one box out can destroy others still waiting in the batch being flushed (a virtual list builds and
+        // discards its rows during layout), so forget them there too.
+        std::replace(_LayoutBatch.begin(), _LayoutBatch.end(), &Box, static_cast<RenderBox*>(nullptr));
     }
 
     void PipelineOwner::FlushLayout() {
         while (!_LayoutQueue.empty()) {
-            std::vector<RenderBox*> Queue = std::move(_LayoutQueue);
+            _LayoutBatch = std::move(_LayoutQueue);
             _LayoutQueue.clear();
-            std::sort(Queue.begin(), Queue.end(), [](const RenderBox* Left, const RenderBox* Right) {
+            std::sort(_LayoutBatch.begin(), _LayoutBatch.end(), [](const RenderBox* Left, const RenderBox* Right) {
                 return Left->GetDepth() < Right->GetDepth();
             });
-            for (RenderBox* Box : Queue) {
-                if (Box->GetOwner() == this) { Box->RelayoutAsBoundary(); }
+            // Index rather than iterate: the batch must stay in place so Unschedule can clear destroyed entries.
+            for (size_t Index = 0; Index < _LayoutBatch.size(); ++Index) {
+                RenderBox* Box = _LayoutBatch[Index];
+                if (Box != nullptr && Box->GetOwner() == this) { Box->RelayoutAsBoundary(); }
             }
+            _LayoutBatch.clear();
         }
     }
 

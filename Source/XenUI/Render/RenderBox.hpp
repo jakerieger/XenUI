@@ -217,6 +217,8 @@ namespace XenUI {
 
         std::vector<RenderBox*> _LayoutQueue;
         std::vector<RenderBox*> _PaintQueue;
+        /// @brief The boxes FlushLayout is laying out right now; entries are cleared when a box is unscheduled.
+        std::vector<RenderBox*> _LayoutBatch;
         std::function<void()> _OnNeedsUpdate;
         FocusManager* _FocusManager = nullptr;
         void* _NativeParent         = nullptr;
