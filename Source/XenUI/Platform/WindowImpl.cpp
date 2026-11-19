@@ -416,12 +416,22 @@ namespace XenUI {
         auto* Self = reinterpret_cast<WindowImpl*>(GetWindowLongPtrW(Hwnd, GWLP_USERDATA));
         if (Self == nullptr) { return DefWindowProcW(Hwnd, Message, WParam, LParam); }
 
+        ++Self->_DispatchDepth;
+        LRESULT Result = 0;
         try {
-            return Self->HandleMessage(Message, WParam, LParam);
+            Result = Self->HandleMessage(Message, WParam, LParam);
         } catch (...) {
             if (auto* Context = AppContext::TryGet()) { Context->ReportException(std::current_exception()); }
-            return DefWindowProcW(Hwnd, Message, WParam, LParam);
+            Result = DefWindowProcW(Hwnd, Message, WParam, LParam);
         }
+
+        // The handler may have destroyed the window (and the WindowImpl with it), so only touch Self while the
+        // handle still leads back to it.
+        if (reinterpret_cast<WindowImpl*>(GetWindowLongPtrW(Hwnd, GWLP_USERDATA)) == Self &&
+            --Self->_DispatchDepth == 0 && std::exchange(Self->_NotifyOwnerWhenIdle, false)) {
+            if (const HWND Owner = GetWindow(Hwnd, GW_OWNER)) { PostMessageW(Owner, kDestroyPopupsMessage, 0, 0); }
+        }
+        return Result;
     }
 
     LRESULT WindowImpl::HandleMessage(UINT Message, WPARAM WParam, LPARAM LParam) {

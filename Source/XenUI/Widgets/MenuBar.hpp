@@ -40,6 +40,7 @@ namespace XenUI {
     struct MenuBar {
         std::vector<Menu> Menus;
         float Height    = 28.0f;
+        /// @brief The narrowest an open menu gets; each widens to fit its longest item.
         float MenuWidth = 220.0f;
 
         class XENUI_API State : public ComponentState<MenuBar> {

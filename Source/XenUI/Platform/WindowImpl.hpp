@@ -84,6 +84,11 @@ namespace XenUI {
         /// @brief Moves and resizes the popup to Bounds in screen pixels and shows it without activating it.
         void PlacePopup(const RECT& Bounds);
         [[nodiscard]] WidgetHost* GetContentHost() const { return _Content.get(); }
+        /// @brief True while one of this window's messages is being handled, including any nested message loop it
+        /// started (a modal dialog, or a shell call that pumps messages). The window must not be destroyed then.
+        [[nodiscard]] bool IsDispatching() const { return _DispatchDepth > 0; }
+        /// @brief Asks the owner to destroy closed popups again once this window has finished its current message.
+        void NotifyOwnerWhenIdle() { _NotifyOwnerWhenIdle = true; }
 
         void SetCursor(CursorShape Shape) override;
         void BeginRelativePointer() override;
@@ -163,6 +168,8 @@ namespace XenUI {
         bool _IsPopup           = false;
         bool _ClickThrough      = false;
         bool _InContentUpdate   = false;
+        bool _NotifyOwnerWhenIdle = false;
+        uint32_t _DispatchDepth   = 0;
         Size _PopupMaximum;
 
         FrameCallback _FrameCallback;

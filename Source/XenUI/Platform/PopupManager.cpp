@@ -120,7 +120,14 @@ namespace XenUI {
     }
 
     void PopupManager::DestroyClosed() {
-        _Closing.clear();
+        // A popup can still be inside its own window procedure here: a menu item's action that shows a modal dialog
+        // or calls into the shell pumps messages, and this message arrives through that nested loop. Destroying the
+        // popup then frees the input dispatcher that is still delivering the click, so keep it until it returns.
+        std::erase_if(_Closing, [](const std::unique_ptr<WindowImpl>& Window) {
+            if (!Window->IsDispatching()) { return true; }
+            Window->NotifyOwnerWhenIdle();
+            return false;
+        });
     }
 
     void PopupManager::Dismiss(bool MenusOnly) {

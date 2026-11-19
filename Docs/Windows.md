@@ -96,8 +96,10 @@ Column {
 - **Actions** go on the right, before the minimize, maximize and close buttons. Use them for a theme selector, a
   search field or an account button.
 - The whole bar drags the window, and the title dims while the window is inactive, like a system title bar.
-- `Height` (34 DIPs), `MenuWidth` (the width of the open menus) and `Background` (the theme's chrome color) adjust
-  it.
+- `Logo` shows an `SvgIcon` in place of the title, in its own colors and `LogoSize` (18 DIPs) square; `Title` is then
+  what screen readers call it.
+- `Height` (34 DIPs), `MenuWidth` (the narrowest an open menu gets; each widens to fit its longest item) and
+  `Background` (the theme's chrome color) adjust it.
 
 ### Building your own
 

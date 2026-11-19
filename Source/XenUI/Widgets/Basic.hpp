@@ -431,6 +431,7 @@ namespace XenUI {
         SvgIcon Source;
         float Size = 16.0f;
         XenUI::Color Tint;
+        bool FullColor = false;
         std::string Label;
 
         [[nodiscard]] std::unique_ptr<RenderIcon> CreateRenderObject() const {
@@ -442,17 +443,21 @@ namespace XenUI {
         void UpdateRenderObject(RenderIcon& Target) const {
             Target.SetIcon(Source);
             Target.SetColor(Tint);
+            Target.SetFullColor(FullColor);
             Target.SetExtent(Size);
             Target.SetLabel(Label);
         }
     };
 
     /// @brief An SvgIcon drawn in one color, as a square of Size device-independent pixels. It takes the color of
-    /// the surrounding text unless Color is set, so icons inside buttons and menus follow their states.
+    /// the surrounding text unless Color is set, so icons inside buttons and menus follow their states. With
+    /// FullColor it keeps the SVG's own colors and gradients instead, as a logo should; Color is then only used for
+    /// shapes painted with currentColor.
     struct Icon {
         SvgIcon Source;
         float Size = 16.0f;
         std::optional<XenUI::Color> Color;
+        bool FullColor = false;
         /// @brief The name screen readers announce. Leave it empty for a decorative icon, such as one next to a
         /// label that already says what it means; screen readers then skip it.
         std::string Label;
@@ -460,7 +465,7 @@ namespace XenUI {
         [[nodiscard]] Node Build(BuildContext& Context) const {
             const TextStyle* Inherited = Context.Find<TextStyle>();
             const XenUI::Color Tint    = Color.value_or(Inherited != nullptr ? Inherited->Color : TextStyle {}.Color);
-            return RawIcon {.Source = Source, .Size = Size, .Tint = Tint, .Label = Label};
+            return RawIcon {.Source = Source, .Size = Size, .Tint = Tint, .FullColor = FullColor, .Label = Label};
         }
     };
 

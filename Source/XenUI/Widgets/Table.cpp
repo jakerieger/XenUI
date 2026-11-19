@@ -155,7 +155,7 @@ namespace XenUI {
                     Table::State* Owner = GetWidget().Parent;
                     const Table& Props  = Owner->GetWidget();
                     const int RowIndex  = GetWidget().Index;
-                    const bool Selected = Owner->GetSelection().Get() == RowIndex;
+                    const bool Selected = Owner->IsRowSelected(RowIndex);
                     const bool Hovered  = _Hovered();
                     (void)Owner->ReadWidths();
 
@@ -191,11 +191,17 @@ namespace XenUI {
                           .Child =
                             GestureDetector {
                               .OnTap =
-                                [Owner, RowIndex](const TapEvent&) {
-                                    Owner->Select(RowIndex, false);
+                                [Owner, RowIndex](const TapEvent& Tap) {
+                                    Owner->Click(RowIndex, Tap.Modifiers);
                                     Owner->FocusTable();
                                 },
                               .OnDoubleTap = [Owner, RowIndex](const TapEvent&) { Owner->Activate(RowIndex); },
+                              .OnSecondaryTap =
+                                [this, Owner, RowIndex](const TapEvent& Tap) {
+                                    Owner->FocusTable();
+                                    Owner->OpenRowMenu(RowIndex,
+                                                       GetGlobalBounds(GetElement()).Origin() + Tap.LocalPosition);
+                                },
                               .Behavior    = HitTestBehavior::Opaque,
                               .Child = Container {.Height = Props.RowHeight, .Background = Background, .Child = Cells},
                             },
@@ -256,7 +262,82 @@ namespace XenUI {
         if (GetWidget().OnSort) { GetWidget().OnSort(Next); }
     }
 
+    Signal<std::vector<int>>& Table::State::GetRows() {
+        Signal<std::vector<int>>* External = GetWidget().SelectedRows;
+        return External != nullptr ? *External : _Rows;
+    }
+
+    bool Table::State::IsRowSelected(int Row) {
+        if (!IsMultiple()) { return GetSelection().Get() == Row; }
+        const std::vector<int>& Rows = GetRows().Get();
+        return std::binary_search(Rows.begin(), Rows.end(), Row);
+    }
+
+    void Table::State::SetRows(std::vector<int> Rows) {
+        if (!IsMultiple()) { return; }
+        std::sort(Rows.begin(), Rows.end());
+        Rows.erase(std::unique(Rows.begin(), Rows.end()), Rows.end());
+        if (GetRows().Peek() == Rows) { return; }
+        GetRows() = Rows;
+        if (GetWidget().OnSelectionChanged) { GetWidget().OnSelectionChanged(Rows); }
+    }
+
+    void Table::State::SelectRange(int From, int To, bool Keep) {
+        std::vector<int> Rows = Keep ? GetRows().Peek() : std::vector<int> {};
+        for (int Row = std::min(From, To); Row <= std::max(From, To); ++Row) {
+            Rows.push_back(Row);
+        }
+        SetRows(std::move(Rows));
+    }
+
     void Table::State::Select(int Row, bool Reveal) {
+        const int Count = GetWidget().RowCount;
+        if (Count <= 0) { return; }
+        Row     = std::clamp(Row, 0, Count - 1);
+        _Anchor = Row;
+        SetRows({Row});
+        SetLead(Row, Reveal);
+    }
+
+    void Table::State::Click(int Row, KeyModifiers Modifiers) {
+        if (!IsMultiple() || GetWidget().RowCount <= 0) {
+            Select(Row, false);
+            return;
+        }
+        const bool Control = HasFlags(Modifiers, KeyModifiers::Control);
+        if (HasFlags(Modifiers, KeyModifiers::Shift) && _Anchor >= 0) {
+            SelectRange(_Anchor, Row, Control);
+            SetLead(Row, false);
+        } else if (Control) {
+            std::vector<int> Rows = GetRows().Peek();
+            const auto Found      = std::find(Rows.begin(), Rows.end(), Row);
+            if (Found != Rows.end()) {
+                Rows.erase(Found);
+            } else {
+                Rows.push_back(Row);
+            }
+            _Anchor = Row;
+            SetRows(std::move(Rows));
+            SetLead(Row, false);
+        } else {
+            Select(Row, false);
+        }
+    }
+
+    void Table::State::OpenRowMenu(int Row, const Vec2& GlobalPosition) {
+        if (!IsRowSelected(Row)) { Select(Row, false); }
+        if (!GetWidget().RowMenu || _Overlay == nullptr) { return; }
+        std::vector<MenuItem> Items = GetWidget().RowMenu(Row);
+        if (Items.empty()) { return; }
+        _Menu = ShowMenu(*_Overlay,
+                         {GlobalPosition.X, GlobalPosition.Y, 0.0f, 0.0f},
+                         PopupPlacement::Below,
+                         std::move(Items),
+                         [this] { _Menu.Reset(); },
+                         _Style);
+    }
+
+    void Table::State::SetLead(int Row, bool Reveal) {
         const int Count = GetWidget().RowCount;
         if (Count <= 0) { return; }
         Row = std::clamp(Row, 0, Count - 1);
@@ -278,30 +359,49 @@ namespace XenUI {
 
     bool Table::State::HandleKey(const KeyEvent& Event) {
         const Table& Props = GetWidget();
-        if (!Event.Pressed || Event.Modifiers != KeyModifiers::None || Props.RowCount <= 0) { return false; }
-        const int Current                = GetSelection().Peek();
+        if (!Event.Pressed || Props.RowCount <= 0) { return false; }
+        const int Current = GetSelection().Peek();
+        if (IsMultiple() && Event.Modifiers == KeyModifiers::Control) {
+            if (Event.Code == KeyCode::A) {
+                SelectRange(0, Props.RowCount - 1, false);
+                return true;
+            }
+            if (Event.Code == KeyCode::Space && Current >= 0) {
+                Click(Current, KeyModifiers::Control);
+                return true;
+            }
+            return false;
+        }
+        const bool Extend = IsMultiple() && Event.Modifiers == KeyModifiers::Shift;
+        if (Event.Modifiers != KeyModifiers::None && !Extend) { return false; }
         const ScrollController& Scroller = Props.Controller != nullptr ? *Props.Controller : _Scroll;
         const int Page = std::max(1, static_cast<int>(Scroller.GetViewportExtent() / Props.RowHeight) - 1);
+        const auto MoveTo = [this, Extend, Count = Props.RowCount](int Row) {
+            Row = std::clamp(Row, 0, Count - 1);
+            if (Extend) {
+                if (_Anchor < 0) { _Anchor = std::max(GetSelection().Peek(), 0); }
+                SelectRange(_Anchor, Row, false);
+                SetLead(Row, true);
+            } else {
+                Select(Row, true);
+            }
+            return true;
+        };
         switch (Event.Code) {
             case KeyCode::Down:
-                Select(Current < 0 ? 0 : Current + 1, true);
-                return true;
+                return MoveTo(Current < 0 ? 0 : Current + 1);
             case KeyCode::Up:
-                Select(Current < 0 ? 0 : Current - 1, true);
-                return true;
+                return MoveTo(Current < 0 ? 0 : Current - 1);
             case KeyCode::PageDown:
-                Select(std::max(Current, 0) + Page, true);
-                return true;
+                return MoveTo(std::max(Current, 0) + Page);
             case KeyCode::PageUp:
-                Select(std::max(Current, 0) - Page, true);
-                return true;
+                return MoveTo(std::max(Current, 0) - Page);
             case KeyCode::Home:
-                Select(0, true);
-                return true;
+                return MoveTo(0);
             case KeyCode::End:
-                Select(Props.RowCount - 1, true);
-                return true;
+                return MoveTo(Props.RowCount - 1);
             case KeyCode::Enter:
+                if (Extend) { return false; }
                 if (Current >= 0 && !Event.Repeat) { Activate(Current); }
                 return true;
             default:
@@ -310,6 +410,8 @@ namespace XenUI {
     }
 
     Node Table::State::Build(BuildContext& Context) {
+        _Overlay           = OverlayController::Of(Context);
+        _Style             = PopupStyle::Capture(Context);
         const Theme& Style = Theme::Of(Context);
         const Table& Props = GetWidget();
         (void)_Widths.Get();

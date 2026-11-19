@@ -32,6 +32,7 @@ namespace XenUI {
         EditableStyle Style;
         bool Focused                     = false;
         bool Enabled                     = true;
+        bool ReadOnly                    = false;
         const Signal<bool>* CaretVisible = nullptr;
         std::string Label;
         bool Multiline = false;
@@ -47,6 +48,7 @@ namespace XenUI {
             Target.SetStyle(Style);
             Target.SetFocused(Focused);
             Target.SetEnabled(Enabled);
+            Target.SetReadOnly(ReadOnly);
             Target.SetCaretVisible(CaretVisible);
             Target.SetAccessibleLabel(Label);
             Target.SetMultiline(Multiline);
@@ -74,6 +76,9 @@ namespace XenUI {
         FocusNode* FocusTarget = nullptr;
         bool AutoFocus         = false;
         bool Enabled           = true;
+        /// @brief Keeps the text focusable, selectable and copyable, but blocks typing, pasting, cutting, undo
+        /// and input-method composition. Changes through the controller or Bind still show.
+        bool ReadOnly          = false;
         bool SelectAllOnFocus  = false;
         /// @brief Limit in characters; 0 for none.
         size_t MaxLength = 0;
@@ -102,6 +107,7 @@ namespace XenUI {
             [[nodiscard]] FocusNode& GetFocus();
             void Attach();
             bool HandleKey(const KeyEvent& Event);
+            [[nodiscard]] bool WouldEdit(const KeyEvent& Event) const;
             bool HandleText(const TextEvent& Event);
             void TextChanged();
             void FocusChanged(bool Focused);
@@ -134,6 +140,8 @@ namespace XenUI {
         FocusNode* FocusTarget = nullptr;
         bool AutoFocus         = false;
         bool Enabled           = true;
+        /// @brief Selectable and copyable but not editable, as for a log or a licence text.
+        bool ReadOnly = false;
         /// @brief Limit in characters; 0 for none.
         size_t MaxLength = 0;
         /// @brief Visible lines, which set the height.

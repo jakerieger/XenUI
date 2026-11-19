@@ -91,6 +91,7 @@ namespace XenUI {
             case SemanticsRole::TreeItem:
             case SemanticsRole::TableRow:
             case SemanticsRole::ColumnHeader:
+            case SemanticsRole::Link:
                 return true;
             default:
                 return false;

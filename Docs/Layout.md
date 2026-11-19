@@ -179,6 +179,9 @@ Button {.Icon = kPlay, .OnPressed = [this] { Play(); }, .AccessibleLabel = "Play
 - **Color.** An icon is drawn in the surrounding text color unless you set `Color`. Every painted shape uses that one
   color, so the same icon follows the theme, a button's hover and disabled states, or a selected row. Opacity
   attributes are kept, so duotone icons still work.
+- **Full color.** For a logo or illustration, set `FullColor = true` to draw the SVG's own colors and gradients
+  instead (`SvgIcon::DrawInColor`). Shapes painted with `currentColor` then take `Color`, and shapes with no fill are
+  black, as in SVG.
 - **Size.** Icons are square, 16 DIPs unless you set `Size`. The view box is scaled uniformly to fit and centered, and
   strokes scale with it, so icons stay crisp at any size and DPI.
 - **Accessibility.** An icon with a `Label` is announced as an image. Without one, it is decorative and screen
@@ -188,8 +191,10 @@ Button {.Icon = kPlay, .OnPressed = [this] { Play(); }, .AccessibleLabel = "Play
 Icon sets made for user interfaces work as they are: Lucide, Feather and Tabler (stroked), and Material Symbols,
 Fluent System Icons and Heroicons (filled). XenUI reads the view box; `path`, `rect`, `circle`, `ellipse`, `line`,
 `polyline` and `polygon` elements, in nested groups; `fill`, `stroke`, the `stroke-*` attributes, `fill-rule`,
-`opacity`, `fill-opacity` and `stroke-opacity`, also inside a `style` attribute; and `transform`. Gradients, patterns,
-masks, clip paths, text, images and `use` are ignored.
+`opacity`, `fill-opacity` and `stroke-opacity`, also inside a `style` attribute; and `transform`. For full-color
+drawing it also reads hex, `rgb()`/`rgba()` and named colors, and linear and radial gradients, with either
+`gradientUnits`, `gradientTransform`, `spreadMethod` and stops inherited through `href`. Patterns, masks, clip paths,
+text, images and `use` are ignored.
 
 ## Custom painting
 

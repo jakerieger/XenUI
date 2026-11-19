@@ -25,14 +25,17 @@ namespace XenUI {
     class Painter;
     struct SvgIconData;
 
-    /// @brief A single-color vector icon read from SVG, such as the icons of Lucide, Material Symbols, Fluent System
-    /// Icons or Heroicons. Every painted shape is drawn in the color the icon is drawn with, so one icon follows the
-    /// theme and its states; opacity attributes are kept, so duotone icons still work.
+    /// @brief A vector icon read from SVG, such as the icons of Lucide, Material Symbols, Fluent System Icons or
+    /// Heroicons, or a logo. Draw paints every shape in one color, so one icon follows the theme and its states;
+    /// opacity attributes are kept, so duotone icons still work. DrawInColor paints the SVG's own colors and gradients
+    /// instead, for logos and illustrations.
     ///
     /// Supported: the viewBox; path, rect, circle, ellipse, line, polyline and polygon elements, inside nested groups;
     /// the fill, stroke, stroke-width, stroke-linecap, stroke-linejoin, stroke-miterlimit, fill-rule, opacity,
-    /// fill-opacity and stroke-opacity attributes, also inside a style attribute; and transform. Gradients, patterns,
-    /// masks, clip paths, text and images are ignored.
+    /// fill-opacity and stroke-opacity attributes, also inside a style attribute; and transform. Colors are hex
+    /// (#rgb, #rrggbb, #rrggbbaa), rgb() and rgba(), common color names and currentColor. Linear and radial gradients
+    /// support both gradientUnits, gradientTransform, spreadMethod and stops inherited through href. Patterns, masks,
+    /// clip paths, text and images are ignored.
     ///
     /// Parsing needs no App; the geometry is created the first time the icon is drawn. Cheap to copy; copies share
     /// the parsed icon.
@@ -56,6 +59,10 @@ namespace XenUI {
 
         /// @brief Draws the icon in Tint, scaled uniformly to fit Bounds and centered in it.
         void Draw(Painter& Canvas, const Rect& Bounds, const Color& Tint) const;
+
+        /// @brief Draws the icon in the colors and gradients its SVG gives it, scaled uniformly to fit Bounds and
+        /// centered in it. Shapes painted with currentColor use CurrentColor; shapes with no fill are black, as in SVG.
+        void DrawInColor(Painter& Canvas, const Rect& Bounds, const Color& CurrentColor = Color::FromHex(0x000000)) const;
 
         /// @internal Identity of the parsed icon, for change detection.
         [[nodiscard]] const SvgIconData* GetData() const { return _Data.get(); }

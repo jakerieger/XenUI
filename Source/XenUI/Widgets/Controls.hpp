@@ -197,6 +197,7 @@ namespace XenUI {
     struct MenuPanel {
         std::vector<MenuItem> Items;
         std::function<void()> OnDismiss;
+        /// @brief The narrowest the panel gets; it widens to fit its longest item and shortcut.
         float Width = 200.0f;
         /// @brief Called with -1 or 1 when Left or Right is pressed, so a menu bar can switch menus.
         std::function<void(int Direction)> OnSideways;

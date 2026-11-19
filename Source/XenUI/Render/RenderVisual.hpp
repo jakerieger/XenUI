@@ -113,6 +113,8 @@ namespace XenUI {
     public:
         void SetIcon(const SvgIcon& Source);
         void SetColor(const Color& Tint);
+        /// @brief Draw the SVG's own colors (with Tint as currentColor) rather than everything in Tint.
+        void SetFullColor(bool FullColor);
         void SetExtent(float Extent);
         void SetLabel(std::string Label);
         void Paint(PaintContext& Context) override;
@@ -124,7 +126,8 @@ namespace XenUI {
     private:
         SvgIcon _Source;
         Color _Tint;
-        float _Extent = 16.0f;
+        float _Extent   = 16.0f;
+        bool _FullColor = false;
         std::string _Label;
     };
 

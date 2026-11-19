@@ -14,6 +14,7 @@
 
 #include "XenUI/Widgets/Controls.hpp"
 #include "XenUI/Graphics/Path.hpp"
+#include "XenUI/Graphics/Text.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -26,6 +27,11 @@ namespace XenUI {
         constexpr float kFineFactor       = 0.1f;
         constexpr float kKeyboardFraction = 0.05f;
         constexpr float kMenuRowHeight    = 24.0f;
+        constexpr float kMenuPanelInset   = 4.0f;   // Padding around the rows
+        constexpr float kMenuRowInset     = 8.0f;   // Padding inside a row
+        constexpr float kMenuCheckWidth   = 12.0f;
+        constexpr float kMenuSpacing      = 8.0f;   // Between the check, the label and the shortcut
+        constexpr float kMenuShortcutGap  = 24.0f;  // Extra room so a shortcut never sits against its label
         constexpr double kHoverDuration   = 0.12;
         constexpr double kPressDuration   = 0.05;
         constexpr float kButtonIconSize   = 16.0f;
@@ -467,6 +473,19 @@ namespace XenUI {
         const MenuPanel& Props = GetWidget();
         const int Highlighted  = _Highlighted();
 
+        // Wide enough for the longest label and shortcut, so they never overlap
+        float PanelWidth = Props.Width;
+        for (const MenuItem& Item : Props.Items) {
+            if (Item.Separator) { continue; }
+            float Needed = 2.0f * (kMenuPanelInset + kMenuRowInset + 1.0f) + kMenuCheckWidth + kMenuSpacing +
+                           std::ceil(TextLayout(Item.Label, Style.BodyFont).GetMeasuredSize().Width);
+            if (!Item.ShortcutText.empty()) {
+                Needed += kMenuSpacing + kMenuShortcutGap +
+                          std::ceil(TextLayout(Item.ShortcutText, Style.SmallFont).GetMeasuredSize().Width);
+            }
+            PanelWidth = std::max(PanelWidth, Needed);
+        }
+
         NodeList Rows;
         for (size_t i = 0; i < Props.Items.size(); ++i) {
             const MenuItem& Item = Props.Items[i];
@@ -481,15 +500,15 @@ namespace XenUI {
             const Color LabelTint = !Item.Enabled ? Style.TextDisabled : (Active ? Style.AccentText : Style.Text);
             const Node Content    = Container {
                  .Height       = kMenuRowHeight,
-                 .Padding      = EdgeInsets::Symmetric(8.0f, 0.0f),
+                 .Padding      = EdgeInsets::Symmetric(kMenuRowInset, 0.0f),
                  .Background   = Active ? Style.Accent : Style.Accent.WithAlpha(0.0f),
                  .CornerRadius = 3.0f,
                  .Child =
                 Row {
-                     .Spacing = 8.0f,
+                     .Spacing = kMenuSpacing,
                      .Children =
                        {
-                      SizedBox {.Width = 12.0f,
+                      SizedBox {.Width = kMenuCheckWidth,
                                    .Child = Item.Checked
                                               ? Node(Text {.Content = "✓", .Font = Style.SmallFont, .Color = LabelTint})
                                               : Node {}},
@@ -567,8 +586,8 @@ namespace XenUI {
                             .Behavior = HitTestBehavior::Opaque,
                             .Child =
                               Container {
-                                .Width        = Props.Width,
-                                .Padding      = EdgeInsets::All(4.0f),
+                                .Width        = PanelWidth,
+                                .Padding      = EdgeInsets::All(kMenuPanelInset),
                                 .Background   = Style.SurfaceRaised,
                                 .CornerRadius = 6.0f,
                                 .BorderColor  = Style.Border,

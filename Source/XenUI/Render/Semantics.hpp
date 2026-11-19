@@ -66,6 +66,8 @@ namespace XenUI {
         /// @brief One row of a table.
         TableRow,
         ColumnHeader,
+        /// @brief A hyperlink that opens a page or another view.
+        Link,
     };
 
     /// @brief Whether nodes with Role are announced as a single control, with their name taken from the text

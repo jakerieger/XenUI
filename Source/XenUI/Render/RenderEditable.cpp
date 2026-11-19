@@ -43,8 +43,11 @@ namespace XenUI {
           .Label      = _AccessibleLabel.empty() ? _Style.Placeholder : _AccessibleLabel,
           .Value      = _Controller->PeekText(),
           .Enabled    = _Enabled,
-          .OnSetValue = [Controller = _Controller](const std::string& Text) { Controller->SetText(Text); },
+          .ReadOnly   = _ReadOnly,
         };
+        if (!_ReadOnly) {
+            Properties.OnSetValue = [Controller = _Controller](const std::string& Text) { Controller->SetText(Text); };
+        }
         return true;
     }
 

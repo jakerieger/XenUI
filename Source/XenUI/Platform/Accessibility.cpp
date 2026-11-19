@@ -103,6 +103,8 @@ namespace XenUI {
                     return UIA_DataItemControlTypeId;
                 case SemanticsRole::ColumnHeader:
                     return UIA_HeaderItemControlTypeId;
+                case SemanticsRole::Link:
+                    return UIA_HyperlinkControlTypeId;
                 default:
                     return UIA_GroupControlTypeId;
             }

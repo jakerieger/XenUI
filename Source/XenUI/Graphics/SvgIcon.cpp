@@ -22,6 +22,7 @@
 #include <Windows.h>
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <cmath>
 #include <filesystem>
@@ -36,10 +37,39 @@
 #include <vector>
 
 namespace XenUI {
+    /// @brief A fill or stroke as the SVG wrote it, for drawing in the icon's own colors.
+    struct SvgColorSource {
+        enum class Kind : uint8_t {
+            Default,  // No color given: black
+            Current,  // currentColor
+            Solid,
+            Gradient,
+        };
+        Kind Type = Kind::Default;
+        Color Value;
+        std::string Gradient;  // The id a url(#id) reference names
+    };
+
+    struct SvgGradient {
+        bool Radial    = false;
+        bool UserSpace = false;  // gradientUnits="userSpaceOnUse"; otherwise fractions of the shape's bounds
+        // Linear gradients run from (X1, Y1) to (X2, Y2); radial ones fill the circle at (Cx, Cy), focused at (Fx, Fy)
+        float X1 = 0.0f, Y1 = 0.0f, X2 = 1.0f, Y2 = 0.0f;
+        float Cx = 0.5f, Cy = 0.5f, R = 0.5f;
+        std::optional<float> Fx;
+        std::optional<float> Fy;
+        Matrix3x2 Transform;
+        GradientExtend Extend = GradientExtend::Clamp;
+        std::vector<GradientStop> Stops;
+        std::string Href;  // Stops come from this gradient when there are none of its own
+    };
+
     /// @brief How a shape is painted: everything an element inherits from its ancestors, plus its own attributes.
     struct SvgPaint {
         bool Fill           = true;
         bool Stroke         = false;
+        SvgColorSource FillSource;
+        SvgColorSource StrokeSource;
         float StrokeWidth   = 1.0f;
         LineCap Cap         = LineCap::Flat;
         LineJoin Join       = LineJoin::MiterOrBevel;
@@ -64,6 +94,7 @@ namespace XenUI {
     struct SvgIconData {
         Rect ViewBox {0.0f, 0.0f, 24.0f, 24.0f};
         std::vector<SvgShape> Shapes;
+        std::vector<std::pair<std::string, SvgGradient>> Gradients;
     };
 
     namespace {
@@ -222,14 +253,123 @@ namespace XenUI {
             return std::clamp(Value, 0.0f, 1.0f);
         }
 
+        bool EqualsIgnoreCase(std::string_view Left, std::string_view Right) {
+            return Left.size() == Right.size() && std::equal(Left.begin(), Left.end(), Right.begin(), [](char A, char B) {
+                       return std::tolower(static_cast<unsigned char>(A)) == std::tolower(static_cast<unsigned char>(B));
+                   });
+        }
+
+        std::optional<uint32_t> ParseHexDigits(std::string_view Digits) {
+            uint32_t Value = 0;
+            for (const char Digit : Digits) {
+                const auto Lower = static_cast<char>(std::tolower(static_cast<unsigned char>(Digit)));
+                if (Lower >= '0' && Lower <= '9') {
+                    Value = Value * 16 + static_cast<uint32_t>(Lower - '0');
+                } else if (Lower >= 'a' && Lower <= 'f') {
+                    Value = Value * 16 + static_cast<uint32_t>(Lower - 'a' + 10);
+                } else {
+                    return std::nullopt;
+                }
+            }
+            return Value;
+        }
+
+        /// @brief An rgb() or rgba() channel: 0 to 255, or a percentage.
+        float ParseChannel(std::string_view Text) {
+            Text = Trim(Text);
+            const bool Percent = Text.ends_with('%');
+            if (Percent) { Text.remove_suffix(1); }
+            const float Value = NumberOr(Text, 0.0f);
+            return Clamp01(Percent ? Value / 100.0f : Value / 255.0f);
+        }
+
+        /// @brief A CSS color as SVG uses it. Returns nothing for none, currentColor and anything not understood.
+        std::optional<Color> ParseColor(std::string_view Text) {
+            Text = Trim(Text);
+            if (Text.starts_with('#')) {
+                const std::string_view Digits     = Text.substr(1);
+                const std::optional<uint32_t> Hex = ParseHexDigits(Digits);
+                if (!Hex) { return std::nullopt; }
+                switch (Digits.size()) {
+                    case 3: {
+                        const auto Expand = [](uint32_t Nibble) { return static_cast<uint8_t>(Nibble * 17); };
+                        return Color::FromRgba8(Expand(*Hex >> 8), Expand((*Hex >> 4) & 0xF), Expand(*Hex & 0xF));
+                    }
+                    case 6: return Color::FromHex(*Hex);
+                    case 8: return Color::FromHex(*Hex >> 8, static_cast<float>(*Hex & 0xFF) / 255.0f);
+                    default: return std::nullopt;
+                }
+            }
+            if (Text.starts_with("rgb")) {
+                const size_t Open  = Text.find('(');
+                const size_t Close = Text.find(')');
+                if (Open == std::string_view::npos || Close == std::string_view::npos || Close < Open) { return std::nullopt; }
+                std::vector<std::string_view> Parts;
+                std::string_view Inner = Text.substr(Open + 1, Close - Open - 1);
+                while (!Inner.empty()) {
+                    const size_t Comma = Inner.find_first_of(",/");
+                    Parts.push_back(Inner.substr(0, Comma));
+                    if (Comma == std::string_view::npos) { break; }
+                    Inner.remove_prefix(Comma + 1);
+                }
+                if (Parts.size() == 1) {  // Space-separated: rgb(255 0 0)
+                    Parts.clear();
+                    for (std::string_view Rest = Trim(Text.substr(Open + 1, Close - Open - 1)); !Rest.empty();) {
+                        const size_t Space = Rest.find(' ');
+                        Parts.push_back(Rest.substr(0, Space));
+                        Rest = Space == std::string_view::npos ? std::string_view {} : Trim(Rest.substr(Space));
+                    }
+                }
+                if (Parts.size() < 3) { return std::nullopt; }
+                Color Result {ParseChannel(Parts[0]), ParseChannel(Parts[1]), ParseChannel(Parts[2]), 1.0f};
+                if (Parts.size() >= 4) {
+                    std::string_view Alpha = Trim(Parts[3]);
+                    const bool Percent     = Alpha.ends_with('%');
+                    if (Percent) { Alpha.remove_suffix(1); }
+                    Result.A = Clamp01(NumberOr(Alpha, 1.0f) / (Percent ? 100.0f : 1.0f));
+                }
+                return Result;
+            }
+
+            static constexpr std::pair<std::string_view, uint32_t> kNamed[] = {
+              {"black", 0x000000},  {"white", 0xFFFFFF},   {"red", 0xFF0000},    {"green", 0x008000},
+              {"lime", 0x00FF00},   {"blue", 0x0000FF},    {"yellow", 0xFFFF00}, {"cyan", 0x00FFFF},
+              {"aqua", 0x00FFFF},   {"magenta", 0xFF00FF}, {"fuchsia", 0xFF00FF}, {"gray", 0x808080},
+              {"grey", 0x808080},   {"silver", 0xC0C0C0},  {"maroon", 0x800000}, {"olive", 0x808000},
+              {"navy", 0x000080},   {"purple", 0x800080},  {"teal", 0x008080},   {"orange", 0xFFA500},
+            };
+            for (const auto& [Name, Rgb] : kNamed) {
+                if (EqualsIgnoreCase(Text, Name)) { return Color::FromHex(Rgb); }
+            }
+            return std::nullopt;
+        }
+
+        /// @brief What a fill or stroke value paints with. Values that aren't understood keep the inherited source.
+        SvgColorSource ColorSourceOf(std::string_view Value, const SvgColorSource& Inherited) {
+            Value = Trim(Value);
+            if (EqualsIgnoreCase(Value, "currentColor")) { return {.Type = SvgColorSource::Kind::Current}; }
+            if (Value.starts_with("url(")) {
+                const size_t Hash  = Value.find('#');
+                const size_t Close = Value.find(')');
+                if (Hash == std::string_view::npos || Close == std::string_view::npos || Close < Hash) { return Inherited; }
+                return {.Type = SvgColorSource::Kind::Gradient, .Gradient = std::string(Trim(Value.substr(Hash + 1, Close - Hash - 1)))};
+            }
+            if (const std::optional<Color> Solid = ParseColor(Value)) {
+                return {.Type = SvgColorSource::Kind::Solid, .Value = *Solid};
+            }
+            return Inherited;
+        }
+
         /// @brief Applies one presentation attribute or style property. Unknown ones are ignored.
         void ApplyProperty(SvgPaint& Paint, std::string_view Name, std::string_view Value) {
             Value = Trim(Value);
             if (Value == "inherit") { return; }
             if (Name == "fill") {
-                Paint.Fill = IsPainted(Value);
+                Paint.Fill       = IsPainted(Value);
+                Paint.FillSource = ColorSourceOf(Value, Paint.FillSource);
             } else if (Name == "stroke") {
-                Paint.Stroke = IsPainted(Value);
+                Paint.Stroke       = IsPainted(Value);
+                Paint.StrokeSource = ColorSourceOf(Value, Paint.StrokeSource);
             } else if (Name == "stroke-width") {
                 Paint.StrokeWidth = NumberOr(Value, Paint.StrokeWidth);
             } else if (Name == "stroke-linecap") {
@@ -490,6 +630,172 @@ namespace XenUI {
             return std::find(std::begin(kSkipped), std::end(kSkipped), Name) != std::end(kSkipped);
         }
 
+        /// @brief A gradient coordinate: a number, or a percentage of Extent (1 for bounding box units).
+        float ParseCoordinate(std::string_view Text, float Fallback, float Extent) {
+            Text = Trim(Text);
+            if (Text.ends_with('%')) {
+                Text.remove_suffix(1);
+                return NumberOr(Text, Fallback * 100.0f / Extent) / 100.0f * Extent;
+            }
+            return NumberOr(Text, Fallback);
+        }
+
+        SvgGradient ReadGradient(const XmlTag& Tag, const Rect& ViewBox) {
+            SvgGradient Result;
+            Result.Radial    = Tag.Name == "radialGradient";
+            Result.UserSpace = Find(Tag.List, "gradientUnits") == "userSpaceOnUse";
+            const float Width  = Result.UserSpace ? ViewBox.Width : 1.0f;
+            const float Height = Result.UserSpace ? ViewBox.Height : 1.0f;
+            const float Size   = Result.UserSpace ? std::sqrt((Width * Width + Height * Height) / 2.0f) : 1.0f;
+            const auto Coordinate = [&](std::string_view Key, float Fallback, float Extent) {
+                return ParseCoordinate(Find(Tag.List, Key), Fallback * Extent, Extent);
+            };
+
+            if (Result.Radial) {
+                Result.Cx = Coordinate("cx", 0.5f, Width);
+                Result.Cy = Coordinate("cy", 0.5f, Height);
+                Result.R  = Coordinate("r", 0.5f, Size);
+                if (!Find(Tag.List, "fx").empty()) { Result.Fx = Coordinate("fx", 0.5f, Width); }
+                if (!Find(Tag.List, "fy").empty()) { Result.Fy = Coordinate("fy", 0.5f, Height); }
+            } else {
+                Result.X1 = Coordinate("x1", 0.0f, Width);
+                Result.Y1 = Coordinate("y1", 0.0f, Height);
+                Result.X2 = Coordinate("x2", 1.0f, Width);
+                Result.Y2 = Coordinate("y2", 0.0f, Height);
+            }
+            if (const std::string_view Transform = Find(Tag.List, "gradientTransform"); !Transform.empty()) {
+                Result.Transform = ParseTransform(Transform);
+            }
+            const std::string_view Spread = Find(Tag.List, "spreadMethod");
+            Result.Extend = Spread == "reflect" ? GradientExtend::Mirror
+                                                : (Spread == "repeat" ? GradientExtend::Repeat : GradientExtend::Clamp);
+            if (const std::string_view Href = Find(Tag.List, "href"); Href.starts_with('#')) {
+                Result.Href = std::string(Href.substr(1));
+            }
+            return Result;
+        }
+
+        /// @brief One stop, kept in order: SVG treats an offset before the previous one as equal to it.
+        void ReadStop(SvgGradient& Target, const Attributes& List) {
+            std::string_view Offset = Trim(Find(List, "offset"));
+            const bool Percent      = Offset.ends_with('%');
+            if (Percent) { Offset.remove_suffix(1); }
+            float Position = Clamp01(NumberOr(Offset, 0.0f) / (Percent ? 100.0f : 1.0f));
+            if (!Target.Stops.empty()) { Position = std::max(Position, Target.Stops.back().Position); }
+
+            // The color and opacity may be attributes or style properties; style wins
+            std::string_view StopColor   = Find(List, "stop-color");
+            std::string_view StopOpacity = Find(List, "stop-opacity");
+            std::string_view Style       = Find(List, "style");
+            while (!Style.empty()) {
+                const size_t End                   = Style.find(';');
+                const std::string_view Declaration = Style.substr(0, End);
+                if (const size_t Colon = Declaration.find(':'); Colon != std::string_view::npos) {
+                    const std::string_view Key = Trim(Declaration.substr(0, Colon));
+                    if (Key == "stop-color") { StopColor = Declaration.substr(Colon + 1); }
+                    if (Key == "stop-opacity") { StopOpacity = Declaration.substr(Colon + 1); }
+                }
+                if (End == std::string_view::npos) { break; }
+                Style.remove_prefix(End + 1);
+            }
+
+            Color Value = ParseColor(StopColor).value_or(Color::FromHex(0x000000));
+            Value.A *= Clamp01(NumberOr(StopOpacity, 1.0f));
+            Target.Stops.push_back({.Position = Position, .Value = Value});
+        }
+
+        const SvgGradient* FindGradient(const SvgIconData& Data, std::string_view Id) {
+            for (const auto& [Name, Gradient] : Data.Gradients) {
+                if (Name == Id) { return &Gradient; }
+            }
+            return nullptr;
+        }
+
+        /// @brief The brush for a gradient fill or stroke, in the local space of a shape with the given bounds.
+        std::optional<Brush> GradientBrush(const SvgIconData& Data, const SvgGradient& Gradient, const Rect& Bounds, float Alpha) {
+            // Stops may come from the gradients this one refers to
+            const SvgGradient* WithStops = &Gradient;
+            for (int Depth = 0; WithStops != nullptr && WithStops->Stops.empty() && !WithStops->Href.empty() && Depth < 8; ++Depth) {
+                WithStops = FindGradient(Data, WithStops->Href);
+            }
+            if (WithStops == nullptr || WithStops->Stops.empty()) { return std::nullopt; }
+
+            std::vector<GradientStop> Stops = WithStops->Stops;
+            for (GradientStop& Stop : Stops) {
+                Stop.Value.A *= Alpha;
+            }
+            if (Stops.size() == 1) { return Brush(Stops.front().Value); }  // A single stop paints a solid color
+
+            // Gradient space to the shape's space: gradientTransform, then bounding box units if those are used
+            Matrix3x2 Space = Gradient.Transform;
+            if (!Gradient.UserSpace) {
+                if (Bounds.Width <= 0.0f || Bounds.Height <= 0.0f) { return std::nullopt; }
+                Space = Space * Matrix3x2::Scaling(Bounds.Width, Bounds.Height) * Matrix3x2::Translation(Bounds.X, Bounds.Y);
+            }
+
+            if (!Gradient.Radial) {
+                return Brush(LinearGradient {.Start  = Space.TransformPoint({Gradient.X1, Gradient.Y1}),
+                                             .End    = Space.TransformPoint({Gradient.X2, Gradient.Y2}),
+                                             .Stops  = std::move(Stops),
+                                             .Extend = Gradient.Extend});
+            }
+            const Vec2 Center = Space.TransformPoint({Gradient.Cx, Gradient.Cy});
+            const Vec2 Focus  = Space.TransformPoint({Gradient.Fx.value_or(Gradient.Cx), Gradient.Fy.value_or(Gradient.Cy)});
+            const Vec2 EdgeX  = Space.TransformPoint({Gradient.Cx + Gradient.R, Gradient.Cy});
+            const Vec2 EdgeY  = Space.TransformPoint({Gradient.Cx, Gradient.Cy + Gradient.R});
+            const auto Distance = [](const Vec2& A, const Vec2& B) { return std::hypot(A.X - B.X, A.Y - B.Y); };
+            return Brush(RadialGradient {.Center      = Center,
+                                         .Radius      = {Distance(EdgeX, Center), Distance(EdgeY, Center)},
+                                         .FocusOffset = {Focus.X - Center.X, Focus.Y - Center.Y},
+                                         .Stops       = std::move(Stops),
+                                         .Extend      = Gradient.Extend});
+        }
+
+        /// @brief The brush a shape's fill or stroke uses when drawn in its own colors, or nothing to skip it.
+        std::optional<Brush> ColorBrush(const SvgIconData& Data,
+                                        const SvgColorSource& Source,
+                                        const Rect& Bounds,
+                                        float Alpha,
+                                        const Color& CurrentColor) {
+            switch (Source.Type) {
+                case SvgColorSource::Kind::Default: return Brush(Color::FromHex(0x000000, Alpha));
+                case SvgColorSource::Kind::Current: return Brush(CurrentColor.WithAlpha(CurrentColor.A * Alpha));
+                case SvgColorSource::Kind::Solid: return Brush(Source.Value.WithAlpha(Source.Value.A * Alpha));
+                case SvgColorSource::Kind::Gradient: {
+                    // A reference to a gradient that doesn't exist paints nothing
+                    const SvgGradient* Gradient = FindGradient(Data, Source.Gradient);
+                    return Gradient != nullptr ? GradientBrush(Data, *Gradient, Bounds, Alpha) : std::nullopt;
+                }
+            }
+            return std::nullopt;
+        }
+
+        /// @brief Calls Paint for each shape, with its geometry built and its transform (fitted to Bounds) pushed.
+        template<class TPaint>
+        void ForEachShape(const SvgIconData& Data, Painter& Canvas, const Rect& Bounds, TPaint&& Paint) {
+            const Rect& Box   = Data.ViewBox;
+            const float Scale = std::min(Bounds.Width / Box.Width, Bounds.Height / Box.Height);
+            const Vec2 Offset {Bounds.X + (Bounds.Width - Box.Width * Scale) / 2.0f,
+                               Bounds.Y + (Bounds.Height - Box.Height * Scale) / 2.0f};
+            const Matrix3x2 Fit =
+              Matrix3x2::Translation(-Box.X, -Box.Y) * Matrix3x2::Scaling(Scale, Scale) * Matrix3x2::Translation(Offset);
+
+            for (const SvgShape& Shape : Data.Shapes) {
+                if (!Shape.Built) {
+                    Shape.Geometry = Shape.Builder.Build();
+                    Shape.Built    = true;
+                }
+                if (Shape.Geometry.IsEmpty()) { continue; }
+                Canvas.PushTransform(Shape.Paint.Transform * Fit);
+                Paint(Shape);
+                Canvas.PopTransform();
+            }
+        }
+
+        StrokeStyle StrokeOf(const SvgPaint& Paint) {
+            return {.Width = Paint.StrokeWidth, .Cap = Paint.Cap, .Join = Paint.Join, .MiterLimit = Paint.MiterLimit};
+        }
+
         void ReadRoot(SvgIconData& Data, const Attributes& List) {
             const std::vector<float> Box = ParseNumbers(Find(List, "viewBox"));
             if (Box.size() == 4 && Box[2] > 0.0f && Box[3] > 0.0f) {
@@ -638,8 +944,29 @@ namespace XenUI {
         std::vector<SvgPaint> Stack;
         int Skipping = 0;
         bool SawRoot = false;
+        std::optional<std::pair<std::string, SvgGradient>> OpenGradient;  // Collecting its stops
 
         while (Reader.Next(Tag)) {
+            // Gradients are read wherever they are, usually inside <defs>, and never drawn themselves
+            if (Tag.Name == "linearGradient" || Tag.Name == "radialGradient") {
+                if (Tag.Closing) {
+                    if (OpenGradient) { Data->Gradients.push_back(std::move(*OpenGradient)); }
+                    OpenGradient.reset();
+                } else {
+                    std::pair<std::string, SvgGradient> Entry {std::string(Find(Tag.List, "id")), ReadGradient(Tag, Data->ViewBox)};
+                    if (Tag.SelfClosing) {
+                        Data->Gradients.push_back(std::move(Entry));
+                    } else {
+                        OpenGradient = std::move(Entry);
+                    }
+                }
+                continue;
+            }
+            if (Tag.Name == "stop") {
+                if (!Tag.Closing && OpenGradient) { ReadStop(OpenGradient->second, Tag.List); }
+                continue;
+            }
+
             if (Tag.Closing) {
                 if (Skipping > 0) {
                     --Skipping;
@@ -703,32 +1030,34 @@ namespace XenUI {
 
     void SvgIcon::Draw(Painter& Canvas, const Rect& Bounds, const Color& Tint) const {
         if (IsEmpty() || Bounds.Width <= 0.0f || Bounds.Height <= 0.0f) { return; }
-        const Rect& Box   = _Data->ViewBox;
-        const float Scale = std::min(Bounds.Width / Box.Width, Bounds.Height / Box.Height);
-        const Vec2 Offset {Bounds.X + (Bounds.Width - Box.Width * Scale) / 2.0f,
-                           Bounds.Y + (Bounds.Height - Box.Height * Scale) / 2.0f};
-        const Matrix3x2 Fit =
-          Matrix3x2::Translation(-Box.X, -Box.Y) * Matrix3x2::Scaling(Scale, Scale) * Matrix3x2::Translation(Offset);
-
-        for (const SvgShape& Shape : _Data->Shapes) {
-            if (!Shape.Built) {
-                Shape.Geometry = Shape.Builder.Build();
-                Shape.Built    = true;
-            }
-            if (Shape.Geometry.IsEmpty()) { continue; }
-
+        ForEachShape(*_Data, Canvas, Bounds, [&](const SvgShape& Shape) {
             const SvgPaint& Paint = Shape.Paint;
-            Canvas.PushTransform(Paint.Transform * Fit);
             if (Paint.Fill) {
                 Canvas.FillPath(Shape.Geometry, Tint.WithAlpha(Tint.A * Paint.Opacity * Paint.FillOpacity));
             }
             if (Paint.Stroke && Paint.StrokeWidth > 0.0f) {
-                Canvas.StrokePath(
-                  Shape.Geometry,
-                  Tint.WithAlpha(Tint.A * Paint.Opacity * Paint.StrokeOpacity),
-                  {.Width = Paint.StrokeWidth, .Cap = Paint.Cap, .Join = Paint.Join, .MiterLimit = Paint.MiterLimit});
+                Canvas.StrokePath(Shape.Geometry, Tint.WithAlpha(Tint.A * Paint.Opacity * Paint.StrokeOpacity), StrokeOf(Paint));
             }
-            Canvas.PopTransform();
-        }
+        });
+    }
+
+    void SvgIcon::DrawInColor(Painter& Canvas, const Rect& Bounds, const Color& CurrentColor) const {
+        if (IsEmpty() || Bounds.Width <= 0.0f || Bounds.Height <= 0.0f) { return; }
+        ForEachShape(*_Data, Canvas, Bounds, [&](const SvgShape& Shape) {
+            const SvgPaint& Paint = Shape.Paint;
+            const Rect Local      = Shape.Geometry.GetBounds();
+            if (Paint.Fill) {
+                if (const std::optional<Brush> Fill =
+                      ColorBrush(*_Data, Paint.FillSource, Local, Paint.Opacity * Paint.FillOpacity, CurrentColor)) {
+                    Canvas.FillPath(Shape.Geometry, *Fill);
+                }
+            }
+            if (Paint.Stroke && Paint.StrokeWidth > 0.0f) {
+                if (const std::optional<Brush> Stroke =
+                      ColorBrush(*_Data, Paint.StrokeSource, Local, Paint.Opacity * Paint.StrokeOpacity, CurrentColor)) {
+                    Canvas.StrokePath(Shape.Geometry, *Stroke, StrokeOf(Paint));
+                }
+            }
+        });
     }
 }  // namespace XenUI

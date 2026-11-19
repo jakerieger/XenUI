@@ -200,6 +200,12 @@ namespace XenUI {
         MarkNeedsPaint();
     }
 
+    void RenderIcon::SetFullColor(bool FullColor) {
+        if (FullColor == _FullColor) { return; }
+        _FullColor = FullColor;
+        MarkNeedsPaint();
+    }
+
     void RenderIcon::SetExtent(float Extent) {
         if (Extent == _Extent) { return; }
         _Extent = Extent;
@@ -216,7 +222,12 @@ namespace XenUI {
 
     void RenderIcon::Paint(PaintContext& Context) {
         const Size Box = GetSize();
-        _Source.Draw(Context.GetPainter(), {0.0f, 0.0f, Box.Width, Box.Height}, _Tint);
+        const Rect Bounds {0.0f, 0.0f, Box.Width, Box.Height};
+        if (_FullColor) {
+            _Source.DrawInColor(Context.GetPainter(), Bounds, _Tint);
+        } else {
+            _Source.Draw(Context.GetPainter(), Bounds, _Tint);
+        }
     }
 
     bool RenderIcon::DescribeSemantics(SemanticsProperties& Properties) const {

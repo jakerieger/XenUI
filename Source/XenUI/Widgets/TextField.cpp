@@ -45,6 +45,7 @@ namespace XenUI {
           .FocusTarget    = FocusTarget,
           .AutoFocus      = AutoFocus,
           .Enabled        = Enabled,
+          .ReadOnly       = ReadOnly,
           .MaxLength      = MaxLength,
           .Width          = Width,
           .Label          = Label,
@@ -144,9 +145,35 @@ namespace XenUI {
         GetController().Edit([&Pasted](TextEditor& Editor) { return Editor.Insert(*Pasted); });
     }
 
+    bool TextField::State::WouldEdit(const KeyEvent& Event) const {
+        const bool Control = HasFlags(Event.Modifiers, KeyModifiers::Control);
+        const bool Shift   = HasFlags(Event.Modifiers, KeyModifiers::Shift);
+        switch (Event.Code) {
+            case KeyCode::Backspace:
+            case KeyCode::Delete:
+                return true;
+            case KeyCode::Insert:
+                return Shift && !Control;
+            case KeyCode::Enter:
+                return GetWidget().Lines > 1 && !Control;
+            case KeyCode::X:
+            case KeyCode::V:
+            case KeyCode::Z:
+            case KeyCode::Y:
+                return Control;
+            default:
+                return false;
+        }
+    }
+
     bool TextField::State::HandleKey(const KeyEvent& Event) {
         const TextField& Props = GetWidget();
         if (Props.OnKey && Props.OnKey(Event)) { return true; }
+        if (Props.ReadOnly && Event.Pressed && WouldEdit(Event)) {
+            // Shift+Delete still copies, as Ctrl+X would have.
+            if (Event.Code == KeyCode::Delete && Event.Modifiers == KeyModifiers::Shift) { Copy(); }
+            return true;
+        }
 
         TextEditingController& Editing = GetController();
         const bool Control             = HasFlags(Event.Modifiers, KeyModifiers::Control);
@@ -278,6 +305,7 @@ namespace XenUI {
     }
 
     bool TextField::State::HandleText(const TextEvent& Event) {
+        if (GetWidget().ReadOnly) { return true; }
         GetController().Edit([&Event](TextEditor& Editor) { return Editor.Insert(Event.Text); });
         RestartBlink();
         return true;
@@ -315,6 +343,7 @@ namespace XenUI {
             },
           .Focused      = Focused,
           .Enabled      = Props.Enabled,
+          .ReadOnly     = Props.ReadOnly,
           .CaretVisible = &_CaretOn,
           .Label        = Props.Label,
           .Multiline    = Props.Lines > 1,
@@ -329,7 +358,7 @@ namespace XenUI {
           .CanRequestFocus = Props.Enabled,
           .OnKey           = [this](const KeyEvent& Event) { return HandleKey(Event); },
           .OnText          = [this](const TextEvent& Event) { return HandleText(Event); },
-          .TextInput       = &Editing,
+          .TextInput       = Props.ReadOnly ? nullptr : &Editing,
           .Behavior        = HitTestBehavior::Opaque,
           .Child =
             Container {

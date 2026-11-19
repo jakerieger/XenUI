@@ -16,6 +16,7 @@
 
 #include "XenUI/Api.hpp"
 #include "XenUI/Graphics/Text.hpp"
+#include "XenUI/Widgets/Controls.hpp"
 #include "XenUI/Input/Focus.hpp"
 #include "XenUI/Reactive/Signal.hpp"
 #include "XenUI/Render/RenderScroll.hpp"
@@ -36,6 +37,13 @@ namespace XenUI {
         bool Sortable = true;
     };
 
+    enum class TableSelectionMode : uint8_t {
+        /// @brief One row at a time.
+        Single,
+        /// @brief Ctrl+click toggles a row, Shift+click and Shift+arrows extend a range, Ctrl+A selects all.
+        Multiple,
+    };
+
     struct TableSort {
         /// @brief The sorted column, or -1 for none.
         int Column     = -1;
@@ -51,6 +59,9 @@ namespace XenUI {
     ///
     /// Click a row to select it and double-click to activate it. With the table focused, Up, Down, Page Up,
     /// Page Down, Home and End move the selection and Enter activates. Give the table a bounded height.
+    ///
+    /// With SelectionMode set to Multiple, SelectedRows holds every selected row while Selected tracks the row
+    /// the keyboard last moved to. Clear both when the rows they point at change.
     struct Table {
         std::vector<TableColumn> Columns;
         int RowCount = 0;
@@ -61,6 +72,15 @@ namespace XenUI {
         /// @brief Optional external selection (a row index, -1 for none); otherwise kept internally.
         Signal<int>* Selected = nullptr;
         std::function<void(int Row)> OnSelected;
+        TableSelectionMode SelectionMode = TableSelectionMode::Single;
+        /// @brief Optional external set of selected rows, in ascending order; otherwise kept internally. Only
+        /// used in Multiple mode.
+        Signal<std::vector<int>>* SelectedRows = nullptr;
+        /// @brief Called with the selected rows, in ascending order, whenever they change in Multiple mode.
+        std::function<void(const std::vector<int>& Rows)> OnSelectionChanged;
+        /// @brief Items for the menu opened by right-clicking a row. A row that is not already selected is
+        /// selected first, so the items can act on the selection.
+        std::function<std::vector<MenuItem>(int Row)> RowMenu;
         /// @brief Called on double-click or Enter.
         std::function<void(int Row)> OnActivated;
         /// @brief Optional external sort state; otherwise kept internally.
@@ -79,7 +99,13 @@ namespace XenUI {
             /// @internal
             [[nodiscard]] float GetWidth(size_t Column) const;
             /// @internal
+            [[nodiscard]] bool IsRowSelected(int Row);
+            /// @internal
             void Select(int Row, bool Reveal);
+            /// @internal
+            void Click(int Row, KeyModifiers Modifiers);
+            /// @internal
+            void OpenRowMenu(int Row, const Vec2& GlobalPosition);
             /// @internal
             void Activate(int Row);
             /// @internal
@@ -98,14 +124,25 @@ namespace XenUI {
 
         private:
             [[nodiscard]] Signal<TableSort>& GetSort();
+            [[nodiscard]] Signal<std::vector<int>>& GetRows();
+            [[nodiscard]] bool IsMultiple() const { return GetWidget().SelectionMode == TableSelectionMode::Multiple; }
+            void SetRows(std::vector<int> Rows);
+            void SetLead(int Row, bool Reveal);
+            void SelectRange(int From, int To, bool Keep);
             bool HandleKey(const KeyEvent& Event);
             void ResetWidths();
 
             Signal<std::vector<float>> _Widths;
             Signal<int> _Selected = -1;
+            Signal<std::vector<int>> _Rows;
             Signal<TableSort> _Sort;
+            /// @brief Fixed end of a Shift range.
+            int _Anchor = -1;
             ScrollController _Scroll;
             FocusNode _Focus;
+            OverlayController* _Overlay = nullptr;
+            PopupStyle _Style;
+            OverlayEntry _Menu;
         };
     };
 }  // namespace XenUI

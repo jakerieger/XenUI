@@ -222,3 +222,57 @@ TEST_CASE("Buttons show an icon beside their label, or alone as a square button"
     REQUIRE(Widths.size() == 2);
     CHECK(Widths[1] == doctest::Approx(Widths[0] + 16.0f + 6.0f).epsilon(0.02));
 }
+
+TEST_CASE("SVG icons keep their own colors and gradients when drawn in color") {
+    const SvgIcon Logo = SvgIcon::Parse(R"svg(<svg viewBox="0 0 100 100">
+      <rect width="10" height="10" fill="#f00" fill-opacity="0.5"/>
+      <circle cx="50" cy="50" r="40" fill="url(#vertical)"/>
+      <rect x="20" width="10" height="10" fill="url(#box)"/>
+      <path d="M0 0h1v1z" fill="currentColor"/>
+      <path d="M0 0h1v1z" fill="url(#missing)"/>
+      <defs>
+        <linearGradient id="vertical" x1="50" y1="10" x2="50" y2="90" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#379C9F"/>
+          <stop offset="1" style="stop-color: rgb(38, 106, 108); stop-opacity: 0.5"/>
+        </linearGradient>
+        <linearGradient id="box" href="#vertical" x2="100%"/>
+      </defs>
+    </svg>)svg");
+
+    (void)SharedApp();
+    DisplayList List;
+    {
+        Painter Canvas(List);
+        Logo.DrawInColor(Canvas, {0.0f, 0.0f, 100.0f, 100.0f}, Color::FromHex(0x00FF00));
+    }
+    std::vector<Brush> Fills;
+    for (const DrawCommand& Command : List.GetCommands()) {
+        if (const auto* Fill = std::get_if<FillPathCommand>(&Command)) { Fills.push_back(Fill->Paint); }
+    }
+    REQUIRE(Fills.size() == 4);  // The fill naming a missing gradient paints nothing
+
+    const Color Red = std::get<Color>(Fills[0]);
+    CHECK(Red.R == doctest::Approx(1.0f));
+    CHECK(Red.G == doctest::Approx(0.0f));
+    CHECK(Red.A == doctest::Approx(0.5f));
+
+    // Gradient points are in the shape's own space, where userSpaceOnUse coordinates already are
+    const auto& Vertical = std::get<LinearGradient>(Fills[1]);
+    CHECK(Vertical.Start.Y == doctest::Approx(10.0f));
+    CHECK(Vertical.End.Y == doctest::Approx(90.0f));
+    REQUIRE(Vertical.Stops.size() == 2);
+    CHECK(Vertical.Stops[0].Value.G == doctest::Approx(0x9C / 255.0f));
+    CHECK(Vertical.Stops[1].Value.G == doctest::Approx(106.0f / 255.0f));
+    CHECK(Vertical.Stops[1].Value.A == doctest::Approx(0.5f));
+
+    // Bounding box units map onto the shape's bounds, and the stops come through href
+    const auto& Box = std::get<LinearGradient>(Fills[2]);
+    CHECK(Box.Start.X == doctest::Approx(20.0f));
+    CHECK(Box.End.X == doctest::Approx(30.0f));
+    CHECK(Box.Stops.size() == 2);
+
+    CHECK(std::get<Color>(Fills[3]) == Color::FromHex(0x00FF00));
+
+    // Drawn the usual way, every shape takes the tint
+    CHECK(Draw(Logo, {0.0f, 0.0f, 100.0f, 100.0f}).size() == 5);
+}

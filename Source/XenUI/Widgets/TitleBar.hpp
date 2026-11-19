@@ -16,6 +16,7 @@
 
 #include "XenUI/Api.hpp"
 #include "XenUI/Core/Color.hpp"
+#include "XenUI/Graphics/SvgIcon.hpp"
 #include "XenUI/Tree/Widget.hpp"
 #include "XenUI/Widgets/MenuBar.hpp"
 
@@ -29,7 +30,11 @@ namespace XenUI {
     /// bar; without them, it sits on the left. The whole bar drags the window, while the menus and actions still
     /// work normally. Place it at the top of the window's content.
     struct XENUI_API TitleBar {
+        /// @brief Shown in the bar unless there's a Logo; with one, screen readers still read it as the logo's name.
         std::string Title;
+        /// @brief An icon shown in place of the title, in its own colors (SvgIcon::DrawInColor).
+        SvgIcon Logo;
+        float LogoSize = 18.0f;
         /// @brief Menus shown on the left, such as File, Edit and View.
         std::vector<Menu> Menus;
         /// @brief Widgets on the right, before the window controls, such as a theme selector or a search field.

@@ -51,6 +51,25 @@ namespace {
             Update();
         }
 
+        void Click(Vec2 Position,
+                   KeyModifiers Modifiers = KeyModifiers::None,
+                   MouseButton Button     = MouseButton::Primary,
+                   double Time            = 0.0) {
+            const auto Send = [this](const PointerEvent& Event) {
+                Host.GetInput().HandlePointer(Event);
+                Host.Update();
+            };
+            Send({.Phase = PointerPhase::Move, .Position = Position, .Modifiers = Modifiers});
+            Send({.Phase     = PointerPhase::Down,
+                  .Position  = Position,
+                  .Button    = Button,
+                  .Buttons   = Button,
+                  .Modifiers = Modifiers,
+                  .Time      = Time});
+            Send({.Phase = PointerPhase::Up, .Position = Position, .Button = Button, .Modifiers = Modifiers, .Time = Time});
+            Update();
+        }
+
         [[nodiscard]] const SemanticsNode& Named(std::string_view Label) const {
             const SemanticsNode* Node = Tree.FindByLabel(Label);
             REQUIRE(Node != nullptr);
@@ -544,6 +563,35 @@ TEST_CASE("Text areas insert line breaks and move the caret by visual lines") {
     CHECK(Notes.GetEditor().GetSelection().Caret < LineStart);
 }
 
+TEST_CASE("Read-only text areas can be focused, navigated and selected but not edited") {
+    Signal<std::string> Log = std::string("line one\nline two");
+    TextEditingController Editing;
+    Harness Test(Align {
+      .Position = Alignment::TopLeft(),
+      .Child    = SizedBox {.Width = 220.0f,
+                            .Child = TextArea {.Controller = &Editing, .Bind = &Log, .ReadOnly = true, .Label = "Log"}}});
+
+    const SemanticsNode& Node = Test.Named("Log");
+    CHECK(Node.Properties.ReadOnly);
+    CHECK_FALSE(Node.Properties.OnSetValue);
+    CHECK(Test.Tree.Focus(Node.Id));
+    Test.Update();
+
+    Test.Type("X");
+    Test.Press(KeyCode::Enter);
+    Test.Press(KeyCode::Backspace);
+    Test.Press(KeyCode::Delete);
+    Test.Press(KeyCode::V, KeyModifiers::Control);
+    Test.Press(KeyCode::X, KeyModifiers::Control);
+    CHECK(Log.Peek() == "line one\nline two");
+
+    Test.Press(KeyCode::A, KeyModifiers::Control);
+    CHECK(Editing.GetEditor().GetSelectedText() == "line one\nline two");
+    Log = std::string("line one\nline two\nline three");
+    Test.Update();
+    CHECK(Test.Named("Log").Properties.Value == "line one\nline two\nline three");
+}
+
 TEST_CASE("Tables describe their columns and rows, sort on request and navigate by keyboard") {
     std::vector<TableSort> Requests;
     int Activated        = -1;
@@ -590,6 +638,78 @@ TEST_CASE("Tables describe their columns and rows, sort on request and navigate 
     CHECK(Test.Tree.Select(Test.Named("Sample 998 2994 KB").Id));
     Test.Update();
     CHECK(Selected.Peek() == 998);
+}
+
+TEST_CASE("Tables in multiple selection mode toggle with Ctrl, extend with Shift and select all with Ctrl+A") {
+    Signal<std::vector<int>> Rows;
+    std::vector<std::vector<int>> Changes;
+    Harness Test(SizedBox {.Height = 300.0f,
+                           .Child  = Table {
+                             .Columns  = {TableColumn {.Title = "Name"}},
+                             .RowCount = 20,
+                             .CellText = [](int Row, int) { return std::format("Item {}", Row); },
+                             .SelectionMode = TableSelectionMode::Multiple,
+                             .SelectedRows  = &Rows,
+                             .OnSelectionChanged =
+                               [&Changes](const std::vector<int>& Selection) { Changes.push_back(Selection); },
+                             .Label = "Items",
+                           }});
+    // Rows start below the 28 px header and its 1 px rule, 26 px apart.
+    const auto RowAt = [](int Row) { return Vec2 {50.0f, 29.0f + 26.0f * static_cast<float>(Row) + 13.0f}; };
+
+    Test.Click(RowAt(2));
+    CHECK(Rows.Peek() == std::vector<int> {2});
+    Test.Click(RowAt(5), KeyModifiers::Control, MouseButton::Primary, 10.0);
+    CHECK(Rows.Peek() == std::vector<int> {2, 5});
+    Test.Click(RowAt(7), KeyModifiers::Shift, MouseButton::Primary, 20.0);
+    CHECK(Rows.Peek() == std::vector<int> {5, 6, 7});
+    Test.Click(RowAt(6), KeyModifiers::Control, MouseButton::Primary, 30.0);
+    CHECK(Rows.Peek() == std::vector<int> {5, 7});
+    CHECK(Test.Named("Item 5").Properties.Selected == true);
+    CHECK(Test.Named("Item 6").Properties.Selected == false);
+
+    Test.Press(KeyCode::Down, KeyModifiers::Shift);
+    CHECK(Rows.Peek() == std::vector<int> {6, 7});
+    Test.Press(KeyCode::Down, KeyModifiers::Shift);
+    CHECK(Rows.Peek() == std::vector<int> {6, 7, 8});
+    Test.Press(KeyCode::Down);
+    CHECK(Rows.Peek() == std::vector<int> {9});
+
+    Test.Press(KeyCode::A, KeyModifiers::Control);
+    CHECK(Rows.Peek().size() == 20);
+    REQUIRE_FALSE(Changes.empty());
+    CHECK(Changes.back().size() == 20);
+}
+
+TEST_CASE("Right-clicking a table row selects it and opens the row menu") {
+    Signal<std::vector<int>> Rows = std::vector<int> {1, 2};
+    int MenuRow                   = -1;
+    Harness Test(SizedBox {.Height = 300.0f,
+                           .Child  = Table {
+                             .Columns       = {TableColumn {.Title = "Name"}},
+                             .RowCount      = 10,
+                             .CellText      = [](int Row, int) { return std::format("Item {}", Row); },
+                             .SelectionMode = TableSelectionMode::Multiple,
+                             .SelectedRows  = &Rows,
+                             .RowMenu =
+                               [&MenuRow](int Row) {
+                                   MenuRow = Row;
+                                   return std::vector<MenuItem> {MenuItem {.Label = "Remove"}};
+                               },
+                             .Label = "Items",
+                           }});
+    const auto RowAt = [](int Row) { return Vec2 {50.0f, 29.0f + 26.0f * static_cast<float>(Row) + 13.0f}; };
+
+    SUBCASE("A selected row keeps the selection") {
+        Test.Click(RowAt(2), KeyModifiers::None, MouseButton::Secondary);
+        CHECK(MenuRow == 2);
+        CHECK(Rows.Peek() == std::vector<int> {1, 2});
+    }
+    SUBCASE("An unselected row replaces the selection") {
+        Test.Click(RowAt(4), KeyModifiers::None, MouseButton::Secondary);
+        CHECK(MenuRow == 4);
+        CHECK(Rows.Peek() == std::vector<int> {4});
+    }
 }
 
 TEST_CASE("Tree views scroll to a selection made from outside, even inside newly expanded items") {
@@ -644,4 +764,36 @@ TEST_CASE("Title bars center the title beside menus and put it on the left witho
     });
     CHECK(WithMenus.Center().X == doctest::Approx(300.0f).epsilon(0.01));
     CHECK(WithMenus.Y + WithMenus.Height <= 34.0f);
+}
+
+TEST_CASE("Hyperlinks announce themselves as links and run OnPressed on click, Enter and invoke") {
+    int Pressed = 0;
+    Harness Test(Align {.Position = Alignment::TopLeft(),
+                        .Child    = Hyperlink {.Label     = "Project page",
+                                               .Url       = "https://example.com",
+                                               .OnPressed = [&Pressed] { ++Pressed; }}});
+
+    const SemanticsNode& Link = Test.Named("Project page");
+    CHECK(Link.Properties.Role == SemanticsRole::Link);
+    CHECK(Test.Tree.Invoke(Link.Id));
+    CHECK(Pressed == 1);
+
+    Test.Click({10.0f, 8.0f});
+    CHECK(Pressed == 2);
+
+    CHECK(Test.Tree.Focus(Test.Named("Project page").Id));
+    Test.Update();
+    Test.Press(KeyCode::Enter);
+    CHECK(Pressed == 3);
+}
+
+TEST_CASE("Disabled hyperlinks do nothing") {
+    int Pressed = 0;
+    Harness Test(Align {.Position = Alignment::TopLeft(),
+                        .Child    = Hyperlink {.Label     = "Docs",
+                                               .OnPressed = [&Pressed] { ++Pressed; },
+                                               .Enabled   = false}});
+    CHECK_FALSE(Test.Named("Docs").Properties.Enabled);
+    Test.Click({10.0f, 8.0f});
+    CHECK(Pressed == 0);
 }

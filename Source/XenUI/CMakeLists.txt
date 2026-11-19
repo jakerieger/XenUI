@@ -148,6 +148,8 @@ add_library(XenUI SHARED
         Platform/HResult.hpp
         Platform/PopupManager.hpp
         Platform/PopupManager.cpp
+        Platform/Shell.hpp
+        Platform/Shell.cpp
         Platform/SystemDragDrop.hpp
         Platform/SystemDragDrop.cpp
         Platform/Utf8.hpp
@@ -176,6 +178,8 @@ add_library(XenUI SHARED
         Widgets/TreeView.cpp
         Widgets/Table.hpp
         Widgets/Table.cpp
+        Widgets/Hyperlink.hpp
+        Widgets/Hyperlink.cpp
         Widgets/DeveloperTools.hpp
         Widgets/DeveloperTools.cpp
         Widgets/DragDrop.hpp

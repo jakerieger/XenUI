@@ -134,6 +134,7 @@ TextField {
 | `Placeholder`, `TextFont`, `Width`, `Leading`  | Appearance                                                                                |
 | `FocusTarget`, `AutoFocus`, `SelectAllOnFocus` | Focus behavior                                                                            |
 | `Enabled`, `MaxLength`                         | Editing limits (`MaxLength` in characters; 0 for none)                                    |
+| `ReadOnly`                                     | Text can be focused, selected and copied, but typing, paste, cut, undo and IME are blocked |
 | `Label`                                        | Screen reader name; the placeholder is used when empty                                    |
 
 Text fields support mouse and keyboard selection, Ctrl word movement, Ctrl+A/C/X/V, Ctrl/Shift+Insert, undo and redo,
@@ -153,8 +154,13 @@ TextArea {.Bind = &Model->Notes, .Placeholder = "Session notes...", .Lines = 6}
 - **Moving the caret.** Up, Down, Home, End, Page Up and Page Down follow the wrapped lines, and Ctrl+Home and
   Ctrl+End jump to the start and end of the text.
 
-It takes the same `Controller`, `Bind` and `OnChanged` options as `TextField`. Setting `Lines` above 1 on a
-`TextField` does the same.
+It takes the same `Controller`, `Bind`, `OnChanged` and `ReadOnly` options as `TextField`. Setting `Lines` above 1
+on a `TextField` does the same. A read-only text area suits logs and licence text that people should be able to
+select and copy:
+
+```cpp
+TextArea {.Bind = &Model->Log, .TextFont = Font {.Family = "Consolas", .Size = 12.0f}, .ReadOnly = true, .Lines = 20}
+```
 
 ## Select
 
@@ -248,7 +254,26 @@ Rows of data in resizable columns:
 - **Selection.** Click to select and double-click to activate. With the table focused, Up, Down, Page Up,
   Page Down, Home and End move the selection, and Enter activates. Pass `Selected` (a `Signal<int>*`) or `Sort`
   (a `Signal<TableSort>*`) to keep that state outside the table.
+- **Multiple selection.** Set `SelectionMode = TableSelectionMode::Multiple` to let Ctrl+click toggle rows,
+  Shift+click and Shift+arrows extend a range from the last plain click, Ctrl+Space toggle the current row and
+  Ctrl+A select every row. `SelectedRows` (a `Signal<std::vector<int>>*`, kept sorted) holds the selection and
+  `OnSelectionChanged` reports it, while `Selected` follows the row the keyboard is on. Clear both when the rows
+  they refer to change.
+- **Row menus.** `RowMenu` returns the items for the menu opened by right-clicking a row. A row that isn't
+  selected is selected first, so the items can act on the whole selection.
 - **Sizing.** Give the table a bounded height, for example with `Expanded` in a column or a `SizedBox`.
+
+## Hyperlinks
+
+```cpp
+Hyperlink {.Label = "Project page", .Url = "https://github.com/jakerieger/XenUI"}
+Hyperlink {.Label = "Show details", .OnPressed = [this] { ShowDetails(); }}
+```
+
+Accent-colored text that opens `Url` with the system's default handler when clicked, or with Enter or Space while
+focused. Set `OnPressed` instead for links that lead somewhere inside the app. It shows a hand cursor and an
+underline on hover and focus, and screen readers announce it as a link. `Shell::Open` and `Shell::Reveal` open
+URLs, files and folders directly.
 
 ## Split views
 

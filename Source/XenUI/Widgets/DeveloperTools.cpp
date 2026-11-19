@@ -95,6 +95,8 @@ namespace XenUI {
                     return "TableRow";
                 case SemanticsRole::ColumnHeader:
                     return "ColumnHeader";
+                case SemanticsRole::Link:
+                    return "Link";
             }
             return "Other";
         }

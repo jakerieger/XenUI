@@ -52,6 +52,8 @@ namespace XenUI {
         void SetStyle(EditableStyle Style);
         void SetFocused(bool Focused);
         void SetEnabled(bool Enabled);
+        /// @brief Text that can be selected and copied but not changed, including by assistive technology.
+        void SetReadOnly(bool ReadOnly) { _ReadOnly = ReadOnly; }
         void SetCaretVisible(const Signal<bool>* Visible);
         /// @brief Wraps text to the width and scrolls vertically instead of horizontally.
         void SetMultiline(bool Multiline);
@@ -88,6 +90,7 @@ namespace XenUI {
         const Signal<bool>* _CaretVisible = nullptr;
         bool _Focused                     = false;
         bool _Enabled                     = true;
+        bool _ReadOnly                    = false;
         bool _Multiline                   = false;
 
         TextLayout _Layout;

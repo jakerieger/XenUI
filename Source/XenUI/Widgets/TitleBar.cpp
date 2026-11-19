@@ -31,11 +31,18 @@ namespace XenUI {
         const WindowChrome* Chrome = WindowChrome::Of(Context);
         // Like the system title bar, the title dims while the window is inactive.
         const bool Active  = Chrome == nullptr || Chrome->Active();
-        const Node Caption = Text {.Content  = Title,
-                                   .Font     = Style.BodyFont,
-                                   .Color    = Active ? Style.TextMuted : Style.TextDisabled,
-                                   .Wrapping = TextWrapping::NoWrap,
-                                   .Trimming = TextTrimming::Ellipsis};
+        const Node Caption = Logo.IsEmpty()
+                               ? Node(Text {.Content  = Title,
+                                            .Font     = Style.BodyFont,
+                                            .Color    = Active ? Style.TextMuted : Style.TextDisabled,
+                                            .Wrapping = TextWrapping::NoWrap,
+                                            .Trimming = TextTrimming::Ellipsis})
+                               : Node(Opacity {.Value = Active ? 1.0f : 0.5f,
+                                               .Child = Icon {.Source    = Logo,
+                                                              .Size      = LogoSize,
+                                                              .Color     = Style.TextMuted,
+                                                              .FullColor = true,
+                                                              .Label     = Title}});
 
         NodeList Items;
         const bool Centered = !Menus.empty();

@@ -512,3 +512,29 @@ TEST_CASE("Scroll views without a scrollbar pass presses on its track through to
     Test.Click({100.0f, 36.0f});
     CHECK(Taps == 1);
 }
+
+TEST_CASE("Menus widen to fit their longest item and its shortcut") {
+    (void)SharedApp();
+    const auto WidthOf = [](std::vector<MenuItem> Items) {
+        WidgetHost Host;
+        Host.SetViewportSize({800.0f, 600.0f});
+        Host.SetRoot(Align {.Position = Alignment::TopLeft(), .Child = MenuPanel {.Items = std::move(Items), .Width = 100.0f}});
+        Host.Update();
+
+        // The panel is the widest box that doesn't fill the viewport
+        float Widest = 0.0f;
+        std::vector<const RenderBox*> Pending = {Host.GetRootBox()};
+        while (!Pending.empty()) {
+            const RenderBox* Box = Pending.back();
+            Pending.pop_back();
+            if (Box->GetSize().Width < 800.0f) { Widest = std::max(Widest, Box->GetSize().Width); }
+            for (size_t I = 0; I < Box->GetChildCount(); ++I) { Pending.push_back(&Box->GetChild(I)); }
+        }
+        return Widest;
+    };
+
+    CHECK(WidthOf({{.Label = "Open"}}) == doctest::Approx(100.0f));  // Short items keep the minimum width
+    const float Long = WidthOf({{.Label = "Open Torrent Files and Magnet Links with This App", .ShortcutText = "Ctrl+Shift+O"}});
+    CHECK(Long > 300.0f);
+    CHECK(WidthOf({{.Label = "Open Torrent Files and Magnet Links with This App"}}) < Long);
+}
