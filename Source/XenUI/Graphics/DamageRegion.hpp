@@ -16,9 +16,20 @@
 
 #include "XenUI/Core/Math.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace XenUI {
+    /// @brief A rectangle in physical pixels, with exclusive right and bottom edges.
+    struct PixelRect {
+        int32_t Left   = 0;
+        int32_t Top    = 0;
+        int32_t Right  = 0;
+        int32_t Bottom = 0;
+
+        [[nodiscard]] int64_t Area() const { return static_cast<int64_t>(Right - Left) * (Bottom - Top); }
+    };
+
     /// @brief Small set of rectangles approximating the area that needs repainting. Merges rectangles once there
     /// are more than a handful, trading some overdraw for fewer clip/replay passes.
     class DamageRegion {

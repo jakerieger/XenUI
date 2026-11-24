@@ -1,6 +1,6 @@
 # XenUI
 
-GPU-accelerated Windows GUI framework for C++20 inspired by Flutter.
+XenUI (pronounced *zen UI*) is a C++20 GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter. 
 
 ![Showcase](Docs/Images/screen.png)
 
@@ -13,16 +13,19 @@ The framework keeps long-lived objects behind that description and updates only 
   `TextField`, `Select`, menus, tooltips, `ListView`, ...) and your own components compose the same way.
 - **Signals.** State lives in `Signal<T>` values. A widget that reads a signal while building is rebuilt when it
   changes; nothing else is.
-- **Retained rendering.** Direct2D display lists are cached per layer and composited with damage tracking, so an idle
-  window uses almost no CPU and a moving playhead repaints a few pixels.
+- **Retained rendering.** Display lists are cached per layer and composited with damage tracking, so an idle window
+  uses almost no CPU and a moving playhead repaints a few pixels.
 - **Immediate-mode live content.** `LiveView` draws high-frequency content such as meters, scopes and spectrograms
-  with instanced Direct3D 11 every frame, fed from other threads through lock-free helpers.
-- **Native Windows behavior.** Per-monitor DPI, custom title bars with Snap Layouts, native popup windows, IME text
-  input, OLE drag and drop, the clipboard, embedded native windows (such as plugin editors) and UI Automation for
-  screen readers.
-- **Minimal dependencies.** XenUI is a single DLL that depends only on the Windows SDK.
-
-XenUI was built for Xen, a digital audio workstation, but contains no audio-specific code.
+  with instanced GPU draws every frame, fed from other threads through lock-free helpers.
+- **One API, native backends.** The same code builds for both platforms, with a backend chosen at compile time:
+    - **Windows:** Direct2D, DirectWrite and Direct3D 11. Per-monitor DPI, custom title bars with Snap Layouts,
+      native popup windows, IME text input, OLE drag and drop, the clipboard, embedded native windows (such as plugin
+      editors) and UI Automation for screen readers.
+    - **Linux:** SDL3 on Wayland or X11, and an OpenGL 3.3 renderer with HarfBuzz and FreeType text. Fractional
+      scaling, custom title bars, popup windows, IME text input, the system clipboard, desktop file dialogs and file
+      drops from other applications.
+- **Minimal dependencies.** XenUI is a single shared library. On Windows it uses only system libraries; on Linux it
+  needs SDL3, HarfBuzz, FreeType, fontconfig and libunibreak, all packaged by common distributions.
 
 ## Example
 
@@ -89,29 +92,52 @@ rebuilds it. The full version, with a custom title bar, is in [Examples/Hello](E
 
 ## Building
 
-### Requirements
+[![CI](https://github.com/jakerieger/XenUI/actions/workflows/CI.yml/badge.svg)](https://github.com/jakerieger/XenUI/actions/workflows/CI.yml)
+
+### Windows
+
+Requirements:
 
 - Windows 10 version 1903 or later, x64
 - Visual Studio 2022 or later with the **Desktop development with C++** workload (MSVC and the Windows SDK)
 - CMake 3.26 or later and Ninja (both ship with Visual Studio)
-
-### Build steps
 
 Run these from an **x64 Developer Command Prompt for VS**, or any shell where `vcvars64.bat` has been run:
 
 ```bash
 cmake --preset debug
 cmake --build --preset debug
+ctest --test-dir build/debug --output-on-failure
 ```
 
 Use the `release` preset for an optimized build (`RelWithDebInfo`). Output goes to `build/<preset>/bin`: the DLL
 (`XenUId.dll` in Debug, `XenUI.dll` otherwise), the showcase, the examples and the tests.
 
-Run the tests:
+### Linux
+
+Requirements:
+
+- SDL 3.2 or later (Ubuntu 25.04 or later), and a driver with OpenGL 3.3 core
+- GCC 13 or Clang 17 or later, CMake 3.26 or later and Ninja
+
+Install the dependencies (Debian and Ubuntu package names) and build:
 
 ```bash
-ctest --test-dir build/debug --output-on-failure
+sudo apt install build-essential cmake ninja-build libsdl3-dev libharfbuzz-dev libfontconfig-dev libfreetype-dev libunibreak-dev
 ```
+
+```bash
+cmake --preset linux-debug
+cmake --build --preset linux-debug
+ctest --test-dir build/linux-debug --output-on-failure
+```
+
+Use `linux-release` for an optimized build. Programs go to `build/<preset>/bin` and the library
+(`libXenUId.so` in Debug, `libXenUI.so` otherwise) to `build/<preset>/lib`. The tests also run without a display
+server, through SDL's offscreen driver.
+
+A few Windows features aren't available on Linux yet: embedding native child windows, dragging data out to other
+applications, and screen reader support. See [Architecture](Docs/Architecture.md#platforms-and-backends).
 
 ### Options
 
@@ -126,14 +152,14 @@ For example: `cmake --preset release -DXENUI_BUILD_TESTS=OFF`.
 
 ### Using XenUI in your project
 
-Install it once, Debug and Release side by side:
+Install it once, Debug and Release side by side (use the `linux-` builds on Linux):
 
 ```bash
 cmake --install build/debug --prefix C:/Libraries/XenUI
 cmake --install build/release --prefix C:/Libraries/XenUI
 ```
 
-Then find it from your project's `CMakeLists.txt`, configuring with `-DCMAKE_PREFIX_PATH=C:/Libraries/XenUI`:
+Then find it from your project's `CMakeLists.txt`, configuring with `-DCMAKE_PREFIX_PATH=<the prefix>`:
 
 ```cmake
 find_package(XenUI 0.1 CONFIG REQUIRED)
@@ -141,7 +167,7 @@ target_link_libraries(MyApp PRIVATE XenUI::XenUI)
 ```
 
 You can also add the repository with `add_subdirectory` or `FetchContent` and link the same `XenUI::XenUI` target.
-[Getting started](Docs/GettingStarted.md) covers both, and copying the DLL next to your executable.
+[Getting started](Docs/GettingStarted.md) covers both, and copying the DLL next to your executable on Windows.
 
 ## Documentation
 
@@ -150,7 +176,7 @@ You can also add the repository with `add_subdirectory` or `FetchContent` and li
 - API reference: generated with Doxygen. Run `doxygen` in the repository root to write it to `Docs/html`. If you have
   Python installed, you can quickly host it with this command:
 
-```
+```bash
 cd Docs/html
 python -m http.server # defaults to port 8000
 ```

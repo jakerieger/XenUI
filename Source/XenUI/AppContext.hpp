@@ -16,26 +16,20 @@
 
 #include "XenUI/Graphics/GraphicsDevice.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <functional>
+#include <memory>
 #include <vector>
 
 namespace XenUI {
-    class WindowImpl;
+    class WindowCore;
 
-    class ComApartment {
-    public:
-        ComApartment();
-        ~ComApartment();
-
-        ComApartment(const ComApartment&)            = delete;
-        ComApartment& operator=(const ComApartment&) = delete;
-
-    private:
-        bool _Initialized = false;
-    };
-
+    /// @brief Process-wide state behind App: the graphics device, the open windows and the run loop.
+    ///
+    /// The window list, posted work, exceptions and clock are shared. The run loop and the dispatcher that wakes
+    /// it are per platform, in Platform/<Platform>/AppContext.cpp.
     class AppContext {
     public:
         AppContext();
@@ -44,30 +38,27 @@ namespace XenUI {
         AppContext(const AppContext&)            = delete;
         AppContext& operator=(const AppContext&) = delete;
 
-        /// @throws Error if no App exists.
         static AppContext& Get();
         static AppContext* TryGet();
 
-        /// @brief Pumps messages and renders requested frames, paced by each window's swapchain. Sleeps when idle.
+        /// @brief Runs the message loop until Quit or the last window closes. Returns the exit code.
         int Run();
         void Quit(int ExitCode);
 
-        /// @brief Renders every window whose next frame is due without waiting, and runs due timers. Keeps the UI
-        /// alive inside modal loops that the run loop does not see, such as a system drag.
+        /// @brief Renders every window whose next frame is due, without waiting. For modal loops the platform runs.
         void RenderReadyWindows();
 
-        void OnWindowOpened(WindowImpl& Opened);
-        void OnWindowClosed(WindowImpl& Closed);
+        void OnWindowOpened(WindowCore& Opened);
+        void OnWindowClosed(WindowCore& Closed);
 
-        /// @brief Rebuilds the GPU device and every window's swapchain after the device was removed or reset.
+        /// @brief Rebuilds the graphics device and every window's swap chain after the GPU was lost.
         void HandleDeviceLost();
 
-        /// @brief Defers an exception caught inside a window procedure so Run can rethrow it outside of user32 frames.
+        /// @brief Stores an exception thrown from a callback so Run rethrows it on the UI thread.
         void ReportException(std::exception_ptr Exception);
 
-        /// @brief Queues Work for the UI thread from any thread. See App::Post.
+        /// @brief Queues Work to run on the UI thread. Safe from any thread; returns false when no App can run it.
         static bool Post(std::function<void()> Work);
-        /// @brief Runs the work posted so far, on the UI thread.
         void RunPosted();
 
         /// @brief Seconds since the App was created.
@@ -76,18 +67,28 @@ namespace XenUI {
         [[nodiscard]] GraphicsDevice& GetGraphicsDevice() { return _GraphicsDevice; }
 
     private:
-        void RethrowPendingException();
+        /// @brief Per-platform state, such as the COM apartment and dispatcher window on Windows.
+        struct PlatformState;
+        struct PlatformStateDeleter {
+            void operator()(PlatformState* State) const;
+        };
+
+        // Implemented per platform.
+        [[nodiscard]] static PlatformState* CreatePlatformState();
+        /// @return The target that WakeDispatcher wakes.
+        [[nodiscard]] void* CreateDispatcher();
+        void DestroyDispatcher();
+        static void WakeDispatcher(void* Target);
         void RenderNextReadyWindow();
 
-        void CreateDispatcher();
+        void RethrowPendingException();
 
-        ComApartment _ComApartment;
-        /// @brief A message-only window that wakes the UI thread for posted work, also inside modal loops.
-        HWND__* _Dispatcher = nullptr;
+        /// @note Declared before the graphics device, so platform setup (COM on Windows) happens before the device
+        /// is created and is torn down after it.
+        std::unique_ptr<PlatformState, PlatformStateDeleter> _Platform;
         GraphicsDevice _GraphicsDevice;
-        std::vector<WindowImpl*> _Windows;
+        std::vector<WindowCore*> _Windows;
         std::exception_ptr _PendingException;
-        int64_t _ClockStart = 0;
-        double _ClockPeriod = 0.0;
+        std::chrono::steady_clock::time_point _ClockStart;
     };
 }  // namespace XenUI

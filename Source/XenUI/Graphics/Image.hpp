@@ -31,7 +31,8 @@ namespace XenUI {
     public:
         Image();
 
-        /// @brief Decodes any format supported by Windows Imaging Component (PNG, JPEG, BMP, ...).
+        /// @brief Decodes PNG, JPEG, BMP and other common formats (Windows Imaging Component on Windows, stb_image on
+        /// Linux).
         /// @throws Error if the file cannot be read or decoded.
         static Image FromFile(std::string_view FilePath);
 

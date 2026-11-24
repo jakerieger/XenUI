@@ -8,7 +8,7 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = XenUI
 PROJECT_NUMBER         = 0.1.0
-PROJECT_BRIEF          = "GPU-accelerated Windows GUI framework for C++20"
+PROJECT_BRIEF          = "GPU-accelerated GUI framework for Windows and Linux, in C++20"
 OUTPUT_DIRECTORY       = Docs
 CREATE_SUBDIRS         = NO
 STRIP_FROM_PATH        = Source \
@@ -68,15 +68,14 @@ EXCLUDE                = Docs/html
 EXCLUDE_PATTERNS       = */Pch.hpp \
                          */AppContext.hpp \
                          */*Impl.hpp \
-                         */Platform/Accessibility.hpp \
-                         */Platform/HResult.hpp \
-                         */Platform/PopupManager.hpp \
-                         */Platform/SystemDragDrop.hpp \
-                         */Graphics/D2D*.hpp \
-                         */Graphics/DeviceLost.hpp \
+                         */Platform/WindowCore.hpp \
+                         */Graphics/D2D/* \
+                         */Graphics/GL/* \
+                         */Platform/Win32/* \
+                         */Platform/Linux/* \
+                         */Graphics/CompositorBackend.hpp \
                          */Graphics/GraphicsDevice.hpp \
-                         */Graphics/LiveRenderer.hpp \
-                         */Graphics/SwapChain.hpp
+                         */Graphics/DeviceLost.hpp
 EXCLUDE_SYMBOLS        = detail \
                          *::detail::*
 IMAGE_PATH             = Docs/Images

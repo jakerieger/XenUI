@@ -3,6 +3,9 @@
 XenUI windows implement UI Automation, the Windows accessibility API that screen readers such as Narrator and NVDA,
 voice control, and UI test tools use. Built-in controls describe themselves; your own widgets need a line or two.
 
+On Linux, screen readers can't see XenUI windows yet: that needs a bridge to AT-SPI, which isn't written. The
+semantics described here are platform-neutral, so widgets that describe themselves now will be ready for it.
+
 ## What you get for free
 
 | Widget                      | Announced as                             | Screen reader actions                      |

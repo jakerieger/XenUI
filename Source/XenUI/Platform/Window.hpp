@@ -43,7 +43,7 @@ namespace XenUI {
         /// borders. Mark draggable areas with WindowDragArea and add WindowControls for the caption buttons.
         bool CustomTitleBar = false;
         /// @brief Resource ID of the icon shown in the title bar, the taskbar and Alt+Tab, from the executable's
-        /// resources. 0 uses the executable's first icon, the one Explorer shows for the file.
+        /// resources. 0 uses the executable's first icon, the one Explorer shows for the file. Windows only.
         int Icon = 0;
     };
 
@@ -126,7 +126,7 @@ namespace XenUI {
         /// @brief Ratio of physical pixels to device-independent pixels for the monitor the window is on.
         [[nodiscard]] float GetDpiScale() const;
 
-        /// @brief Returns the underlying HWND.
+        /// @brief Returns the underlying native window: an HWND on Windows, an SDL_Window* on Linux.
         [[nodiscard]] void* GetNativeHandle() const;
 
     private:

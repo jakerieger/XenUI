@@ -4,5 +4,7 @@ add_executable(XenUIHello WIN32
 
 XenUI_ConfigureTarget(XenUIHello)
 
-target_link_options(XenUIHello PRIVATE /ENTRY:mainCRTStartup)
+if (MSVC)
+    target_link_options(XenUIHello PRIVATE /ENTRY:mainCRTStartup)
+endif ()
 target_link_libraries(XenUIHello PRIVATE XenUI::XenUI)

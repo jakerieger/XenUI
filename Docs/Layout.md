@@ -172,7 +172,7 @@ Button {.Icon = kPlay, .OnPressed = [this] { Play(); }, .AccessibleLabel = "Play
 
 - **Loading.** `SvgIcon::FromFile` reads an `.svg` file and `SvgIcon::Parse` reads SVG markup.
   `SvgIcon::FromResource` reads an icon compiled into the executable, such as `IDI_SEARCH RCDATA "Icons/search.svg"`
-  in your `.rc` file, so it ships without loose files. `SvgIcon::FromPathData` makes an icon from a single path's `d`
+  in your `.rc` file, so it ships without loose files (Windows only). `SvgIcon::FromPathData` makes an icon from a single path's `d`
   attribute, with a 24 × 24 view box unless you pass another. They throw `Error` if the icon can't be read.
 - **Load once.** Parsing doesn't need an `App`, so icons can be constants. Copies share the parsed icon, and the
   geometry is created the first time the icon is drawn.

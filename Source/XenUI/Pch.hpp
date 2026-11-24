@@ -14,14 +14,16 @@
 
 #pragma once
 
-#include <Windows.h>
-#include <dwmapi.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+    #include <dwmapi.h>
 
-#include <d2d1_3.h>
-#include <d3d11_4.h>
-#include <dwrite_3.h>
-#include <dxgi1_6.h>
-#include <wrl/client.h>
+    #include <d2d1_3.h>
+    #include <d3d11_4.h>
+    #include <dwrite_3.h>
+    #include <dxgi1_6.h>
+    #include <wrl/client.h>
+#endif
 
 #include <algorithm>
 #include <cstdint>

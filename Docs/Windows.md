@@ -26,13 +26,13 @@ Create exactly one `App`, before any window, and keep it alive until the end. `A
 | `ClientSize`     | 1280 × 720 | Initial client area in DIPs; the window opens centered on its monitor            |
 | `Background`     | dark gray  | Shown behind the content and while resizing                                      |
 | `Resizable`      | `true`     | Whether the user can resize or maximize it                                       |
-| `DarkTitleBar`   | `true`     | Whether the system title bar uses dark mode                                      |
+| `DarkTitleBar`   | `true`     | Whether the system title bar uses dark mode (Windows only)                       |
 | `CustomTitleBar` | `false`    | Lets the content draw the title bar (see below)                                  |
-| `Icon`           | `0`        | Resource ID of the window's icon; 0 uses the executable's first icon (see below) |
+| `Icon`           | `0`        | Resource ID of the icon; 0 uses the executable's first icon (Windows only)       |
 
 After creation, `Window` can `Show`, `Maximize`, `Activate`, `Close`, `Destroy`, `SetTitle`, `SetClientSize`,
 `SetBackground`, `SetDarkTitleBar`, `SetIcon` and `SetIconFile`, and report `GetClientSize`, `GetDpiScale` and
-`GetNativeHandle` (the `HWND`).
+`GetNativeHandle` (the `HWND` on Windows, the `SDL_Window*` on Linux).
 
 ### Icons
 
@@ -41,6 +41,10 @@ resource, the one Explorer shows for the file, so an application that has an ico
 else. To pick another icon, pass its resource ID as `WindowDesc::Icon` or call `SetIcon`; to load one from an `.ico`
 file, call `SetIconFile`. Icons are reloaded at the right size when the window moves to a monitor with different
 scaling.
+
+Linux executables have no icon resources, so `Icon` and `SetIcon` do nothing there. `SetIconFile` reads `.ico` files
+(their largest image) and PNG, JPEG or BMP images. Many Wayland desktops show the icon from the application's
+`.desktop` file instead of the window's.
 
 ### Closing
 
@@ -62,7 +66,8 @@ MainWindow.SetOnCloseRequested([&] {
 
 Windows are per-monitor DPI aware. Everything in XenUI is measured in device-independent pixels, and text and
 graphics are rendered at the monitor's real resolution. Moving a window to a monitor with different scaling
-re-lays it out at the new scale.
+re-lays it out at the new scale. On Linux the scale comes from SDL, including fractional scaling on Wayland and
+`Xft.dpi` on X11.
 
 ### Rendering only when needed
 
@@ -96,6 +101,9 @@ Column {
 - **Actions** go on the right, before the minimize, maximize and close buttons. Use them for a theme selector, a
   search field or an account button.
 - The whole bar drags the window, and the title dims while the window is inactive, like a system title bar.
+- On Linux the window has no system frame at all. The compositor moves and resizes it from the areas XenUI reports,
+  and XenUI draws a one-pixel border inside the edge, as Windows does, so the window stays visible over similar
+  content. The border is hidden while the window is maximized.
 - `Logo` shows an `SvgIcon` in place of the title, in its own colors and `LogoSize` (18 DIPs) square; `Title` is then
   what screen readers call it.
 - `Height` (34 DIPs), `MenuWidth` (the narrowest an open menu gets; each widens to fit its longest item) and
@@ -132,8 +140,9 @@ struct MyTitleBar {
 - **`WindowDragArea`** marks the area the user can drag the window by. Double-clicking it maximizes, and
   right-clicking opens the system menu. Interactive widgets placed on top of it, such as a menu button or a search
   field, still receive the pointer normally.
-- **`WindowControls`** draws the minimize, maximize and close buttons. They are real caption buttons to Windows, so
-  hovering the maximize button shows Snap Layouts, and screen readers can operate them.
+- **`WindowControls`** draws the minimize, maximize and close buttons. On Windows they are real caption buttons, so
+  hovering the maximize button shows Snap Layouts, and screen readers can operate them. On Linux XenUI handles them
+  itself.
 - **`WindowChrome::Of(Context)`** gives the title bar state, such as whether the window is maximized or active. Use it
   to restyle your own title bar, as `WindowControls` does.
 
@@ -195,7 +204,9 @@ const std::optional<std::filesystem::path> Project = FileDialog::SaveFile({
 
 `OpenFiles` lets the user choose several files. `FileDialogOptions` also sets the `Title` and the `InitialFolder`.
 The dialog belongs to `Owner`, or to the active window when `Owner` is null, which is the right window when the dialog
-is opened from a button. That window is disabled while the dialog is open, but every window keeps painting.
+is opened from a button. That window is disabled while the dialog is open, but every window keeps painting. On Linux
+the dialog is the desktop's own (through the xdg file chooser portal where available), and the application's windows
+ignore input until it closes.
 
 ## Multiple windows
 
@@ -221,14 +232,16 @@ A widget in one window that reads a signal written in another updates like any o
 ## Popup windows
 
 Menus, select lists and tooltips open as separate, non-activating native windows, so they can extend past the edge
-of their owner like real Windows menus. See [Controls](Controls.md#popups-and-dialogs) to open your own.
+of their owner like native menus. On Linux they are SDL popup windows that never take keyboard focus; menus get
+their keys from the owner, as on Windows. See [Controls](Controls.md#popups-and-dialogs) to open your own.
 
 ![Overlays and popups](Images/overlays.svg)
 
 ## Embedding native windows
 
 `NativeHost` reserves space in the layout for a native child window, such as a VST3 plugin editor or a Win32
-control:
+control. This is Windows only for now: SDL can't embed child windows, so on Linux the space stays empty and
+`OnAttach` is never called.
 
 ```cpp
 NativeHost {

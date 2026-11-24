@@ -15,24 +15,17 @@
 #include "XenUI/Render/RenderWindowChrome.hpp"
 #include "XenUI/Render/Semantics.hpp"
 
-#include <Windows.h>
-
 namespace XenUI {
     bool RenderCaptionButton::DescribeSemantics(SemanticsProperties& Properties) const {
-        const HWND Window = GetOwner() != nullptr ? static_cast<HWND>(GetOwner()->GetNativeParent()) : nullptr;
-        if (Window == nullptr) { return false; }
+        if (!_OnInvoke) { return false; }
 
-        const bool Maximized = IsZoomed(Window) != FALSE;
-        WPARAM Command       = SC_CLOSE;
-        const char* Label    = "Close";
+        const char* Label = "Close";
         switch (_Region) {
             case WindowRegion::Minimize:
-                Command = SC_MINIMIZE;
-                Label   = "Minimize";
+                Label = "Minimize";
                 break;
             case WindowRegion::Maximize:
-                Command = Maximized ? SC_RESTORE : SC_MAXIMIZE;
-                Label   = Maximized ? "Restore" : "Maximize";
+                Label = _Maximized ? "Restore" : "Maximize";
                 break;
             default:
                 break;
@@ -40,7 +33,7 @@ namespace XenUI {
         Properties = {
           .Role     = SemanticsRole::Button,
           .Label    = Label,
-          .OnInvoke = [Window, Command] { PostMessageW(Window, WM_SYSCOMMAND, Command, 0); },
+          .OnInvoke = _OnInvoke,
         };
         return true;
     }

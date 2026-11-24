@@ -48,7 +48,8 @@ namespace XenUI {
         /// @brief Reads and parses an .svg file. Throws Error if it can't be read or parsed.
         [[nodiscard]] static SvgIcon FromFile(std::string_view FilePath);
         /// @brief Parses an RCDATA resource of the executable, such as `IDI_PLAY RCDATA "Icons/play.svg"` in an .rc
-        /// file. Throws Error if there is no such resource or it can't be parsed.
+        /// file. Throws Error if there is no such resource or it can't be parsed, and always on Linux, which has no
+        /// executable resources.
         [[nodiscard]] static SvgIcon FromResource(int ResourceId);
         /// @brief An icon made of one filled path, from the value of a path's d attribute.
         [[nodiscard]] static SvgIcon FromPathData(std::string_view PathData, const Size& ViewBox = {24.0f, 24.0f});

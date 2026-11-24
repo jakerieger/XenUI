@@ -20,12 +20,12 @@
 #include <string_view>
 
 namespace XenUI {
-    /// @brief Hands URLs, files and folders to the Windows shell.
+    /// @brief Hands URLs, files and folders to the desktop: the Windows shell, or xdg handlers on Linux.
     class XENUI_API Shell {
     public:
         /// @brief Opens a URL in the default browser, or a file or folder with its default handler.
         static bool Open(std::string_view Target);
-        /// @brief Opens an Explorer window on the folder containing Item, with Item selected.
+        /// @brief Opens a file manager window (Explorer on Windows) on the folder containing Item, with Item selected.
         static bool Reveal(const std::filesystem::path& Item);
     };
 }  // namespace XenUI

@@ -16,7 +16,9 @@
 #include "XenUI/Core/Timer.hpp"
 #include "XenUI/Reactive/Reactive.hpp"
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+#endif
 
 #include <cmath>
 #include <numbers>
@@ -27,9 +29,14 @@ namespace XenUI {
         std::optional<bool> SystemSetting;
 
         bool ReadSystemSetting() {
+#if defined(_WIN32)
             BOOL Enabled = TRUE;
             if (SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &Enabled, 0) == FALSE) { return true; }
             return Enabled != FALSE;
+#else
+            // TODO(linux): read the desktop's reduced-motion preference (e.g. org.gnome.desktop.interface).
+            return true;
+#endif
         }
     }  // namespace
 

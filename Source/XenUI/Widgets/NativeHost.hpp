@@ -25,7 +25,8 @@ namespace XenUI {
     /// @brief Embeds a native window, such as a plugin editor or a Win32 control, at this point of the layout.
     /// OnAttach receives the container window to create native content in; OnResize reports its size in physical
     /// pixels. The container follows layout, scrolling and clipping automatically. See RenderNativeHost for how
-    /// native windows stack with XenUI content.
+    /// native windows stack with XenUI content. Windows only: on Linux the space is reserved but OnAttach is never
+    /// called, since SDL can't embed child windows.
     struct NativeHost {
         std::function<void(NativeHandle Container)> OnAttach;
         std::function<void(NativeHandle Container)> OnDetach;

@@ -15,11 +15,14 @@
 #include "XenUI/Widgets/Theme.hpp"
 #include "XenUI/Reactive/Signal.hpp"
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+#endif
 
 namespace XenUI {
     namespace {
         Appearance ReadSystemAppearance() {
+#if defined(_WIN32)
             DWORD Light          = 0;
             DWORD Length         = sizeof(Light);
             const LSTATUS Result = RegGetValueW(HKEY_CURRENT_USER,
@@ -30,6 +33,10 @@ namespace XenUI {
                                                 &Light,
                                                 &Length);
             return Result == ERROR_SUCCESS && Light != 0 ? Appearance::Light : Appearance::Dark;
+#else
+            // TODO(linux): read the desktop color-scheme preference (xdg-desktop-portal Settings).
+            return Appearance::Dark;
+#endif
         }
 
         Signal<Appearance>& SystemAppearance() {

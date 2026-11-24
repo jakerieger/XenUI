@@ -1,14 +1,24 @@
 cmake_minimum_required(VERSION 3.26)
 project(XenUI
         VERSION 0.1.0
-        DESCRIPTION "GPU-accelerated Windows GUI framework for C++20"
+        DESCRIPTION "GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter"
         HOMEPAGE_URL "https://github.com/jakerieger/XenUI"
         LANGUAGES CXX
 )
 
-if (NOT MSVC)
-    message(FATAL_ERROR "XenUI requires the MSVC toolchain")
+if (WIN32)
+    if (NOT MSVC)
+        message(FATAL_ERROR "XenUI on Windows requires the MSVC toolchain")
+    endif ()
+    set(XENUI_PLATFORM "Win32")
+    set(XENUI_RENDERER "D2D")
+elseif (UNIX AND NOT APPLE)
+    set(XENUI_PLATFORM "Linux")
+    set(XENUI_RENDERER "GL")
+else ()
+    message(FATAL_ERROR "XenUI supports Windows and Linux only")
 endif ()
+message(STATUS "XenUI platform: ${XENUI_PLATFORM}, renderer: ${XENUI_RENDERER}")
 
 option(XENUI_BUILD_TESTS "Build the XenUI unit tests" ON)
 option(XENUI_BUILD_SHOWCASE "Build the XenUI showcase application" ON)

@@ -15,14 +15,17 @@
 #pragma once
 
 #include "XenUI/Core/Error.hpp"
-#include "XenUI/Platform/HResult.hpp"
 
-#include <d2d1.h>
-#include <dxgi.h>
+#if defined(_WIN32)
+    #include "XenUI/Platform/Win32/HResult.hpp"
 
-#include <cstdint>
-#include <format>
-#include <string_view>
+    #include <d2d1.h>
+    #include <dxgi.h>
+
+    #include <cstdint>
+    #include <format>
+    #include <string_view>
+#endif
 
 namespace XenUI {
     /// @brief Thrown when the GPU device was removed or reset and every device-dependent resource must be rebuilt.
@@ -31,6 +34,7 @@ namespace XenUI {
         using Error::Error;
     };
 
+#if defined(_WIN32)
     inline void CheckDeviceResult(HRESULT Result, std::string_view Operation) {
         if (Result == DXGI_ERROR_DEVICE_REMOVED || Result == DXGI_ERROR_DEVICE_RESET ||
             Result == D2DERR_RECREATE_TARGET) {
@@ -39,4 +43,5 @@ namespace XenUI {
         }
         ThrowIfFailed(Result, Operation);
     }
+#endif
 }  // namespace XenUI

@@ -23,8 +23,8 @@ Each stage only does work for the parts of the interface that changed.
 
 ![The run loop](Images/run-loop.svg)
 
-`App::Run` waits for window messages, timers and frame deadlines. When nothing is pending it sleeps, so an idle
-window uses close to no CPU. Input is handled as soon as its message arrives, but drawing waits for the next frame,
+`App::Run` waits for window events (Win32 messages, or SDL events on Linux), timers and frame deadlines. When nothing is pending it sleeps, so an idle
+window uses close to no CPU. Input is handled as soon as it arrives, but drawing waits for the next frame,
 so several changes in a row are rendered once.
 
 ## One frame
@@ -88,7 +88,8 @@ subtree.
 
 ![Paint and layers](Images/paint-and-layers.svg)
 
-Render objects paint into Direct2D display lists, grouped into layers at **repaint boundaries**. A layer that didn't
+Render objects paint into display lists (plain recordings of draw commands, independent of the graphics API), grouped
+into layers at **repaint boundaries**. A layer that didn't
 change reuses its recording. Moving a layer only changes its offset: a moving playhead touches one tiny layer, and
 the timeline under it is not repainted.
 
@@ -96,16 +97,17 @@ the timeline under it is not repainted.
 
 ![Compositing and damage](Images/compositing.svg)
 
-The compositor tracks the damaged region of each frame and draws only the union of recent damage, which keeps every
-back buffer of the flip-model swap chain correct. Frames are presented with dirty rectangles, so Windows composes
-just the changed area too.
+The compositor tracks the damaged region of each frame and draws only the union of recent damage. On Windows that
+keeps every back buffer of the flip-model swap chain correct, and frames are presented with dirty rectangles, so the
+system composes just the changed area too. On Linux each window draws into one persistent back buffer, so only the
+new damage is redrawn, and the whole buffer is copied to the window when it is presented.
 
 ## Live rendering
 
 ![Live rendering and threads](Images/live-rendering.svg)
 
-`LiveView` bypasses the display lists. Its callback records primitives into instanced Direct3D 11 batches every
-frame, between the retained layers below and above it. Data from other threads arrives through `TripleBuffer` and
+`LiveView` bypasses the display lists. Its callback records primitives into instanced batches (Direct3D 11 on
+Windows, OpenGL on Linux) every frame, between the retained layers below and above it. Data from other threads arrives through `TripleBuffer` and
 `SpscQueue`, so the audio thread never waits for the UI.
 
 ## Input
@@ -126,21 +128,52 @@ Preempting shortcuts run before all of them, except when the key types text into
 ![Overlays and popups](Images/overlays.svg)
 
 Each window's root is an overlay host. Popups become separate native windows when the host supports them, so they can
-extend past the window edge like real Windows menus. Otherwise they fall back to layers in the overlay, with the same
+extend past the window edge like native menus. Otherwise they fall back to layers in the overlay, with the same
 behavior.
+
+## Platforms and backends
+
+The widget, layout, input and compositing code is shared. Under it sit two backends, chosen when CMake configures
+(there is no run-time switch):
+
+|                    | Windows                                    | Linux                                                  |
+|--------------------|--------------------------------------------|--------------------------------------------------------|
+| Windows and events | Win32                                      | SDL3 (Wayland or X11)                                  |
+| Drawing            | Direct2D on a Direct3D 11 swap chain       | OpenGL 3.3 core, one context shared by every window    |
+| Text               | DirectWrite                                | HarfBuzz shaping, FreeType glyphs, fontconfig fallback |
+| Images             | WIC                                        | stb_image                                              |
+| Live rendering     | Direct3D 11 instancing                     | OpenGL instancing                                      |
+| Accessibility      | UI Automation                              | Not yet                                                |
+
+Each pimpl type behind the public API (`TextLayout`, `Path`, `Image`) has one data definition per backend, and the
+compositor talks to a `CompositorBackend` with the same interface on both. Display lists are the same everywhere, so
+a widget paints identically on both platforms.
+
+The GL renderer draws rectangles, rounded rectangles, ellipses and lines in a single shader that computes their
+antialiased coverage from a signed distance, matching Direct2D's edges under any transform. Paths, dashed strokes and
+uncommon joins are rasterized to exact-area coverage on the CPU and cached in a texture atlas; glyphs are cached in
+another.
+
+Some Windows features have no Linux equivalent yet: embedding native child windows (`NativeHost` reserves its space
+but stays empty), dragging data out to other applications, Snap Layouts, icons from executable resources, and
+screen reader support.
 
 ## Source layout
 
-| Directory   | Contents                                                                                     |
-|-------------|----------------------------------------------------------------------------------------------|
-| `Core/`     | Math, colors, timers, animation, lock-free helpers                                           |
-| `Reactive/` | Signals, computed values, effects                                                            |
-| `Tree/`     | Nodes, the widget concepts, elements, components, keys, `Provide`                            |
-| `Layout/`   | Constraints, insets, alignment                                                               |
-| `Render/`   | Render objects, semantics                                                                    |
-| `Graphics/` | Device, swap chain, painter, display lists, layers, compositor, text, images, live rendering |
-| `Input/`    | Events, the input dispatcher, focus, shortcuts, text editing, drag and drop                  |
-| `Platform/` | Windows, popups, clipboard, OLE drag and drop, UI Automation                                 |
-| `Widgets/`  | Every widget, the theme and `WidgetHost`                                                     |
+| Directory         | Contents                                                                               |
+|-------------------|----------------------------------------------------------------------------------------|
+| `Core/`           | Math, colors, timers, animation, lock-free helpers                                     |
+| `Reactive/`       | Signals, computed values, effects                                                      |
+| `Tree/`           | Nodes, the widget concepts, elements, components, keys, `Provide`                      |
+| `Layout/`         | Constraints, insets, alignment                                                         |
+| `Render/`         | Render objects, semantics                                                              |
+| `Graphics/`       | Painter, display lists, layers, compositor, text, paths and images: the shared side    |
+| `Graphics/D2D/`   | Windows backend: Direct2D renderer, DirectWrite text, WIC images, D3D 11 swap chain    |
+| `Graphics/GL/`    | Linux backend: OpenGL 3.3 renderer, HarfBuzz and FreeType text, glyph and path atlases |
+| `Input/`          | Events, the input dispatcher, focus, shortcuts, text editing, drag and drop            |
+| `Platform/`       | Window and run-loop code shared by both platforms, and the public platform services    |
+| `Platform/Win32/` | Win32 windows, popups, clipboard, file dialogs, OLE drag and drop, UI Automation       |
+| `Platform/Linux/` | SDL3 windows and run loop, popups, clipboard, file dialogs, shell                      |
+| `Widgets/`        | Every widget, the theme and `WidgetHost`                                               |
 
 The diagrams on this page are generated from Mermaid sources in `Docs/Images/Source`.

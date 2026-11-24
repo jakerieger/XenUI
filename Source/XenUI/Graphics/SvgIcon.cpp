@@ -19,7 +19,9 @@
 #include "XenUI/Graphics/Path.hpp"
 #include "XenUI/Graphics/StrokeStyle.hpp"
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+#endif
 
 #include <algorithm>
 #include <cctype>
@@ -1005,12 +1007,17 @@ namespace XenUI {
     }
 
     SvgIcon SvgIcon::FromResource(int ResourceId) {
+#if defined(_WIN32)
         const HMODULE Executable = GetModuleHandleW(nullptr);
         const HRSRC Found        = FindResourceW(Executable, MAKEINTRESOURCEW(ResourceId), RT_RCDATA);
         const HGLOBAL Loaded     = Found != nullptr ? LoadResource(Executable, Found) : nullptr;
         const void* Bytes        = Loaded != nullptr ? LockResource(Loaded) : nullptr;
         if (Bytes == nullptr) { throw Error(std::format("SVG: no RCDATA resource {}", ResourceId)); }
         return Parse({static_cast<const char*>(Bytes), SizeofResource(Executable, Found)});
+#else
+        // TODO(linux): Linux has no RCDATA. Look up icons embedded at build time (e.g. a generated id -> bytes table).
+        throw Error(std::format("SVG: RCDATA resource {} is not available on this platform", ResourceId));
+#endif
     }
 
     SvgIcon SvgIcon::FromPathData(std::string_view PathData, const Size& ViewBox) {

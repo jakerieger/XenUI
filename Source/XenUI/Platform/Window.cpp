@@ -13,7 +13,11 @@
 // limitations under the License.
 
 #include "XenUI/Platform/Window.hpp"
-#include "XenUI/Platform/WindowImpl.hpp"
+#if defined(_WIN32)
+    #include "XenUI/Platform/Win32/WindowImpl.hpp"
+#else
+    #include "XenUI/Platform/Linux/WindowImpl.hpp"
+#endif
 
 namespace XenUI {
     Window::Window(const WindowDesc& Desc) : _Impl(std::make_unique<WindowImpl>(Desc)) {}
@@ -116,6 +120,6 @@ namespace XenUI {
     }
 
     void* Window::GetNativeHandle() const {
-        return _Impl->GetHwnd();
+        return _Impl->GetNativeHandle();
     }
 }  // namespace XenUI

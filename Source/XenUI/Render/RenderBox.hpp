@@ -208,7 +208,7 @@ namespace XenUI {
         void SetFocusManager(FocusManager* Manager) { _FocusManager = Manager; }
         [[nodiscard]] FocusManager* GetFocusManager() const { return _FocusManager; }
 
-        /// @brief The platform window (an HWND) that hosts this tree, for render objects that embed native windows.
+        /// @brief The platform window (an HWND, or an SDL_Window* on Linux) that hosts this tree, for render objects that embed native windows.
         void SetNativeParent(void* Parent) { _NativeParent = Parent; }
         [[nodiscard]] void* GetNativeParent() const { return _NativeParent; }
 

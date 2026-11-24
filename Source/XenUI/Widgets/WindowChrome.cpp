@@ -77,8 +77,14 @@ namespace XenUI {
                 Fill = Style.Hover;
             }
 
+            std::function<void()> Command = Region == WindowRegion::Minimize   ? Chrome.Minimize
+                                            : Region == WindowRegion::Maximize ? Chrome.ToggleMaximize
+                                                                               : Chrome.Close;
+
             return RawCaptionButton {
-              .Region = Region,
+              .Region    = Region,
+              .Maximized = Maximized,
+              .OnInvoke  = std::move(Command),
               .Child =
                 Container {
                   .Width      = Width,

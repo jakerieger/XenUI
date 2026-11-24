@@ -19,19 +19,18 @@
 #include "XenUI/Core/Matrix.hpp"
 #include "XenUI/Graphics/DamageRegion.hpp"
 
-#include <Windows.h>
-#include <d2d1_1.h>
-
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace XenUI {
+    class CompositorBackend;
     class GraphicsDevice;
     class Layer;
     class LayerImpl;
     class SwapChain;
-    class WindowImpl;
 
     /// @brief Renders a window's layer tree, repainting only damaged regions. Tracks damage across the swapchain's
     /// buffers so that each back buffer is brought up to date with everything that changed since it was last shown.
@@ -45,7 +44,8 @@ namespace XenUI {
             float Damage = 0.0f;
         };
 
-        explicit Compositor(WindowImpl& Owner);
+        /// @param RequestFrame Asks the window for another frame, while flashes fade or live layers animate.
+        explicit Compositor(std::function<void()> RequestFrame);
         ~Compositor();
 
         Compositor(const Compositor&)            = delete;
@@ -64,6 +64,9 @@ namespace XenUI {
         void ResetBufferHistory();
 
         void SetShowDamage(bool Enabled);
+        /// @brief Draws a one-pixel line of Border just inside the window's edge, above all content, for windows the
+        /// system doesn't frame (borderless windows on Linux). Nothing when unset.
+        void SetFrameBorder(const std::optional<Color>& Border);
 
         [[nodiscard]] bool HasPendingDamage() const { return !_Pending.IsEmpty(); }
 
@@ -85,21 +88,20 @@ namespace XenUI {
         void DrawLayer(LayerImpl& Node, const Matrix3x2& ParentWorld, const Rect& Damage);
         void DrawLayerContents(LayerImpl& Node, const Matrix3x2& World, const Rect& Damage);
         void DrawFlashes(const Rect& Area);
-        [[nodiscard]] std::vector<RECT> ToPixelRects(const DamageRegion& Region, uint32_t Width, uint32_t Height) const;
+        [[nodiscard]] std::vector<PixelRect> ToPixelRects(const DamageRegion& Region) const;
 
-        WindowImpl& _Owner;
+        std::function<void()> _RequestFrame;
+        std::unique_ptr<CompositorBackend> _Backend;
         std::shared_ptr<Layer> _Root;
         DamageRegion _Pending;
         std::vector<DamageRegion> _History;
         std::vector<Flash> _Flashes;
         uint32_t _FlashCounter   = 0;
         bool _ShowDamage         = false;
+        std::optional<Color> _FrameBorder;
         bool _LiveActive         = false;
         uint64_t _PlacementFrame = 0;
 
-        ID2D1DeviceContext* _Context = nullptr;
-        GraphicsDevice* _Device      = nullptr;
-        float _DpiScale              = 1.0f;
         Timings _LastTimings;
     };
 }  // namespace XenUI

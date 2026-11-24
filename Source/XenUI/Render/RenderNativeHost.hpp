@@ -22,7 +22,7 @@
 #include <optional>
 
 namespace XenUI {
-    /// @brief A platform window handle (an HWND on Windows) as an opaque pointer.
+    /// @brief A platform window handle (an HWND on Windows, an SDL_Window* on Linux) as an opaque pointer.
     using NativeHandle = void*;
 
     /// @brief Hosts a native child window inside the widget tree. The container window is created on first paint

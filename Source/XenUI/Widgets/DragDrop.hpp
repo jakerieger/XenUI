@@ -44,8 +44,8 @@ namespace XenUI {
 
     /// @brief Makes its child draggable. Moving the pointer past the drag threshold builds the payload with Data and
     /// shows Feedback under the pointer; drop targets in any XenUI window can receive it. When the payload has Files
-    /// or Text, dragging out of the window continues as a system drag, so Explorer and other applications can take
-    /// it too. Deeper gesture detectors and drag sources take drags first, so nested draggables work.
+    /// or Text, dragging out of the window continues as a system drag on Windows, so Explorer and other applications
+    /// can take it too. Deeper gesture detectors and drag sources take drags first, so nested draggables work.
     struct XENUI_API DragSource {
         DragDataCallback Data;
         /// @brief The effects a drop may have. Copy is the safe choice for files, since Explorer moves files on Move.

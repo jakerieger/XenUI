@@ -378,7 +378,7 @@ TEST_CASE("Shortcuts run for single combinations and chords") {
     CHECK(Chords == 1);
 
     CHECK_FALSE(Test.Press(KeyCode::S));
-    CHECK((KeyModifiers::Control | KeyModifiers::Shift + KeyCode::S).Modifiers ==
+    CHECK((KeyModifiers::Control | (KeyModifiers::Shift + KeyCode::S)).Modifiers ==
           (KeyModifiers::Control | KeyModifiers::Shift));
 }
 

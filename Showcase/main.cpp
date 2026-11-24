@@ -14,7 +14,9 @@
 
 #include <XenUI/XenUI.hpp>
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+#endif
 
 #include <chrono>
 #include <cmath>
@@ -576,6 +578,7 @@ namespace {
         };
     }
 
+#if defined(_WIN32)
     /// @brief A Win32 EDIT control created inside a NativeHost container, resized with it.
     Node NativeEditor() {
         auto Edit = std::make_shared<HWND>(nullptr);
@@ -607,6 +610,12 @@ namespace {
           .Height = 180.0f,
         };
     }
+#else
+    /// @brief SDL can't embed native child windows, so on Linux the NativeHost only reserves its space.
+    Node NativeEditor() {
+        return NativeHost {.Height = 180.0f};
+    }
+#endif
 
     struct NativeSection {
         ShowcaseState* State = nullptr;

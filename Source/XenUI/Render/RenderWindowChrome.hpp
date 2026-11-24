@@ -18,6 +18,7 @@
 #include "XenUI/Render/RenderBox.hpp"
 
 #include <cstdint>
+#include <functional>
 
 namespace XenUI {
     /// @brief What a point in a window with a custom title bar is, as far as the system is concerned.
@@ -39,6 +40,10 @@ namespace XenUI {
     class XENUI_API RenderCaptionButton final : public RenderBox {
     public:
         void SetRegion(WindowRegion Region) { _Region = Region; }
+        /// @brief Whether the window is maximized, so the maximize button reads as "Restore".
+        void SetMaximized(bool Maximized) { _Maximized = Maximized; }
+        /// @brief Runs the button's window command, for assistive technology. The button has no action when empty.
+        void SetOnInvoke(std::function<void()> OnInvoke) { _OnInvoke = std::move(OnInvoke); }
         [[nodiscard]] WindowRegion GetRegion() const { return _Region; }
         [[nodiscard]] bool DescribeSemantics(SemanticsProperties& Properties) const override;
 
@@ -50,5 +55,7 @@ namespace XenUI {
 
     private:
         WindowRegion _Region = WindowRegion::Close;
+        bool _Maximized      = false;
+        std::function<void()> _OnInvoke;
     };
 }  // namespace XenUI

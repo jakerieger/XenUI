@@ -16,8 +16,12 @@
 
 #include "XenUI/Core/Math.hpp"
 
-#include <d3d11.h>
-#include <wrl/client.h>
+#if defined(_WIN32)
+    #include <d3d11.h>
+    #include <wrl/client.h>
+#else
+    #include "XenUI/Graphics/GL/GLObjects.hpp"
+#endif
 
 #include <cstdint>
 #include <vector>
@@ -81,8 +85,12 @@ namespace XenUI {
         std::vector<uint32_t> Pixels;
         bool Dirty = true;
 
+#if defined(_WIN32)
         Microsoft::WRL::ComPtr<ID3D11Texture2D> Texture;
         Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> View;
+#else
+        GLTexture Texture;
+#endif
         uint64_t Generation = 0;
     };
 }  // namespace XenUI

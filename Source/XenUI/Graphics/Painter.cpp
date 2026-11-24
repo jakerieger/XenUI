@@ -13,12 +13,18 @@
 // limitations under the License.
 
 #include "XenUI/Graphics/Painter.hpp"
-#include "XenUI/AppContext.hpp"
-#include "XenUI/Graphics/D2DConvert.hpp"
-#include "XenUI/Graphics/D2DRenderer.hpp"
-#include "XenUI/Graphics/PathData.hpp"
+#if defined(_WIN32)
+    #include "XenUI/AppContext.hpp"
+    #include "XenUI/Graphics/D2D/D2DConvert.hpp"
+    #include "XenUI/Graphics/D2D/D2DRenderer.hpp"
+    #include "XenUI/Graphics/D2D/PathData.hpp"
+#else
+    #include "XenUI/Graphics/GL/Coverage.hpp"
+    #include "XenUI/Graphics/GL/PathData.hpp"
+#endif
 
 #include <algorithm>
+#include <limits>
 
 namespace XenUI {
     namespace {
@@ -30,19 +36,40 @@ namespace XenUI {
             return Stroke.Width * 0.5f * kSqrtTwo + kAntialiasPadding;
         }
 
+        Rect EstimateStrokedPathBounds(const Path& Geometry, const StrokeStyle& Stroke) {
+            const float JoinFactor = Stroke.Join == LineJoin::Miter ? std::max(Stroke.MiterLimit, kSqrtTwo) : kSqrtTwo;
+            return Geometry.GetBounds().Inflated(Stroke.Width * 0.5f * JoinFactor);
+        }
+
         Rect GetStrokedPathBounds(const Path& Geometry, const StrokeStyle& Stroke) {
+#if defined(_WIN32)
             GraphicsDevice& Device  = AppContext::Get().GetGraphicsDevice();
             ID2D1StrokeStyle* Style = Device.GetResources().GetStrokeStyle(*Device.GetD2DFactory(), Stroke);
 
             D2D1_RECT_F Bounds {};
             const HRESULT Result =
               Geometry.GetData()->Geometry->GetWidenedBounds(Stroke.Width, Style, nullptr, &Bounds);
-            if (FAILED(Result) || Bounds.left > Bounds.right) {
-                const float JoinFactor =
-                  Stroke.Join == LineJoin::Miter ? std::max(Stroke.MiterLimit, kSqrtTwo) : kSqrtTwo;
-                return Geometry.GetBounds().Inflated(Stroke.Width * 0.5f * JoinFactor);
-            }
+            if (FAILED(Result) || Bounds.left > Bounds.right) { return EstimateStrokedPathBounds(Geometry, Stroke); }
             return FromD2D(Bounds);
+#else
+            const PathData* Data = Geometry.GetData();
+            if (Data == nullptr) { return {}; }
+            // Widen the path exactly as the GL renderer will, at the path's own flattening tolerance.
+            float Left   = std::numeric_limits<float>::max();
+            float Top    = std::numeric_limits<float>::max();
+            float Right  = std::numeric_limits<float>::lowest();
+            float Bottom = std::numeric_limits<float>::lowest();
+            for (const Contour& Shape : StrokeFigures(Data->Figures, Stroke, PathData::kTolerance)) {
+                for (const Vec2& Point : Shape) {
+                    Left   = std::min(Left, Point.X);
+                    Top    = std::min(Top, Point.Y);
+                    Right  = std::max(Right, Point.X);
+                    Bottom = std::max(Bottom, Point.Y);
+                }
+            }
+            if (Left > Right) { return EstimateStrokedPathBounds(Geometry, Stroke); }
+            return Rect::FromEdges(Left, Top, Right, Bottom);
+#endif
         }
 
         Rect GetEllipseBounds(const Vec2& Center, const Vec2& Radius) {

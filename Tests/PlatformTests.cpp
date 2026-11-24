@@ -16,7 +16,11 @@
 
 #include <doctest/doctest.h>
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+#else
+    #include <cstdlib>
+#endif
 
 #include <cstdint>
 #include <filesystem>
@@ -27,7 +31,15 @@
 using namespace XenUI;
 using namespace XenUI::Testing;
 
+#if !defined(_WIN32)
+namespace XenUI {
+    // Exported for tests by Platform/Linux/SdlPlatform.hpp, which needs SDL's headers.
+    XENUI_API void PumpPlatformEvents();
+}  // namespace XenUI
+#endif
+
 namespace {
+#if defined(_WIN32)
     /// @brief Handles every queued message, as the run loop would, including the quit message that closing the
     /// last window posts.
     void PumpMessages() {
@@ -37,6 +49,20 @@ namespace {
             DispatchMessageW(&Message);
         }
     }
+#else
+    /// @brief Handles every queued event and posted work, as the run loop would.
+    void PumpMessages() {
+        PumpPlatformEvents();
+    }
+
+    // Without a display server (CI), SDL's offscreen driver still creates windows with GL contexts.
+    [[maybe_unused]] const bool kDisplayChosen = [] {
+        if (std::getenv("DISPLAY") == nullptr && std::getenv("WAYLAND_DISPLAY") == nullptr) {
+            setenv("SDL_VIDEO_DRIVER", "offscreen", 0);
+        }
+        return true;
+    }();
+#endif
 
     /// @brief Writes a 16x16 single-color .ico file.
     std::filesystem::path WriteIconFile() {
@@ -154,15 +180,19 @@ TEST_CASE("A window asks before closing, and Destroy closes it without asking") 
 TEST_CASE("Windows take their icon from an .ico file") {
     (void)SharedApp();
     Window Subject({.Title = "Icon test", .ClientSize = {200.0f, 100.0f}});
+#if defined(_WIN32)
     const auto Handle = static_cast<HWND>(Subject.GetNativeHandle());
 
     // The test executable has no icon resources, so the default leaves the window without one.
     CHECK(SendMessageW(Handle, WM_GETICON, ICON_SMALL, 0) == 0);
+#endif
 
     const std::filesystem::path IconFile = WriteIconFile();
     Subject.SetIconFile(IconFile);
+#if defined(_WIN32)
     CHECK(SendMessageW(Handle, WM_GETICON, ICON_SMALL, 0) != 0);
     CHECK(SendMessageW(Handle, WM_GETICON, ICON_BIG, 0) != 0);
+#endif
     std::filesystem::remove(IconFile);
 
     CHECK_THROWS(Subject.SetIconFile(IconFile));

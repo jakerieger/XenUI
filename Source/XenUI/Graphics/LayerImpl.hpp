@@ -17,9 +17,11 @@
 #include "XenUI/Graphics/Layer.hpp"
 #include "XenUI/Graphics/LiveRecording.hpp"
 
-#include <d2d1_1.h>
-#include <d3d11.h>
-#include <wrl/client.h>
+#if defined(_WIN32)
+    #include "XenUI/Graphics/D2D/LayerSurfaces.hpp"
+#else
+    #include "XenUI/Graphics/GL/LayerSurfaces.hpp"
+#endif
 
 #include <cstdint>
 #include <memory>
@@ -28,26 +30,6 @@
 
 namespace XenUI {
     class Compositor;
-
-    struct LayerCache {
-        Microsoft::WRL::ComPtr<ID2D1Bitmap1> Bitmap;
-        Rect Bounds;
-        float Scale          = 0.0f;
-        uint32_t PixelWidth  = 0;
-        uint32_t PixelHeight = 0;
-        uint64_t Generation  = 0;
-        bool Dirty           = true;
-    };
-
-    struct LiveSurface {
-        Microsoft::WRL::ComPtr<ID3D11Texture2D> Texture;
-        Microsoft::WRL::ComPtr<ID3D11RenderTargetView> Target;
-        Microsoft::WRL::ComPtr<ID2D1Bitmap1> Bitmap;
-        uint32_t PixelWidth  = 0;
-        uint32_t PixelHeight = 0;
-        float Scale          = 0.0f;
-        uint64_t Generation  = 0;
-    };
 
     struct LiveState {
         Size Extent;

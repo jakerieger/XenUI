@@ -2,7 +2,8 @@
 
 Most of an interface changes occasionally, and XenUI's retained rendering repaints only those changes. Some content
 changes every frame: level meters, oscilloscopes, waveforms while recording, spectrograms. For those, `LiveView`
-offers an immediate-mode canvas that is redrawn every frame with instanced Direct3D 11 draws. Tens of thousands of
+offers an immediate-mode canvas that is redrawn every frame with instanced draws (Direct3D 11 on Windows, OpenGL on
+Linux). Tens of thousands of
 line segments per frame are practical.
 
 ## LiveView

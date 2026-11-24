@@ -1,9 +1,11 @@
 add_executable(XenUIShowcase WIN32
         main.cpp
-        Showcase.rc
+        $<$<PLATFORM_ID:Windows>:Showcase.rc>
 )
 
 XenUI_ConfigureTarget(XenUIShowcase)
 
-target_link_options(XenUIShowcase PRIVATE /ENTRY:mainCRTStartup)
+if (MSVC)
+    target_link_options(XenUIShowcase PRIVATE /ENTRY:mainCRTStartup)
+endif ()
 target_link_libraries(XenUIShowcase PRIVATE XenUI::XenUI)

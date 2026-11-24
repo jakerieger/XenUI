@@ -22,7 +22,7 @@
 
 namespace XenUI {
     /// @brief Immediate-mode drawing for high-frequency content such as scopes, meters, waveforms and spectrograms.
-    /// OnDraw records primitives into a LiveCanvas that is rendered with instanced Direct3D draws. Set Continuous to
+    /// OnDraw records primitives into a LiveCanvas that is rendered with instanced GPU draws. Set Continuous to
     /// redraw every frame (for data read from another thread); otherwise it redraws when signals it read change.
     struct LiveView {
         LiveDrawer OnDraw;

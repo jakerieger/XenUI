@@ -14,12 +14,18 @@
 
 #pragma once
 
-#ifdef XENUI_EXPORTS
-    #define XENUI_API __declspec(dllexport)
+#if defined(_WIN32)
+    #ifdef XENUI_EXPORTS
+        #define XENUI_API __declspec(dllexport)
+    #else
+        #define XENUI_API __declspec(dllimport)
+    #endif
 #else
-    #define XENUI_API __declspec(dllimport)
+    #define XENUI_API __attribute__((visibility("default")))
 #endif
 
+#if defined(_MSC_VER)
 /// @note C4251 and C4275 fire for std:: members and header-only template bases of exported classes. XenUI requires
 /// consumers to use the same MSVC toolset and CRT, so these never cross an ABI boundary that could disagree on layout.
-#pragma warning(disable : 4251 4275)
+    #pragma warning(disable : 4251 4275)
+#endif

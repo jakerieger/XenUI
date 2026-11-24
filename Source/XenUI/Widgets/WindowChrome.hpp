@@ -60,6 +60,9 @@ namespace XenUI {
 
     struct RawCaptionButton {
         WindowRegion Region = WindowRegion::Close;
+        bool Maximized      = false;
+        /// @brief The window command this button runs when invoked through assistive technology.
+        std::function<void()> OnInvoke;
         Node Child;
 
         [[nodiscard]] std::unique_ptr<RenderCaptionButton> CreateRenderObject() const {
@@ -68,7 +71,11 @@ namespace XenUI {
             return Result;
         }
 
-        void UpdateRenderObject(RenderCaptionButton& Target) const { Target.SetRegion(Region); }
+        void UpdateRenderObject(RenderCaptionButton& Target) const {
+            Target.SetRegion(Region);
+            Target.SetMaximized(Maximized);
+            Target.SetOnInvoke(OnInvoke);
+        }
     };
 
     /// @brief Minimize, maximize and close buttons in the Windows 11 style, for the right end of a custom title bar.

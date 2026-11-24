@@ -155,9 +155,11 @@ DropTarget {
 ```
 
 - **Inside the application**, `DragData::Value` (a `std::any`) carries any C++ value. Read it with `Get<T>()`.
-- **Between applications**, drags go through Windows (OLE) drag and drop:
-    - Dragging out of the window hands the drag to the system with `Files` and `Text`, so files can be dropped into
-      Explorer or another program.
-    - Files and text dragged in from other programs arrive with `External = true` and an empty `Value`.
+- **Between applications**, drags go through the system:
+    - On Windows (OLE drag and drop), dragging out of the window hands the drag to the system with `Files` and
+      `Text`, so files can be dropped into Explorer or another program. Linux doesn't support dragging out yet.
+    - Files and text dragged in from other programs arrive with `External = true` and an empty `Value`. On Linux,
+      SDL only reports what is being dragged at the drop, so while the pointer moves over the window `Files` and
+      `Text` are empty; check them in `OnDrop`.
 - **`OnOver` decides whether a drop is accepted**, and with which effect. It is called as the pointer moves. Return
   `DropEffect::None` to refuse the drop.

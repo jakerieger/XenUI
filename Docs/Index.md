@@ -1,6 +1,6 @@
 # XenUI guide
 
-XenUI is a declarative GUI framework for Windows: you describe the interface as a tree of widget structs, keep state
+XenUI is a declarative GUI framework for Windows and Linux: you describe the interface as a tree of widget structs, keep state
 in signals, and the framework rebuilds, lays out and repaints only what changed.
 
 Start with **Getting started**, then read **Widgets** and **Signals**. Together they explain almost everything

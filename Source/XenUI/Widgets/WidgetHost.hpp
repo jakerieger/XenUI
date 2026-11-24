@@ -67,7 +67,7 @@ namespace XenUI {
 
         /// @brief Shows popups through Presenter instead of inside the overlay. Call before SetRoot.
         void SetPopupPresenter(PopupPresenter* Presenter) { _Presenter = Presenter; }
-        /// @brief The platform window (an HWND) that native child windows of this tree are created in.
+        /// @brief The platform window (an HWND, or an SDL_Window* on Linux) that native child windows of this tree are created in.
         void SetNativeParent(void* Parent) { _Pipeline.SetNativeParent(Parent); }
         /// @brief The title bar state that WindowControls and WindowChrome::Of find, for custom title bars.
         void SetWindowChrome(WindowChrome* Chrome) { _Chrome = Chrome; }

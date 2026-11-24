@@ -23,8 +23,10 @@
 #include <span>
 #include <type_traits>
 
-#pragma warning(push)
-#pragma warning(disable : 4324)
+#if defined(_MSC_VER)
+    #pragma warning(push)
+    #pragma warning(disable : 4324)
+#endif
 
 namespace XenUI {
     inline constexpr size_t kCacheLineSize = 64;
@@ -142,4 +144,6 @@ namespace XenUI {
     };
 }  // namespace XenUI
 
-#pragma warning(pop)
+#if defined(_MSC_VER)
+    #pragma warning(pop)
+#endif

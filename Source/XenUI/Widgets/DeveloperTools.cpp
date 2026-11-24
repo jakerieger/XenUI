@@ -28,6 +28,13 @@
 #include <format>
 #include <typeinfo>
 
+#if !defined(_MSC_VER)
+    #include <cxxabi.h>
+
+    #include <cstdlib>
+    #include <memory>
+#endif
+
 namespace XenUI {
     namespace {
         constexpr double kStatsInterval     = 0.25;
@@ -269,6 +276,14 @@ namespace XenUI {
 
     std::string WidgetInspector::CleanTypeName(std::string_view Raw) {
         std::string Name(Raw);
+#if !defined(_MSC_VER)
+        // GCC and Clang report mangled names; anything that isn't one comes back unchanged.
+        int Status = 0;
+        const std::unique_ptr<char, decltype(&std::free)> Demangled(
+          abi::__cxa_demangle(Name.c_str(), nullptr, nullptr, &Status),
+          &std::free);
+        if (Status == 0 && Demangled) { Name = Demangled.get(); }
+#endif
         for (const std::string_view Noise :
              {"struct ", "class ", "enum ", "XenUI::", "`anonymous namespace'::", "(anonymous namespace)::"}) {
             ReplaceAll(Name, Noise, "");
@@ -276,6 +291,7 @@ namespace XenUI {
         ReplaceAll(Name, " __ptr64", "");
         ReplaceAll(Name, " *", "*");
         ReplaceAll(Name, ",", ", ");
+        ReplaceAll(Name, ",  ", ", ");
         return Name;
     }
 

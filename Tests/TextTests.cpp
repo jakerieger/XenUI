@@ -16,7 +16,9 @@
 
 #include <doctest/doctest.h>
 
-#include <Windows.h>
+#if defined(_WIN32)
+    #include <Windows.h>
+#endif
 
 #include <optional>
 #include <string>
@@ -212,7 +214,11 @@ TEST_CASE("Text field compositions display without changing the text until commi
 }
 
 TEST_CASE("Clipboard round-trips text and custom data") {
+#if defined(_WIN32)
     const bool SafeToReplace = CountClipboardFormats() == 0 || Clipboard::HasText();
+#else
+    const bool SafeToReplace = true;
+#endif
     if (!SafeToReplace) {
         MESSAGE("Skipped: the clipboard holds non-text data that this test would replace");
         return;
@@ -230,10 +236,13 @@ TEST_CASE("Clipboard round-trips text and custom data") {
 
     if (Saved) {
         Clipboard::SetText(*Saved);
-    } else if (OpenClipboard(nullptr) != FALSE) {
+    }
+#if defined(_WIN32)
+    else if (OpenClipboard(nullptr) != FALSE) {
         EmptyClipboard();
         CloseClipboard();
     }
+#endif
 }
 
 TEST_CASE("Preempting shortcuts beat focused controls but not typing") {
