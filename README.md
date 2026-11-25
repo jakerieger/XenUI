@@ -1,8 +1,14 @@
-# XenUI
+<h1 align="middle">XenUI</h1>
 
-XenUI (pronounced *zen UI*) is a C++20 GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter. 
+<p align="middle">
+<a href="https://github.com/jakerieger/XenUI/actions/workflows/CI.yml"><img alt="CI" src="https://github.com/jakerieger/XenUI/actions/workflows/CI.yml/badge.svg"/></a>
+</p>
 
-![Showcase](Docs/Images/screen.png)
+---
+
+XenUI (pronounced *Zen UI*) is a C++20 GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter. 
+
+![Showcase](Docs/Images/screen-linux.png)
 
 ## Overview
 
@@ -91,8 +97,6 @@ two signals alive across rebuilds. Reading `_Greeting()` in `Build` subscribes t
 rebuilds it. The full version, with a custom title bar, is in [Examples/Hello](Examples/Hello/main.cpp).
 
 ## Building
-
-[![CI](https://github.com/jakerieger/XenUI/actions/workflows/CI.yml/badge.svg)](https://github.com/jakerieger/XenUI/actions/workflows/CI.yml)
 
 ### Windows
 
