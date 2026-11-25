@@ -75,6 +75,10 @@ namespace XenUI::Sdl {
         SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
         SDL_SetHint(SDL_HINT_QUIT_ON_LAST_WINDOW_CLOSE, "0");
         SDL_SetHint(SDL_HINT_APP_NAME, "XenUI");
+        // libdecor's GTK title bar stalls interactive resizes on GNOME (the window only catches up when the pointer
+        // is released). Without it SDL uses server-side decorations where the compositor has them, and XenUI draws
+        // its own title bar where it doesn't (see Decorations.cpp).
+        SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR, "0");
         if (!SDL_Init(SDL_INIT_EVENTS)) { throw Error(std::format("SDL: initialization failed: {}", SDL_GetError())); }
         if (WakeEvent.load() == 0) { WakeEvent.store(SDL_RegisterEvents(1)); }
     }

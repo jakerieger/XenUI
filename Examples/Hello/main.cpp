@@ -118,7 +118,7 @@ int main() {
     const WindowDesc Desc {
       .Title          = "Hello, XenUI",
       .ClientSize     = {360.0f, 212.0f},
-      .CustomTitleBar = true,  // make title bar part of client draw region
+        .CustomTitleBar = true,
     };
 
     const auto OnClosed = [&HelloApp] { HelloApp.Quit(); };

@@ -37,10 +37,14 @@ namespace XenUI {
         /// @brief Initial client area size in device-independent pixels.
         Size ClientSize   = {1280.0f, 720.0f};
         Color Background  = Color::FromHex(0x1E1E22);
-        bool Resizable    = true;
+        bool Resizable = true;
+        /// @brief Whether the system title bar is dark: on Windows, and for the title bar XenUI draws on desktops
+        /// without one (see CustomTitleBar).
         bool DarkTitleBar = true;
         /// @brief Lets the content draw the title bar: the client area covers the whole window inside the resize
         /// borders. Mark draggable areas with WindowDragArea and add WindowControls for the caption buttons.
+        /// When false, the system draws the title bar; where the desktop has none to give (GNOME on Wayland),
+        /// XenUI adds its own TitleBar above the content instead, outside ClientSize.
         bool CustomTitleBar = false;
         /// @brief Resource ID of the icon shown in the title bar, the taskbar and Alt+Tab, from the executable's
         /// resources. 0 uses the executable's first icon, the one Explorer shows for the file. Windows only.

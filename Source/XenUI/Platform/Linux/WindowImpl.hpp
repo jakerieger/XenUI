@@ -15,6 +15,7 @@
 #pragma once
 
 #include "XenUI/Platform/WindowCore.hpp"
+#include "XenUI/Reactive/Signal.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -22,6 +23,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 
 namespace XenUI {
@@ -75,6 +77,7 @@ namespace XenUI {
         /// @brief Destroys popups closed since the last call whose windows aren't handling an event.
         static void DestroyClosedPopups();
 
+
         void SetCursor(CursorShape Shape) override;
         void BeginRelativePointer() override;
         void EndRelativePointer() override;
@@ -93,6 +96,7 @@ namespace XenUI {
         [[nodiscard]] bool HasRenderTarget() const override { return _SwapChain != nullptr && _Visible; }
         void RenderComposition() override;
         void ConfigureContent(WidgetHost& Content) override;
+        [[nodiscard]] Node WrapContent(const Node& Root) override;
         void OnContentUpdated() override;
 
     private:
@@ -102,6 +106,8 @@ namespace XenUI {
         void RequestClose();
         void DestroyNative();
         void OnResize();
+        /// @brief Resizes the swap chain to the window's current pixel size. Returns whether it changed.
+        bool SyncSwapChainSize();
         void UpdatePopupSize();
 
         bool HandleWindowEvent(const SDL_Event& Event);
@@ -139,6 +145,14 @@ namespace XenUI {
         bool _Resizable       = true;
         bool _Visible         = false;
         bool _InContentUpdate = false;
+        /// @brief XenUI draws a title bar for a window that asked for the system's, because the desktop has none to
+        /// give (GNOME on Wayland). The window is then frameless like a CustomTitleBar one.
+        bool _AutoTitleBar = false;
+        Signal<std::string> _Title;
+        Signal<bool> _DarkTitleBar = true;
+
+        /// @brief Present the next frame without waiting for vertical blank.
+        bool _PresentImmediately = false;
         uint32_t _DispatchDepth = 0;
 
         CursorShape _Cursor      = CursorShape::Arrow;

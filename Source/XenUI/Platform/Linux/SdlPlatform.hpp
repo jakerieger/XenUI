@@ -37,6 +37,10 @@ namespace XenUI {
         void EnsureVideo();
         [[nodiscard]] bool HasVideo();
 
+        /// @brief Whether the desktop draws title bars for windows that don't draw their own: always on X11, and on
+        /// Wayland when the compositor offers server-side decorations (not GNOME). Requires the video subsystem.
+        [[nodiscard]] bool ServerDrawsTitleBars();
+
         /// @brief The GL context every window shares, created the first time with Window, which must have been
         /// created with SDL_WINDOW_OPENGL. Also initializes the graphics device's GL side.
         SDL_GLContext GetGLContext(SDL_Window* Window);

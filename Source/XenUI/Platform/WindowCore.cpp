@@ -45,7 +45,7 @@ namespace XenUI {
             }
         }
         _Compositor.SetRoot(_Content->GetRootLayer());
-        _Content->SetRoot(Root);
+        _Content->SetRoot(_IsPopup ? Root : WrapContent(Root));
     }
 
     void WindowCore::SetRootLayer(std::shared_ptr<Layer> Root) {

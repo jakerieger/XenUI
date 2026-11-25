@@ -154,6 +154,10 @@ antialiased coverage from a signed distance, matching Direct2D's edges under any
 uncommon joins are rasterized to exact-area coverage on the CPU and cached in a texture atlas; glyphs are cached in
 another.
 
+On GNOME's Wayland session, which offers no server-side title bars, XenUI draws its own `TitleBar` for windows that
+asked for the system one. SDL's fallback there (libdecor's GTK title bar) stalls interactive resizes, so XenUI turns
+it off.
+
 Some Windows features have no Linux equivalent yet: embedding native child windows (`NativeHost` reserves its space
 but stays empty), dragging data out to other applications, Snap Layouts, icons from executable resources, and
 screen reader support.

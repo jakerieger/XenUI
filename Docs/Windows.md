@@ -26,7 +26,7 @@ Create exactly one `App`, before any window, and keep it alive until the end. `A
 | `ClientSize`     | 1280 × 720 | Initial client area in DIPs; the window opens centered on its monitor            |
 | `Background`     | dark gray  | Shown behind the content and while resizing                                      |
 | `Resizable`      | `true`     | Whether the user can resize or maximize it                                       |
-| `DarkTitleBar`   | `true`     | Whether the system title bar uses dark mode (Windows only)                       |
+| `DarkTitleBar`   | `true`     | Whether the system title bar uses dark mode (see below for Linux)                |
 | `CustomTitleBar` | `false`    | Lets the content draw the title bar (see below)                                  |
 | `Icon`           | `0`        | Resource ID of the icon; 0 uses the executable's first icon (Windows only)       |
 
@@ -101,6 +101,11 @@ Column {
 - **Actions** go on the right, before the minimize, maximize and close buttons. Use them for a theme selector, a
   search field or an account button.
 - The whole bar drags the window, and the title dims while the window is inactive, like a system title bar.
+- On Linux, a window **without** `CustomTitleBar` normally gets the desktop's title bar. GNOME on Wayland has none
+  to give (it expects every application to draw its own), so there XenUI adds its standard `TitleBar` above your
+  content automatically, styled light or dark by `DarkTitleBar`. `ClientSize` still means the content's size; the bar
+  is added on top. KDE, sway and other compositors with server-side title bars, and every X11 desktop, keep drawing
+  their own.
 - On Linux the window has no system frame at all. The compositor moves and resizes it from the areas XenUI reports,
   and XenUI draws a one-pixel border inside the edge, as Windows does, so the window stays visible over similar
   content. The border is hidden while the window is maximized.

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
 project(XenUI
         VERSION 0.1.0
-        DESCRIPTION "GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter"
+        DESCRIPTION "C++20 GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter"
         HOMEPAGE_URL "https://github.com/jakerieger/XenUI"
         LANGUAGES CXX
 )

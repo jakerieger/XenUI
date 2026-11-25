@@ -102,6 +102,7 @@ elseif (XENUI_PLATFORM STREQUAL "Linux")
             Graphics/GL/TextLayoutData.hpp
             Platform/Linux/AppContext.cpp
             Platform/Linux/Clipboard.cpp
+            Platform/Linux/Decorations.cpp
             Platform/Linux/FileDialog.cpp
             Platform/Linux/IconFile.hpp
             Platform/Linux/IconFile.cpp

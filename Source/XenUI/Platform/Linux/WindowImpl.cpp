@@ -20,6 +20,10 @@
 #include "XenUI/Platform/Linux/IconFile.hpp"
 #include "XenUI/Platform/Linux/PopupManager.hpp"
 #include "XenUI/Platform/Linux/SdlPlatform.hpp"
+#include "XenUI/Tree/Provide.hpp"
+#include "XenUI/Widgets/Basic.hpp"
+#include "XenUI/Widgets/Theme.hpp"
+#include "XenUI/Widgets/TitleBar.hpp"
 #include "XenUI/Widgets/WidgetHost.hpp"
 #include "XenUI/Widgets/WindowChrome.hpp"
 
@@ -32,6 +36,25 @@
 
 namespace XenUI {
     namespace {
+        /// @brief Height of the title bar XenUI draws where the desktop has none, matching TitleBar's default.
+        constexpr float kAutoTitleBarHeight = 34.0f;
+
+        /// @brief The title bar of a window that asked for the system's, on desktops without one. Reading the
+        /// signals rebuilds it when the title or appearance changes; the theme follows DarkTitleBar, as the system
+        /// title bar would, rather than whatever theme the content provides below it.
+        struct SystemTitleBar {
+            Signal<std::string>* Title = nullptr;
+            Signal<bool>* Dark         = nullptr;
+
+            [[nodiscard]] Node Build(BuildContext& Context) const {
+                (void)Context;
+                return Provide<Theme> {
+                  .Value = (*Dark)() ? Theme::Dark() : Theme::Light(),
+                  .Child = TitleBar {.Title = (*Title)(), .Height = kAutoTitleBarHeight},
+                };
+            }
+        };
+
         /// @brief Every live window, so the run loop can destroy closed popups once their events are handled.
         std::vector<WindowImpl*>& GetLiveWindows() {
             static std::vector<WindowImpl*> Windows;
@@ -55,10 +78,12 @@ namespace XenUI {
 
     WindowImpl::WindowImpl(const WindowDesc& Desc)
         : WindowCore(Desc.Background, false), _Popups(std::make_unique<PopupManager>(*this)),
-          _Resizable(Desc.Resizable) {
+          _Resizable(Desc.Resizable), _Title(std::string(Desc.Title)), _DarkTitleBar(Desc.DarkTitleBar) {
         SDL_WindowFlags Flags = SDL_WINDOW_HIDDEN;
         if (Desc.Resizable) { Flags |= SDL_WINDOW_RESIZABLE; }
-        if (Desc.CustomTitleBar) {
+        Sdl::EnsureVideo();
+        _AutoTitleBar = !Desc.CustomTitleBar && !Sdl::ServerDrawsTitleBars();
+        if (Desc.CustomTitleBar || _AutoTitleBar) {
             Flags |= SDL_WINDOW_BORDERLESS;
             _Chrome                 = std::make_unique<WindowChrome>();
             _Chrome->Minimize       = [this] { SDL_MinimizeWindow(_Window); };
@@ -72,7 +97,9 @@ namespace XenUI {
             _Chrome->Close = [this] { Close(); };
         }
         const std::string Title(Desc.Title);
-        CreateNativeWindow(Title.c_str(), Flags, nullptr, Desc.ClientSize);
+        // ClientSize is the content's size; a title bar XenUI adds goes on top of it.
+        const Size Initial {Desc.ClientSize.Width, Desc.ClientSize.Height + (_AutoTitleBar ? kAutoTitleBarHeight : 0.0f)};
+        CreateNativeWindow(Title.c_str(), Flags, nullptr, Initial);
         if (_Chrome) { SDL_SetWindowHitTest(_Window, &WindowImpl::HitTest, this); }
         // Typing reaches widgets as text events, as WM_CHAR does on Windows; the input method is told where the
         // caret is whenever a text field has focus.
@@ -193,19 +220,29 @@ namespace XenUI {
     }
 
     void WindowImpl::SetTitle(std::string_view Title) {
+        _Title = std::string(Title);
         if (_Window != nullptr) { SDL_SetWindowTitle(_Window, std::string(Title).c_str()); }
     }
 
     void WindowImpl::SetClientSize(const Size& ClientSize) {
         if (_Window == nullptr) { return; }
-        const float Ratio = 1.0f / GetCoordinateScale();
+        const float Ratio  = 1.0f / GetCoordinateScale();
+        const float Height = ClientSize.Height + (_AutoTitleBar ? kAutoTitleBarHeight : 0.0f);
         SDL_SetWindowSize(_Window,
                           std::max(1, static_cast<int>(std::lround(ClientSize.Width * Ratio))),
-                          std::max(1, static_cast<int>(std::lround(ClientSize.Height * Ratio))));
+                          std::max(1, static_cast<int>(std::lround(Height * Ratio))));
     }
 
     void WindowImpl::SetDarkTitleBar(bool Dark) {
-        (void)Dark;
+        _DarkTitleBar = Dark;
+    }
+
+    Node WindowImpl::WrapContent(const Node& Root) {
+        if (!_AutoTitleBar) { return Root; }
+        return Column {
+          .CrossAlignment = CrossAxisAlignment::Stretch,
+          .Children       = {SystemTitleBar {&_Title, &_DarkTitleBar}, Expanded {.Child = Root}},
+        };
     }
 
     void WindowImpl::SetIcon(int ResourceId) {
@@ -299,7 +336,34 @@ namespace XenUI {
             Border = Luminance < 0.5f ? Color {1.0f, 1.0f, 1.0f, 0.14f} : Color {0.0f, 0.0f, 0.0f, 0.22f};
         }
         _Compositor.SetFrameBorder(Border);
+
+        // During an interactive resize SDL changes the drawable's size at once but holds the size events back until
+        // the next frame callback, so draw at whatever size the window has now.
+        SyncSwapChainSize();
+
+        // SDL keeps one swap interval for every window, so set this window's before each present. A redraw the
+        // compositor asked for mid-resize presents at once: the resize waits for that frame, and with vsync the
+        // swap would wait on a frame callback the compositor holds back until it arrives.
+        _SwapChain->MakeCurrent();
+        const int Interval = _IsPopup || _PresentImmediately ? 0 : 1;
+        int Current        = -2;
+        if (!SDL_GL_GetSwapInterval(&Current) || Current != Interval) { SDL_GL_SetSwapInterval(Interval); }
+
         _Compositor.Render(*_SwapChain, AppContext::Get().GetGraphicsDevice(), _Background);
+    }
+
+    bool WindowImpl::SyncSwapChainSize() {
+        if (!_SwapChain || _Window == nullptr) { return false; }
+        int Width  = 0;
+        int Height = 0;
+        SDL_GetWindowSizeInPixels(_Window, &Width, &Height);
+        const auto PixelWidth  = static_cast<uint32_t>(std::max(Width, 1));
+        const auto PixelHeight = static_cast<uint32_t>(std::max(Height, 1));
+        if (PixelWidth == _SwapChain->GetWidth() && PixelHeight == _SwapChain->GetHeight()) { return false; }
+
+        _SwapChain->Resize(PixelWidth, PixelHeight);
+        _Compositor.ResetBufferHistory();
+        return true;
     }
 
     void WindowImpl::ReleaseSwapChain() {
@@ -311,8 +375,6 @@ namespace XenUI {
         if (_Window == nullptr) { return; }
         SDL_GLContext Context = Sdl::GetGLContext(_Window);
         SDL_GL_MakeCurrent(_Window, Context);
-        // Top-level windows wait for vertical blank; popups shouldn't hold up their owner's frames.
-        SDL_GL_SetSwapInterval(_IsPopup ? 0 : 1);
 
         int Width  = 0;
         int Height = 0;
@@ -325,17 +387,7 @@ namespace XenUI {
     }
 
     void WindowImpl::OnResize() {
-        if (!_SwapChain || _Window == nullptr) { return; }
-        int Width  = 0;
-        int Height = 0;
-        SDL_GetWindowSizeInPixels(_Window, &Width, &Height);
-        const auto PixelWidth  = static_cast<uint32_t>(std::max(Width, 1));
-        const auto PixelHeight = static_cast<uint32_t>(std::max(Height, 1));
-        if (PixelWidth == _SwapChain->GetWidth() && PixelHeight == _SwapChain->GetHeight()) { return; }
-
-        _SwapChain->Resize(PixelWidth, PixelHeight);
-        _Compositor.ResetBufferHistory();
-        if (!_InContentUpdate) { RenderFrame(); }
+        if (SyncSwapChainSize() && !_InContentUpdate) { RenderFrame(); }
     }
 
     void WindowImpl::HandleEvent(const SDL_Event& Event) {
@@ -399,7 +451,9 @@ namespace XenUI {
                 return true;
             case SDL_EVENT_WINDOW_EXPOSED:
                 _Compositor.AddFullDamage();
+                _PresentImmediately = true;
                 RenderFrame();
+                _PresentImmediately = false;
                 return true;
             case SDL_EVENT_WINDOW_SHOWN:
                 _Visible = true;

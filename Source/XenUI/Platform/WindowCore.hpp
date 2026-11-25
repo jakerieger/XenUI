@@ -82,6 +82,8 @@ namespace XenUI {
         virtual void ConfigureContent(WidgetHost& Content) = 0;
         /// @brief Runs after every content update, for popup resizing and accessibility.
         virtual void OnContentUpdated() = 0;
+        /// @brief The tree actually shown for Root. Platforms that draw a title bar themselves wrap Root in one.
+        [[nodiscard]] virtual Node WrapContent(const Node& Root) { return Root; }
 
         void UpdateContent();
         void RunFrameCallback();

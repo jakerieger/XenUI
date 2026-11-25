@@ -4,8 +4,6 @@
 <a href="https://github.com/jakerieger/XenUI/actions/workflows/CI.yml"><img alt="CI" src="https://github.com/jakerieger/XenUI/actions/workflows/CI.yml/badge.svg"/></a>
 </p>
 
----
-
 XenUI (pronounced *Zen UI*) is a C++20 GPU-accelerated GUI framework for Windows and Linux, inspired by Flutter. 
 
 ![Showcase](Docs/Images/screen-linux.png)
